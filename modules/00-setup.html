@@ -1,0 +1,257 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Module 0 · Meet your radio lab · Signal Path</title>
+  <meta name="description" content="Get comfortable holding the Flipper Zero, learn what Momentum firmware adds, and watch live radio energy for the first time — before any theory.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&family=Public+Sans:ital,wght@0,400;0,500;0,600;1,400&display=swap">
+  <link rel="stylesheet" href="../assets/css/site.css">
+  <script>(function(){try{var t=localStorage.getItem("signalpath.theme");if(t==="light"||t==="dark")document.documentElement.setAttribute("data-theme",t);}catch(e){}})();</script>
+</head>
+<body data-root="../" data-page="m00">
+  <header class="topbar"></header>
+
+  <main class="page">
+    <aside class="toc" aria-label="On this page">
+      <span class="eyebrow">On this page</span>
+      <ol>
+        <li><a href="#goal">Goal</a></li>
+        <li><a href="#what-it-is">What the Flipper is</a></li>
+        <li><a href="#momentum">What Momentum adds</a></li>
+        <li><a href="#sd-card">The SD card &amp; .sub files</a></li>
+        <li><a href="#getting-around">Getting around</a></li>
+        <li><a href="#what-you-need">What you'll need</a></li>
+        <li><a href="#lab">Lab 0: the tour</a></li>
+        <li><a href="#quiz">Check yourself</a></li>
+      </ol>
+    </aside>
+
+    <article class="content">
+      <div class="mod-header">
+        <div class="mod-index">0</div>
+        <div class="mod-titles">
+          <div class="mod-week">Week 0 · Getting oriented</div>
+          <h1>Meet your radio lab</h1>
+          <p class="lede">Before a single word of theory: hold the device, learn where things live, and watch real radio energy move on the screen. By the end of this module the Flipper will feel like a tool, not a mystery.</p>
+          <div class="mod-meta">
+            <span class="chip">⏱ <b>30 min</b></span>
+            <span class="chip">Gear: <b>Flipper + SD card</b></span>
+            <span class="chip">Transmit: <b>none yet</b></span>
+          </div>
+        </div>
+      </div>
+
+      <section id="goal">
+        <h2>Goal</h2>
+        <p>You just unboxed a Flipper Zero, flashed the <b>Momentum</b> firmware, and now you are staring at a little orange gadget with a dolphin on it, wondering what you got yourself into. That is exactly the right place to start.</p>
+        <p>This module has one job: make the device feel <em>ordinary</em>. No captures, no decoding, no transmitting — just navigating menus and confirming the radio is alive. Radio is intimidating in the abstract and completely approachable once you have watched a needle twitch when you press a doorbell. We are going to press the doorbell.</p>
+        <div class="callout tip">
+          <span class="ic">i</span>
+          <div><span class="callout-title">You do not need to understand anything yet</span>Frequencies, modulation, protocols — all of that arrives in the next modules, one idea at a time. Today you only need thumbs and curiosity.</div>
+        </div>
+      </section>
+
+      <section id="what-it-is">
+        <h2>What the Flipper actually is</h2>
+        <p>The Flipper Zero is a <b>multi-tool for the wireless world</b>. Think of a Swiss Army knife where each blade is a different way of talking to everyday electronics. Most of those "blades" are separate little radios and interfaces, each tuned to a different technology:</p>
+
+        <div class="table-scroll">
+          <table>
+            <thead>
+              <tr><th>Tool</th><th>What it talks to</th><th>Everyday examples</th></tr>
+            </thead>
+            <tbody>
+              <tr><td><b>Sub-GHz radio</b> <span class="pill orange">our focus</span></td><td>Low-power radios below 1&nbsp;GHz, via a TI <span class="mono">CC1101</span> chip</td><td>Garage remotes, doorbells, TPMS, weather stations, key fobs</td></tr>
+              <tr><td><b>125&nbsp;kHz RFID</b></td><td>Low-frequency access cards (unpowered coils)</td><td>Older building fobs, gym tags, pet chips</td></tr>
+              <tr><td><b>13.56&nbsp;MHz NFC</b></td><td>High-frequency smartcards (ISO&nbsp;14443)</td><td>Transit cards, hotel keys, contactless payments</td></tr>
+              <tr><td><b>Infrared</b></td><td>Line-of-sight IR light</td><td>TVs, air-conditioners, projectors</td></tr>
+              <tr><td><b>iButton / 1-Wire</b></td><td>Contact "touch" keys</td><td>Intercom keys, some door contacts</td></tr>
+              <tr><td><b>GPIO pins</b></td><td>Direct wires to other electronics</td><td>Sensors, dev boards, hardware hacking</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <p>That is a lot of doors. Here is the good news: <b>this course walks through one of them.</b> Signal Path is almost entirely about the <b>Sub-GHz radio</b> — the part that listens to and repeats the little radio remotes scattered around your home. RFID and NFC get one module each near the end so you know they exist and how they differ, but Sub-GHz is where a beginner learns the most, fastest, with the least risk.</p>
+
+        <div class="callout note">
+          <span class="ic">?</span>
+          <div><span class="callout-title">Why "Sub-GHz"?</span>"Sub" means "below." Sub-GHz means "below one gigahertz" — the stretch of radio spectrum under 1,000&nbsp;MHz where cheap, short-range remotes live. The Flipper's radio chip physically covers <b>300–348, 387–464, and 779–928&nbsp;MHz</b>. Do not memorize those; you will meet the four numbers that matter in Module&nbsp;1.</div>
+        </div>
+
+        <p>One more reframe that helps enormously: <b>listening is not the same as transmitting.</b> Receiving radio is passive and, for the bands the Flipper covers, generally fine to do — your car radio does it all day. Transmitting is the part that is regulated, because you are now putting energy into the air that can reach other people's devices. For all of Week&nbsp;0 and most of Week&nbsp;1, you are only ever <em>listening</em>. We will make the transmit rules crystal clear before you send a single signal.</p>
+      </section>
+
+      <section id="momentum">
+        <h2>What Momentum firmware adds</h2>
+        <p>The Flipper ships with <b>stock (official) firmware</b> made by the manufacturer. <b>Momentum</b> is a <b>community firmware</b> — a version built and maintained by volunteers that you flash onto the device in place of the stock one. (Unleashed is another popular one; they are cousins.) Same hardware, more software.</p>
+        <p>Why bother? Community firmware typically unlocks conveniences the stock build keeps conservative:</p>
+        <ul>
+          <li><b>Extended frequency range</b> — the ability to tune to more frequencies within what the radio chip physically supports, not just a short "approved" list.</li>
+          <li><b>Custom modulation presets</b> — extra receiver settings beyond the four built-in ones, loaded from a settings file on the SD card.</li>
+          <li><b>More protocols</b> — recognizes more remote "languages" out of the box.</li>
+          <li><b>Extra apps</b> and quality-of-life tweaks — a richer app catalog, interface options, and tools.</li>
+        </ul>
+
+        <div class="callout legal">
+          <span class="ic">!</span>
+          <div><span class="callout-title">Extra power is your responsibility</span>The same options that make Momentum handy — extended frequencies, unlocked transmit — can let the device transmit on frequencies or in ways that are <b>illegal in your region</b>. The firmware does not know where you live. You do. "It let me" is never the same as "it's legal here." The full ground rules live in the <a href="../legal.html">legal guide</a>, and you will read them in full before Module&nbsp;4, where you first transmit.</div>
+        </div>
+
+        <details>
+          <summary>Do I need to know which firmware version I'm on?</summary>
+          <div class="d-body">
+            <p>Not deeply — but it helps to know you're on <em>a</em> Momentum build so menu labels and available presets roughly match what this course describes. Firmware version and device info live under the Flipper's settings, near the bottom of the main menu. Community firmware updates often, so if a menu on your device is worded slightly differently or sits in a different spot than a screenshot online, that is normal and expected. We describe menus by what they <em>do</em> for exactly this reason.</p>
+          </div>
+        </details>
+      </section>
+
+      <section id="sd-card">
+        <h2>The SD card &amp; your first file format</h2>
+        <p>Slide a <b>microSD card</b> into the Flipper and it becomes the device's filing cabinet. Almost everything you save — captured signals, RFID cards, NFC tags, infrared remotes, downloaded apps — lands on that card as ordinary files. No card, no saving.</p>
+        <p>For Sub-GHz, the file you will create over and over is a <b>.sub file</b>: a small, human-readable text file describing one captured signal. You do not need to understand its guts today, but a peek now makes Module&nbsp;3 far less mysterious. A saved fixed-code remote looks roughly like this:</p>
+        <pre><code>Filetype: Flipper SubGhz Key File
+Version: 1
+Frequency: 433920000
+Preset: FuriHalSubGhzPresetOok650Async
+Protocol: Princeton
+Bit: 24
+Key: 00 00 00 00 00 8C 5A 3B
+TE: 400</code></pre>
+        <p>Read it like a label on a jar: <b>Frequency</b> is where the signal lives (433.92&nbsp;MHz here), <b>Preset</b> is how to listen (a modulation setting), <b>Protocol</b> is which remote "language" it speaks, and <b>Key</b> is the actual code that was sent. Every one of those words gets its own module. Today, just notice that a captured radio signal is, in the end, a tiny text file you can open and read.</p>
+        <div class="callout tip">
+          <span class="ic">i</span>
+          <div><span class="callout-title">Format it and keep it seated</span>If a fresh card misbehaves, formatting it from the Flipper's storage settings usually sorts it out. A card that pops loose mid-capture is a classic "why won't it save?" gotcha — seat it firmly.</div>
+        </div>
+      </section>
+
+      <section id="getting-around">
+        <h2>Getting around: buttons and menus</h2>
+        <p>Five controls do everything. Learn these and you can drive the whole device blind.</p>
+        <dl class="kv">
+          <dt>D-pad</dt><dd>The four-way ring: <b>Up / Down</b> move through a list, <b>Left / Right</b> change values or move between screens.</dd>
+          <dt>OK</dt><dd>The center button. <b>Select / confirm / go in.</b> When in doubt, press <kbd>OK</kbd>.</dd>
+          <dt>Back</dt><dd>Steps out one level. <b>Hold</b> <kbd>Back</kbd> to jump straight to the desktop (the dolphin home screen) from anywhere.</dd>
+        </dl>
+        <p>From the desktop, pressing <kbd>OK</kbd> (or the appropriate direction) opens the <b>main menu</b>: a scrolling list of apps, one per tool — <span class="flip">Sub-GHz</span>, <span class="flip">125 kHz RFID</span>, <span class="flip">NFC</span>, <span class="flip">Infrared</span>, <span class="flip">GPIO</span>, <span class="flip">iButton</span>, plus <span class="flip">Apps</span> and <span class="flip">Settings</span>. Momentum may reorder this list or add entries, so scroll the whole thing once to see what you have rather than trusting a fixed position.</p>
+
+        <h3>Inside the Sub-GHz app</h3>
+        <p>Open <span class="flip">Sub-GHz</span> and you land on its own little menu. These are the sub-items you will live in for the next few weeks:</p>
+        <div class="table-scroll">
+          <table>
+            <thead><tr><th>Item</th><th>What it does</th><th>You'll meet it in</th></tr></thead>
+            <tbody>
+              <tr><td><b>Read</b></td><td>Listens on a set frequency and tries to <em>name</em> the protocol it hears</td><td>Module&nbsp;3</td></tr>
+              <tr><td><b>Read RAW</b></td><td>Records the raw pulse timing when it can't name the protocol</td><td>Module&nbsp;5</td></tr>
+              <tr><td><b>Frequency Analyzer</b></td><td>Finds the frequency of the strongest signal held close by</td><td>Module&nbsp;1</td></tr>
+              <tr><td><b>Test</b></td><td>Shows a live reading of the radio energy the antenna is picking up</td><td><b>Today</b></td></tr>
+              <tr><td><b>Add Manually</b></td><td>Builds a signal from a known protocol without capturing it</td><td>Module&nbsp;4</td></tr>
+              <tr><td><b>Saved</b></td><td>Your library of captured .sub files, ready to view or replay</td><td>Module&nbsp;3</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="faint">Exact wording and order can vary between firmware versions; if yours differs slightly, match by description, not by the label.</p>
+
+        <h3>Practice the menus without the risk</h3>
+        <p>Before you thumb through the real thing, poke at this simulator. It mirrors the Sub-GHz menus and the D-pad so you can build muscle memory — nothing here touches a real radio.</p>
+
+        <div data-widget="flipper-sim" data-opts='{"start":"subghz"}'></div>
+
+        <div class="callout note">
+          <span class="ic">?</span>
+          <div><span class="callout-title">Lost? Hold Back.</span>The single most reassuring fact for a nervous beginner: you cannot get stuck. Holding <kbd>Back</kbd> always returns you to the desktop. Menus are just lists; there is no wrong turn you can't reverse.</div>
+        </div>
+      </section>
+
+      <section id="what-you-need">
+        <h2>What you'll need</h2>
+        <p>Gather these once and the rest of the course flows. None of it is expensive or exotic — most of it is already in your house.</p>
+        <ul>
+          <li><b>A Flipper Zero running Momentum</b>, charged. (Any recent Momentum build is fine.)</li>
+          <li><b>A microSD card</b>, seated and formatted, for saving captures later.</li>
+          <li><b>A few small RF remotes you own</b> — see the prop list in the lab below.</li>
+          <li><b>A notebook or a notes app.</b> You will jot down frequencies and settings; writing them down is half the learning.</li>
+          <li><b>Patience with "nothing happened."</b> Some devices will show you nothing, and that is data too. We'll explain why.</li>
+        </ul>
+        <div class="callout legal">
+          <span class="ic">!</span>
+          <div><span class="callout-title">One rule, from the very first press</span>Everything in Signal Path uses devices <b>you own</b>, in a space <b>you control</b>. We never open, unlock, or interfere with property that isn't ours. Today you are only listening, which is the gentlest thing a radio can do — but it is worth building the habit now. The complete <a href="../legal.html">ground rules</a> come before you transmit in Module&nbsp;4.</div>
+        </div>
+      </section>
+
+      <section id="lab">
+        <h2>Lab 0: the tour</h2>
+        <p>Two small missions: confirm the radio breathes, and gather your props for the weeks ahead.</p>
+
+        <div class="lab">
+          <div class="lab-kicker">Lab 0.1</div>
+          <h3>Watch live radio energy</h3>
+          <p class="lab-gear">Gear: <b>Flipper only</b> — no capture, no transmit</p>
+          <ol>
+            <li>From the desktop, open the main menu and select <span class="flip">Sub-GHz</span>.</li>
+            <li>Choose <span class="flip">Sub-GHz → Test</span>. You'll see a live reading of the radio energy around you — a number and/or a moving indicator. This is the antenna reporting how loud the air is right now.</li>
+            <li>Note the resting level with nothing happening nearby. That baseline is the <b>noise floor</b> — the quiet hum of the world. (Its name and meaning come in Module&nbsp;1; for now, just notice it sits low.)</li>
+            <li>Grab any small remote — a wireless doorbell button is perfect — hold it a few centimeters from the Flipper, and <b>press it</b>. Watch the reading jump.</li>
+            <li>Let go. Watch it fall back to the noise floor. Press again. Feel the cause and effect.</li>
+          </ol>
+        </div>
+
+        <div class="lab">
+          <div class="lab-kicker">Lab 0.2</div>
+          <h3>Round up your props</h3>
+          <p class="lab-gear">Gear: <b>a shoebox and a wander around the house</b></p>
+          <p>Good beginner devices are cheap, fixed-code, and yours. Collect a few of these into one "radio box":</p>
+          <div class="grid2">
+            <div class="card">
+              <h4 style="margin-top:0">Great first targets <span class="pill fixed">usually fixed-code</span></h4>
+              <ul style="margin-bottom:0">
+                <li><b>Wireless doorbell</b> button — the classic, near-perfect starter.</li>
+                <li><b>RF LED-strip remote</b> — the little handset for color-changing lights.</li>
+                <li><b>Ceiling-fan remote</b> — often plain on/off/speed codes.</li>
+                <li><b>Old garage remote</b> from a pre-2000s opener you own.</li>
+              </ul>
+            </div>
+            <div class="card">
+              <h4 style="margin-top:0">Interesting, but expect surprises <span class="pill rolling">often rolling</span></h4>
+              <ul style="margin-bottom:0">
+                <li><b>Car key fob</b> — modern ones use <em>rolling codes</em> and won't simply replay. Great to observe, not to copy.</li>
+                <li><b>Newer gate/garage remotes</b> — many are rolling too.</li>
+              </ul>
+              <p class="faint" style="margin-bottom:0">Rolling-code devices are the star of Module&nbsp;5. Keep them in the box; you'll understand exactly why they behave "weirdly" soon.</p>
+            </div>
+          </div>
+          <div class="callout warn">
+            <span class="ic">!</span>
+            <div><span class="callout-title">Batteries matter</span>A remote with a dying battery transmits weakly and may barely register. If a device shows nothing on <span class="flip">Test</span>, a fresh coin cell is often the fix before you blame the Flipper.</div>
+          </div>
+        </div>
+
+        <div class="win"><span class="ic">✓</span><span><b>You've got it when:</b> pressing a remote makes the <span class="flip">Test</span> reading jump above the resting noise floor, and drop back when you let go — <em>and</em> you have a small box of your own remotes ready for Module&nbsp;1. You just watched invisible radio become a number on a screen. That's the whole job.</span></div>
+
+        <div class="callout story">
+          <span class="ic">"</span>
+          <div><span class="callout-title">The doorbell moment</span>Almost everyone's "oh, it's real" moment is a doorbell. You press a button in your hand and a needle three feet away leaps. Nothing you decode later will feel more like magic than that first twitch — enjoy it before it becomes routine.</div>
+        </div>
+      </section>
+
+      <section id="quiz">
+        <h2>Check yourself</h2>
+        <div data-quiz="m00"></div>
+      </section>
+    </article>
+  </main>
+
+  <footer class="site-footer">
+    <div class="wrap">
+      <p>Signal Path teaches RF with devices you own, for learning and legitimate testing. Radio transmission is regulated where you live; interfering with other people's devices is illegal and harmful. When in doubt: listen, don't transmit.</p>
+      <p>Signal Path · a self-guided RF course for the Flipper Zero</p>
+    </div>
+  </footer>
+
+  <script src="../assets/js/site.js"></script>
+  <script src="../assets/js/data/quiz-bank.js"></script>
+  <script src="../assets/js/widgets/flipper-sim.js"></script>
+</body>
+</html>

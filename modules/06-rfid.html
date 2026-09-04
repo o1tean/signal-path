@@ -1,0 +1,269 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Module 6 · 125 kHz RFID · Signal Path</title>
+  <meta name="description" content="Read, save and emulate your own 125 kHz access fob, and learn why low-frequency RFID is a near-field world, not radio the way Sub-GHz is.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&family=Public+Sans:ital,wght@0,400;0,500;0,600;1,400&display=swap">
+  <link rel="stylesheet" href="../assets/css/site.css">
+  <script>(function(){try{var t=localStorage.getItem("signalpath.theme");if(t==="light"||t==="dark")document.documentElement.setAttribute("data-theme",t);}catch(e){}})();</script>
+</head>
+<body data-root="../" data-page="m06">
+  <header class="topbar"></header>
+
+  <main class="page">
+    <aside class="toc" aria-label="On this page">
+      <span class="eyebrow">On this page</span>
+      <ol>
+        <li><a href="#goal">Goal</a></li>
+        <li><a href="#different-world">A different kind of radio</a></li>
+        <li><a href="#how-it-works">How a passive tag answers</a></li>
+        <li><a href="#protocols">What's actually on the tag</a></li>
+        <li><a href="#flow">Read, Save, Emulate, Write</a></li>
+        <li><a href="#lab">Lab</a></li>
+        <li><a href="#going-deeper">Going deeper</a></li>
+        <li><a href="#quiz">Check yourself</a></li>
+      </ol>
+    </aside>
+
+    <article class="content">
+      <div class="mod-header">
+        <div class="mod-index">6</div>
+        <div class="mod-titles">
+          <div class="mod-week">Week 4 · Access control</div>
+          <h1>125 kHz RFID</h1>
+          <p class="lede">Your building fob isn't a tiny radio remote. It's a coil of wire that wakes up only when your reader feeds it power. This module reads, saves and emulates a fob you own — and shows why "RFID" and "Sub-GHz" live in completely different worlds.</p>
+          <div class="mod-meta">
+            <span class="chip">⏱ <b>45 min</b></span>
+            <span class="chip">Gear: <b>a 125 kHz fob or card you own</b></span>
+            <span class="chip">App: <b>125 kHz RFID</b></span>
+          </div>
+        </div>
+      </div>
+
+      <section id="goal">
+        <h2>Goal</h2>
+        <p>By the end of this module you can pick up a low-frequency access fob that <b>belongs to you</b>, read it on the Flipper, save it, and play it back from the device — and, just as important, explain to a friend why you have to hold it almost touching the reader instead of waving it from across the room.</p>
+        <p>Everything up to now has been <b>Sub-GHz</b>: remotes, gates and sensors that broadcast a little radio signal into the air on 315, 433.92 or 868&nbsp;MHz. This module is a hard left turn. Low-frequency RFID at <b>125&nbsp;kHz</b> looks similar on the surface — you "read" a thing and "emulate" it — but the physics underneath is different enough that it deserves its own week. Get the mental model right here and Module 7's NFC will feel like a cousin, not a stranger.</p>
+        <div class="callout legal">
+          <span class="ic">§</span>
+          <div>
+            <span class="callout-title">Read this before you touch a reader</span>
+            The only credential you should read, save or emulate is one you personally own — a fob for your own front door, a blank you bought, a hotel card you can keep. Being <em>able</em> to copy a workplace, apartment-building or gym badge does not make it allowed: cloning access you don't control can violate your lease, your employment terms, or the law even if the door happens to open. This module is about understanding the technology on hardware that is yours. Keep it there.
+          </div>
+        </div>
+      </section>
+
+      <section id="different-world">
+        <h2>A different kind of radio</h2>
+        <p>"RFID" stands for <b>radio-frequency identification</b>. The name is honest but a little misleading, because the low-frequency version barely radiates at all. Here is the split you need to hold in your head:</p>
+        <div class="grid2">
+          <div class="card">
+            <p class="eyebrow" style="margin-bottom:6px;">Sub-GHz (Modules 1–5)</p>
+            <p style="margin-bottom:0;">A remote has a battery. It <b>transmits</b> a signal that flies through the air as a real radio wave and can be picked up metres away. This is <b>far-field</b> radio — the wave leaves the antenna and keeps going on its own.</p>
+          </div>
+          <div class="card">
+            <p class="eyebrow" style="margin-bottom:6px;">125 kHz RFID (this module)</p>
+            <p style="margin-bottom:0;">A fob has <b>no battery</b>. It does nothing until a reader's coil is close enough to power it. This is <b>near-field</b> coupling — energy is shared between two coils almost touching, like a loose transformer, not a wave sailing across a room.</p>
+          </div>
+        </div>
+        <p>That one difference — battery versus no battery, far-field wave versus near-field coupling — explains almost everything else about how these tags behave, especially the tiny range.</p>
+
+        <h3>Why the range is centimetres, not metres</h3>
+        <p>125&nbsp;kHz is a <b>very</b> low frequency. Run it through the wavelength formula from the primer, <span class="mono">λ = c / f</span>, and you get a wavelength of roughly <b>2.4&nbsp;kilometres</b>. A useful radiating antenna is a meaningful fraction of a wavelength; nobody is putting a kilometre-long antenna on a keyfob. So a 125&nbsp;kHz tag doesn't try to radiate. Instead the reader and the tag each have a small coil, and they pass energy back and forth through the <b>magnetic field</b> between them. Magnetic coupling falls off ferociously with distance — far faster than a radio wave does — which is exactly why your fob works when it's kissing the reader and does nothing an inch further out. The short range isn't a flaw. It's the whole operating principle, and it's a feature: an attacker can't skim your coil from across the street the way they might sniff a Sub-GHz remote.</p>
+        <div class="facts">
+          <div class="fact"><div class="v">125 kHz</div><div class="k">LF RFID carrier</div></div>
+          <div class="fact"><div class="v">~2.4 km</div><div class="k">wavelength (λ = c/f)</div></div>
+          <div class="fact"><div class="v">a few cm</div><div class="k">practical read range</div></div>
+          <div class="fact"><div class="v">no battery</div><div class="k">tag is passive</div></div>
+        </div>
+      </section>
+
+      <section id="how-it-works">
+        <h2>How a passive tag answers</h2>
+        <p>Picture two coils of wire facing each other. The reader (your Flipper, or the box by the door) drives an alternating current through <b>its</b> coil at 125&nbsp;kHz. That creates a pulsing magnetic field. Bring the tag's coil into that field and the field induces a small current in it — the same trick that makes a transformer or a wireless phone charger work. The tag has no battery, but for as long as it's in the field it has just enough power to run its tiny chip.</p>
+        <p>Now the tag has to <b>answer</b>. It can't shout back with its own transmitter — it has no power source of its own. Instead it changes how much energy it draws from the reader's field, flicking that load on and off in a pattern. The reader feels those tiny tugs on its own coil and reads them out as ones and zeros. The tag never "broadcasts"; it modulates the reader's own field. That's why the tag can be so cheap and so thin, and why it only works up close.</p>
+
+        <figure class="diagram">
+          <svg viewBox="0 0 640 240" width="100%" role="img" aria-label="A reader coil on the left creates a magnetic field that reaches a passive tag coil on the right. The reader powers the tag; the tag answers by changing its load. The gap between them is only a few centimetres.">
+            <!-- reader coil -->
+            <g stroke="var(--orange)" fill="none" stroke-width="2.5">
+              <ellipse cx="120" cy="120" rx="16" ry="52"/>
+              <ellipse cx="132" cy="120" rx="16" ry="52"/>
+              <ellipse cx="144" cy="120" rx="16" ry="52"/>
+            </g>
+            <text x="132" y="200" text-anchor="middle" fill="var(--orange)" font-family="var(--font-mono)" font-size="13" font-weight="600">Reader coil</text>
+            <text x="132" y="218" text-anchor="middle" fill="var(--muted)" font-family="var(--font-mono)" font-size="11">drives 125 kHz · powers the tag</text>
+            <!-- field lines -->
+            <g stroke="var(--cyan)" fill="none" stroke-width="1.6" opacity="0.85">
+              <path d="M160 120 C 260 60, 380 60, 480 120"/>
+              <path d="M160 120 C 270 95, 370 95, 480 120"/>
+              <path d="M160 120 C 270 145, 370 145, 480 120"/>
+              <path d="M160 120 C 260 180, 380 180, 480 120"/>
+            </g>
+            <text x="320" y="46" text-anchor="middle" fill="var(--cyan)" font-family="var(--font-mono)" font-size="12" font-weight="600">magnetic field (near-field)</text>
+            <!-- tag coil -->
+            <g stroke="var(--text)" fill="none" stroke-width="2.5">
+              <ellipse cx="496" cy="120" rx="12" ry="44"/>
+              <ellipse cx="506" cy="120" rx="12" ry="44"/>
+            </g>
+            <text x="506" y="200" text-anchor="middle" fill="var(--text)" font-family="var(--font-mono)" font-size="13" font-weight="600">Tag coil</text>
+            <text x="506" y="218" text-anchor="middle" fill="var(--muted)" font-family="var(--font-mono)" font-size="11">no battery · answers by load</text>
+            <!-- gap marker -->
+            <line x1="160" y1="120" x2="480" y2="120" stroke="var(--faint)" stroke-width="1" stroke-dasharray="4 4"/>
+            <text x="320" y="212" text-anchor="middle" fill="var(--faint)" font-family="var(--font-mono)" font-size="11">gap: a few cm</text>
+          </svg>
+          <figcaption>Near-field coupling: the reader's coil both powers the tag and listens for the pattern the tag makes by tugging on the field.</figcaption>
+        </figure>
+
+        <div class="callout note">
+          <span class="ic">i</span>
+          <div>The Flipper can play <em>either</em> role. As a <b>reader</b> it energises your fob and reads it. As an <b>emulator</b> it pretends to be the tag, tugging on a door reader's field the way your fob would. Same coil, two jobs.</div>
+        </div>
+      </section>
+
+      <section id="protocols">
+        <h2>What's actually on the tag</h2>
+        <p>A 125&nbsp;kHz tag doesn't store your name or your job title. It stores a short number, and the reader system at the door looks that number up in a database to decide whether to unlock. But there are several incompatible ways that number is laid out, and the Flipper has to recognise which one it's looking at. The three you'll meet most:</p>
+
+        <div class="table-scroll">
+          <table>
+            <thead>
+              <tr><th>Family</th><th>Also called</th><th>What it carries</th><th>Notes</th></tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><b>EM4100</b></td>
+                <td>EM-Marin</td>
+                <td>A fixed <b>40-bit ID</b> (often shown as 5 or 10 hex characters).</td>
+                <td>The classic cheap blue fob and round token. Simplest and most common.</td>
+              </tr>
+              <tr>
+                <td><b>HID Prox</b></td>
+                <td>H10301 (a 26-bit format)</td>
+                <td>A <b>facility code</b> plus a <b>card number</b>.</td>
+                <td>The grey "HID" clamshell cards in a lot of offices.</td>
+              </tr>
+              <tr>
+                <td><b>Indala</b></td>
+                <td>Motorola Indala</td>
+                <td>A vendor-specific ID layout.</td>
+                <td>Older but still around in some buildings.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3>UID vs "facility code + card number"</h3>
+        <p>Two different ways of thinking about the number are worth pulling apart, because they come up again in NFC next module:</p>
+        <dl class="kv">
+          <dt>UID</dt><dd>A <b>unique identifier</b> — one flat number that <em>is</em> the tag's identity. EM4100 works this way: the whole 40-bit value is the ID, and the door either knows it or doesn't.</dd>
+          <dt>FC + card #</dt><dd>Some formats, like HID's H10301, split the number into a <b>facility code</b> (which site or customer this card belongs to) and a <b>card number</b> (which person). A door tuned to facility code 42 ignores an otherwise-valid card stamped facility 7.</dd>
+        </dl>
+        <p>Neither layout is "encrypted" in any meaningful sense. A 125&nbsp;kHz tag mostly just recites its number when powered. That simplicity is why these tags are cheap, and also why the security world moved on to the 13.56&nbsp;MHz cards you'll meet in <a href="07-nfc.html">Module 7</a> — where at least some cards can hold keys and do real cryptography. Reading a 125&nbsp;kHz ID is roughly as hard as reading a printed serial number: trivial. The security, such as it is, lives in the door's database, not on the tag.</p>
+        <div class="callout warn">
+          <span class="ic">!</span>
+          <div><span class="callout-title">"It read, but it says Unknown"</span>If the Flipper energises a tag but can't name the protocol, it may show the raw data without a friendly label. That usually means the tag is a format the reader app doesn't decode, or it's a 13.56&nbsp;MHz card you're holding to the wrong tool — those belong to the <b>NFC</b> app, not the 125&nbsp;kHz one. Frequency first, always.</div>
+        </div>
+      </section>
+
+      <section id="flow">
+        <h2>Read, Save, Emulate, Write</h2>
+        <p>The 125&nbsp;kHz RFID app has a simple loop, and it mirrors the Sub-GHz workflow you already know: capture something, keep it, play it back. Four verbs:</p>
+        <ol class="steps">
+          <li><b>Read.</b> The Flipper energises the tag and tries to identify it. Hold the fob flat against the back of the Flipper — the coil is inside the case — and wait for it to lock on to a protocol and an ID.</li>
+          <li><b>Save.</b> Give the capture a name and store it on the SD card, exactly like a <code>.sub</code> file but for RFID. Now you have a reusable copy of that identity.</li>
+          <li><b>Emulate.</b> The Flipper becomes the tag. Held to a compatible reader, it presents the saved ID as if it were the original fob. This is the "does the door recognise it" test — on <b>your own</b> door.</li>
+          <li><b>Write.</b> The Flipper writes the saved ID onto a <b>blank</b> tag, producing a physical duplicate you can carry.</li>
+        </ol>
+        <p>On the device the path looks like <span class="flip">125 kHz RFID → Read</span>, then <span class="flip">Saved → Emulate</span> once you've stored one.</p>
+
+        <h3>The T5577: a blank that can pretend to be anything</h3>
+        <p>Reading and emulating live entirely on the Flipper. To make a real physical copy you need a <b>writable</b> tag, and the workhorse there is the <b>T5577</b>. Out of the factory a T5577 is a blank — a chip that can be configured to <em>imitate</em> other 125&nbsp;kHz formats. Write an EM4100 ID to it and it behaves like an EM4100 tag; configure it for HID Prox and it presents that instead. That flexibility is why a single pack of T5577 fobs and cards can stand in for most of the low-frequency tags you'll encounter.</p>
+        <p>The idea to lock in: <b>reading</b> a tag captures its number; <b>writing</b> puts that captured number onto a blank so a copy exists in the world. The first is passive and harmless. The second creates a working credential — which is precisely why the legal line matters, and why the only ID you should ever write to a blank is one you're entitled to duplicate.</p>
+        <div class="callout tip">
+          <span class="ic">✓</span>
+          <div>A cheap starter kit is a few <b>T5577</b> cards and fobs plus one <b>EM4100</b> tag you buy new. Now you can read a blank, write a made-up ID to it, read it back, and emulate it — a complete round trip with nothing but hardware you own outright.</div>
+        </div>
+      </section>
+
+      <section id="lab">
+        <h2>Lab</h2>
+        <div class="lab">
+          <div class="lab-kicker">Lab 6.1</div>
+          <h3>Read, save and emulate your own fob</h3>
+          <p class="lab-gear">Gear: <b>a 125 kHz fob or card you own</b> (your own front-door fob, or a fresh EM4100/T5577 tag you bought)</p>
+          <ol>
+            <li>Open the <span class="flip">125 kHz RFID</span> app and choose <span class="flip">125 kHz RFID → Read</span>.</li>
+            <li>Lay the fob <b>flat against the back</b> of the Flipper and hold still. The antenna coil is inside the case, so contact beats hovering.</li>
+            <li>Watch the screen name a <b>protocol</b> (EM4100, HID Prox, Indala…) and show an <b>ID</b>. If it stays blank, reposition the fob and try again — coil alignment is fussy.</li>
+            <li>Choose <b>Save</b> and give it a clear name like <span class="mono">frontdoor-mine</span>.</li>
+            <li>Go to <span class="flip">Saved</span>, open your capture, and pick <b>Emulate</b>. The Flipper is now impersonating that tag.</li>
+            <li>Hold the emulating Flipper to <b>your own</b> reader — the one the fob already opens. Confirm it behaves like the fob. Do not test this on any reader that isn't yours.</li>
+          </ol>
+        </div>
+        <div class="win"><span class="ic">✓</span><span><b>You've got it when:</b> you can read your fob, see its protocol and ID on screen, save it, and emulate it back to your own reader — and you can say in one sentence why you had to hold everything almost touching.</span></div>
+
+        <h3>The three RF worlds, side by side</h3>
+        <p>Keep this table handy. It's the single most useful thing to memorise this week, because "which app do I even open?" starts with "which of these three am I holding?"</p>
+        <div class="table-scroll">
+          <table>
+            <thead>
+              <tr><th>&nbsp;</th><th>Sub-GHz</th><th>125 kHz RFID (LF)</th><th>NFC (HF)</th></tr>
+            </thead>
+            <tbody>
+              <tr><td><b>Frequency</b></td><td>300–928 MHz<br><span class="mono">315 / 433.92 / 868</span></td><td><span class="mono">125 kHz</span></td><td><span class="mono">13.56 MHz</span></td></tr>
+              <tr><td><b>Typical range</b></td><td>metres to tens of metres</td><td>a few centimetres</td><td>a few centimetres</td></tr>
+              <tr><td><b>Powered?</b></td><td>transmitter has a battery</td><td>tag is passive (no battery)</td><td>tag is passive (no battery)</td></tr>
+              <tr><td><b>How it works</b></td><td>far-field radio wave</td><td>near-field magnetic coupling</td><td>near-field coupling</td></tr>
+              <tr><td><b>Typical use</b></td><td>remotes, gates, sensors, TPMS</td><td>old building fobs, prox cards</td><td>bank cards, transit, newer badges, phone tap-to-pay</td></tr>
+              <tr><td><b>Flipper app</b></td><td><span class="pill grey">Sub-GHz</span></td><td><span class="pill grey">125 kHz RFID</span></td><td><span class="pill grey">NFC</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p>The two right-hand columns look almost identical — both near-field, both a few centimetres, both passive tags. The difference is the frequency and, as you'll see next module, how much <b>brains</b> the tag has. Sub-GHz is the odd one out: it's the only column that's a real radio wave with a real battery behind it.</p>
+      </section>
+
+      <section id="going-deeper">
+        <h2>Going deeper</h2>
+        <details>
+          <summary>Why can't I read my hotel key or new office badge with the 125 kHz app?</summary>
+          <div class="d-body">
+            <p>Because it's almost certainly not a 125&nbsp;kHz tag. Most hotel keys and modern access badges are <b>13.56&nbsp;MHz</b> cards — a different frequency, a different app (NFC), covered in Module 7. The clue is in the read: hold it to the 125&nbsp;kHz app and you get nothing, because that app's coil is running at the wrong frequency to wake the card up. Frequency is the first fork in every RFID decision.</p>
+          </div>
+        </details>
+        <details>
+          <summary>Is reading a tag "hacking"? It felt too easy.</summary>
+          <div class="d-body">
+            <p>Reading a 125&nbsp;kHz ID is about as sophisticated as reading a barcode. The tag is designed to announce its number to anything that powers it. That's the point of the technology and the reason it's cheap. The "security" was always meant to live in the door controller's list of allowed numbers, not in the tag being hard to read. Understanding that is more valuable than any single capture — it's why serious access control has moved to cards that can actually keep a secret.</p>
+          </div>
+        </details>
+        <details>
+          <summary>What's the difference between Emulate and Write, really?</summary>
+          <div class="d-body">
+            <p><b>Emulate</b> is temporary and lives on the Flipper: while the app runs, the device pretends to be the tag, and when you leave the screen it stops. <b>Write</b> is permanent and lives on a blank: you burn the ID onto a physical T5577 and now a second working tag exists that you can hand to someone or drop in a drawer. Emulate is a test; write is a duplicate. Treat the second with the seriousness a real key deserves.</p>
+          </div>
+        </details>
+      </section>
+
+      <section id="quiz">
+        <h2>Check yourself</h2>
+        <div data-quiz="m06"></div>
+      </section>
+    </article>
+  </main>
+
+  <footer class="site-footer">
+    <div class="wrap">
+      <p>Signal Path teaches RF with devices you own, for learning and legitimate testing. Radio transmission is regulated where you live; interfering with other people's devices is illegal and harmful. When in doubt: listen, don't transmit.</p>
+      <p>Signal Path · a self-guided RF course for the Flipper Zero</p>
+    </div>
+  </footer>
+
+  <script src="../assets/js/site.js"></script>
+  <script src="../assets/js/data/quiz-bank.js"></script>
+</body>
+</html>

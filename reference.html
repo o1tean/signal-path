@@ -1,0 +1,281 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Reference · Signal Path</title>
+  <meta name="description" content="Quick-reference tables for RF on the Flipper Zero: frequencies, modulation presets, protocol families, .sub file fields, RFID/NFC facts, and unit conversions.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&family=Public+Sans:ital,wght@0,400;0,500;0,600;1,400&display=swap">
+  <link rel="stylesheet" href="assets/css/site.css">
+  <script>(function(){try{var t=localStorage.getItem("signalpath.theme");if(t==="light"||t==="dark")document.documentElement.setAttribute("data-theme",t);}catch(e){}})();</script>
+</head>
+<body data-root="" data-page="reference">
+  <header class="topbar"></header>
+
+  <main class="page">
+    <aside class="toc" aria-label="On this page">
+      <span class="eyebrow">On this page</span>
+      <ol>
+        <li><a href="#frequencies">Common frequencies</a></li>
+        <li><a href="#presets">Modulation presets</a></li>
+        <li><a href="#radio">The Sub-GHz radio</a></li>
+        <li><a href="#protocols">Protocol families</a></li>
+        <li><a href="#sub-files">.sub &amp; RAW files</a></li>
+        <li><a href="#rfid-nfc">RFID &amp; NFC</a></li>
+        <li><a href="#units">Unit cheats</a></li>
+        <li><a href="#resources">Trusted resources</a></li>
+      </ol>
+    </aside>
+
+    <article class="content">
+      <p class="eyebrow">Reference · keep this open</p>
+      <h1>The numbers, on one page.</h1>
+      <p class="lede">
+        The tables you'll reach for again and again — frequencies, presets, protocol families, file
+        fields and conversions. Bookmark it; you're not meant to memorise this.
+      </p>
+
+      <section id="frequencies">
+        <h2>Common frequencies</h2>
+        <p>
+          The Sub-GHz frequencies you'll meet most, and roughly where and on what. Regions overlap and
+          exceptions exist, so treat "where" as "most common," not a rule.
+        </p>
+        <div class="table-scroll">
+          <table>
+            <thead><tr><th>Frequency</th><th>Region</th><th>Typical devices</th></tr></thead>
+            <tbody>
+              <tr><td class="mono">315 MHz</td><td>North America</td><td>Car key fobs, TPMS sensors, some garage remotes</td></tr>
+              <tr><td class="mono">390 / 418 MHz</td><td>North America (older)</td><td>Older garage-door openers and gate remotes</td></tr>
+              <tr><td class="mono">433.92 MHz</td><td>Worldwide ISM</td><td>Gates, garages, weather sensors, doorbells, cheap remotes</td></tr>
+              <tr><td class="mono">868.35 MHz</td><td>Europe</td><td>Newer gates, alarm sensors, smart-home devices</td></tr>
+              <tr><td class="mono">915 MHz</td><td>North America ISM</td><td>US sensors, some newer garage systems</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="callout note">
+          <span class="ic">i</span>
+          <div><span class="callout-title">433.92 is the "try this first" frequency</span>
+          When you don't know a device's channel, 433.92 MHz is the single best first guess worldwide.
+          If nothing shows up, sweep with the Frequency Analyzer rather than guessing again.</div>
+        </div>
+      </section>
+
+      <section id="presets">
+        <h2>Modulation presets</h2>
+        <p>
+          A preset tells the radio <i>how</i> to listen: which modulation, and how wide a slice of
+          spectrum. The four stock presets, and when to reach for each. For the <b>AM</b> presets the number is
+          roughly the receiver bandwidth in kHz; for the <b>FM</b> presets it's the FSK frequency deviation
+          (how far the two tones are spread) — either way, treat them as "narrow vs wide," not exact figures.
+        </p>
+        <div class="table-scroll">
+          <table>
+            <thead><tr><th>Preset</th><th>Type</th><th>Feel</th><th>When to use</th></tr></thead>
+            <tbody>
+              <tr><td class="mono">AM650</td><td><span class="pill am">AM / OOK</span></td><td>Wide</td><td>The default. Fits most fixed-code remotes, gates and garages.</td></tr>
+              <tr><td class="mono">AM270</td><td><span class="pill am">AM / OOK</span></td><td>Narrow</td><td>Cleaner on weak or narrow OOK signals when AM650 is noisy.</td></tr>
+              <tr><td class="mono">FM238</td><td><span class="pill fm">FM / FSK</span></td><td>Narrow</td><td>FSK devices with small frequency shift — some 868 MHz gear.</td></tr>
+              <tr><td class="mono">FM476</td><td><span class="pill fm">FM / FSK</span></td><td>Wide</td><td>FSK devices with a larger shift; try when FM238 under-reads.</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p>
+          In a saved <span class="mono">.sub</span> file, the preset appears as a
+          <span class="mono">FuriHalSubGhzPreset…Async</span> token on the <span class="mono">Preset:</span>
+          line — for example AM650 is written <span class="mono">FuriHalSubGhzPresetOok650Async</span>.
+          Momentum and Unleashed can add extra custom presets defined in a user settings file on the SD
+          card. If a signal won't decode, changing the preset is the second thing to try after confirming
+          the frequency.
+        </p>
+      </section>
+
+      <section id="radio">
+        <h2>The Flipper's Sub-GHz radio</h2>
+        <p>Key facts about the hardware doing the listening:</p>
+        <div class="facts">
+          <div class="fact"><div class="v">CC1101</div><div class="k">Texas Instruments transceiver chip</div></div>
+          <div class="fact"><div class="v">300&ndash;348</div><div class="k">MHz &middot; band 1</div></div>
+          <div class="fact"><div class="v">387&ndash;464</div><div class="k">MHz &middot; band 2</div></div>
+          <div class="fact"><div class="v">779&ndash;928</div><div class="k">MHz &middot; band 3</div></div>
+        </div>
+        <p>
+          The CC1101 doesn't cover the gaps between those three bands, which is why a handful of
+          frequencies simply can't be tuned by the internal radio. An external CC1101 module can extend
+          performance, and Momentum exposes extended-frequency options — but "the firmware lets you tune
+          it" is never the same as "it's legal to transmit there where you live."
+        </p>
+      </section>
+
+      <section id="protocols">
+        <h2>Protocol families the Flipper decodes</h2>
+        <p>
+          Recognised out of the box (a partial list — Momentum adds more). When the Read screen names one
+          of these, it understood the signal's grammar.
+        </p>
+        <div class="grid2">
+          <div class="card">
+            <h3><span class="pill fixed">Fixed code</span> replayable</h3>
+            <p class="muted" style="margin-bottom:0;">
+              <span class="pill grey">Princeton</span> <span class="pill grey">CAME</span>
+              <span class="pill grey">Nice FLO</span> <span class="pill grey">Holtek</span>
+              <span class="pill grey">Linear</span> <span class="pill grey">Chamberlain (older)</span>
+              <span class="pill grey">Hormann HSM</span> <span class="pill grey">Ansonic</span>
+              <span class="pill grey">Hollarm</span>
+              <br><br>
+              These send the same key each press. Nice <b>FLO</b> is a classic 12-bit fixed code.
+            </p>
+          </div>
+          <div class="card">
+            <h3><span class="pill rolling">Rolling code</span> shows a counter</h3>
+            <p class="muted" style="margin-bottom:0;">
+              <span class="pill grey">KeeLoq</span> <span class="pill grey">Nice FloR-S</span>
+              <span class="pill grey">Security+ 2.0</span> <span class="pill grey">Security+ (1.0)</span>
+              <span class="pill grey">CAME Atomo</span> <span class="pill grey">FAAC SLH</span>
+              <span class="pill grey">Somfy Telis</span>
+              <br><br>
+              The Read screen shows a counter (<span class="mono">Cnt</span>) that increments each press.
+              A capture is a spent, one-time code — replay generally does nothing.
+            </p>
+          </div>
+        </div>
+        <div class="callout note">
+          <span class="ic">i</span>
+          <div><span class="callout-title">FLO vs FloR-S</span>
+          Nice's naming trips people up: <b>Nice FLO</b> is fixed code; <b>Nice FloR-S</b> is the
+          rolling-code family. One letter, entirely different behaviour. See the
+          <a href="case-studies.html">case studies</a> for the classic gate mystery.</div>
+        </div>
+      </section>
+
+      <section id="sub-files">
+        <h2>.sub file fields, and RAW</h2>
+        <p>
+          A saved capture is a small plain-text <span class="mono">.sub</span> file. When the Flipper
+          recognised the protocol, it stores the decoded key and these fields:
+        </p>
+        <div class="table-scroll">
+          <table>
+            <thead><tr><th>Field</th><th>Example</th><th>Meaning</th></tr></thead>
+            <tbody>
+              <tr><td class="mono">Filetype</td><td class="mono">Flipper SubGhz Key File</td><td>Marks a decoded-key capture.</td></tr>
+              <tr><td class="mono">Version</td><td class="mono">1</td><td>File-format version.</td></tr>
+              <tr><td class="mono">Frequency</td><td class="mono">433920000</td><td>Frequency in hertz (433.92 MHz).</td></tr>
+              <tr><td class="mono">Preset</td><td class="mono">FuriHalSubGhzPresetOok650Async</td><td>Modulation preset used (here, AM650).</td></tr>
+              <tr><td class="mono">Protocol</td><td class="mono">Princeton</td><td>The decoded protocol family.</td></tr>
+              <tr><td class="mono">Bit</td><td class="mono">24</td><td>How many bits the key contains.</td></tr>
+              <tr><td class="mono">Key</td><td class="mono">00 00 00 00 00 8C 5A 3B</td><td>The decoded code itself, as bytes.</td></tr>
+              <tr><td class="mono">TE</td><td class="mono">400</td><td>The base timing element, in microseconds.</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p>
+          When the Flipper <i>can't</i> name the protocol, you capture with <b>Read RAW</b> instead. A RAW
+          file uses <span class="mono">Filetype: Flipper SubGhz RAW File</span> and stores
+          <span class="mono">RAW_Data:</span> lines — long runs of alternating positive and negative
+          numbers, each a duration in microseconds (positive = signal on, negative = off). It's a
+          faithful recording of the pulses rather than a decoded message, so it's bigger and less portable,
+          but it captures signals the decoders don't understand. Full walkthrough in
+          <a href="modules/05-raw-and-rolling.html">Module 5</a>.
+        </p>
+      </section>
+
+      <section id="rfid-nfc">
+        <h2>RFID &amp; NFC quick facts</h2>
+        <p>Two separate worlds, at two very different frequencies:</p>
+        <div class="table-scroll">
+          <table>
+            <thead><tr><th>Family</th><th>Frequency</th><th>Common types</th><th>Notes</th></tr></thead>
+            <tbody>
+              <tr><td><b>LF RFID</b></td><td class="mono">125 kHz</td><td>EM4100 (EM-Marin), HID Prox (H10301), Indala</td><td>Simple ID tags &mdash; often just a number. Writable <span class="mono">T5577</span> blanks can emulate many of them.</td></tr>
+              <tr><td><b>HF NFC</b></td><td class="mono">13.56 MHz</td><td>Mifare Classic / Ultralight, NTAG, DESFire</td><td>ISO 14443 smartcards. Can hold data and run crypto; many are far harder to clone than LF tags.</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="callout warn">
+          <span class="ic">!</span>
+          <div><span class="callout-title">Bank cards are read-only curiosities here</span>
+          The Flipper can read only limited public data from EMV bank cards, and access systems often check
+          far more than the number you can read. See the <a href="legal.html#rfid-policy">ground rules on
+          access badges</a> before you go near a credential you don't administer.</div>
+        </div>
+      </section>
+
+      <section id="units">
+        <h2>Unit cheats</h2>
+        <div class="grid2">
+          <div class="card">
+            <h3>Wavelength</h3>
+            <p class="muted"><span class="mono">&#955; = c / f</span></p>
+            <p class="muted" style="margin-bottom:0;">
+              Speed of light <span class="mono">c = 299,792,458 m/s</span>. Divide by frequency in hertz to
+              get wavelength in metres. A quarter-wave antenna is <span class="mono">&#955; / 4</span>.
+              <br><br>
+              433.92 MHz &rarr; <b>~69.1 cm</b> (quarter-wave <b>~17.3 cm</b>). Higher frequency &rarr;
+              shorter wave &rarr; shorter antenna.
+            </p>
+          </div>
+          <div class="card">
+            <h3>Power: dBm &harr; mW</h3>
+            <p class="muted" style="margin-bottom:0;">
+              <span class="mono">0 dBm = 1 mW</span><br>
+              <span class="mono">+3 dB &asymp; &times;2</span> (so 3 dBm &asymp; 2 mW)<br>
+              <span class="mono">+10 dB = &times;10</span> (so 10 dBm = 10 mW, 20 dBm = 100 mW)<br>
+              <span class="mono">&minus;3 dB &asymp; &frac12;</span>, <span class="mono">&minus;10 dB = &divide;10</span>
+              <br><br>
+              Decibels are a ratio, so they add where milliwatts multiply. That's why signal budgets are
+              done in dB.
+            </p>
+          </div>
+        </div>
+        <p class="muted">Play with both conversions live in the <a href="playground.html#rf-calc">RF Calculator</a>.</p>
+      </section>
+
+      <section id="resources">
+        <h2>Trusted resources</h2>
+        <p>Primary sources worth going to directly. External links open in a new tab.</p>
+        <div class="grid2">
+          <div class="card">
+            <h3>Flipper Zero docs</h3>
+            <p class="muted" style="font-size:14px;">The official documentation — the authority on menus, file formats and features.</p>
+            <p style="margin-bottom:0;">
+              <a href="https://docs.flipper.net/" target="_blank" rel="noopener">docs.flipper.net</a><br>
+              <a href="https://docs.flipper.net/sub-ghz" target="_blank" rel="noopener">docs.flipper.net/sub-ghz</a><br>
+              <a href="https://docs.flipper.net/nfc" target="_blank" rel="noopener">docs.flipper.net/nfc</a>
+            </p>
+          </div>
+          <div class="card">
+            <h3>Momentum firmware</h3>
+            <p class="muted" style="font-size:14px;">The custom firmware this course assumes, with its own docs and settings.</p>
+            <p style="margin-bottom:0;">
+              <a href="https://momentum-fw.dev/" target="_blank" rel="noopener">momentum-fw.dev</a>
+            </p>
+          </div>
+          <div class="card">
+            <h3>FCC rules (US)</h3>
+            <p class="muted" style="font-size:14px;">Title 47 — the US regulations covering radio devices and transmission.</p>
+            <p style="margin-bottom:0;">
+              <a href="https://www.fcc.gov/general/rules-regulations-title-47" target="_blank" rel="noopener">fcc.gov &middot; Title 47</a>
+            </p>
+          </div>
+          <div class="card">
+            <h3>Know your local law</h3>
+            <p class="muted" style="font-size:14px; margin-bottom:0;">Outside the US, find your own regulator — Ofcom (UK), ISED (Canada), ACMA (Australia), or your national equivalent. See the <a href="legal.html#listening-transmitting">ground rules</a> for the list.</p>
+          </div>
+        </div>
+      </section>
+    </article>
+  </main>
+
+  <footer class="site-footer">
+    <div class="wrap">
+      <p>Signal Path teaches RF with devices you own, for learning and legitimate testing. Radio transmission is regulated where you live; interfering with other people's devices is illegal and harmful. When in doubt: listen, don't transmit.</p>
+      <p>Signal Path · a self-guided RF course for the Flipper Zero</p>
+    </div>
+  </footer>
+
+  <script src="assets/js/site.js"></script>
+</body>
+</html>

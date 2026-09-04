@@ -1,0 +1,196 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Case Studies · Signal Path</title>
+  <meta name="description" content="The beginner RF mysteries everyone hits, explained plainly: the Nice gate that copies once, the car fob that won't clone, and more.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&family=Public+Sans:ital,wght@0,400;0,500;0,600;1,400&display=swap">
+  <link rel="stylesheet" href="assets/css/site.css">
+  <script>(function(){try{var t=localStorage.getItem("signalpath.theme");if(t==="light"||t==="dark")document.documentElement.setAttribute("data-theme",t);}catch(e){}})();</script>
+</head>
+<body data-root="" data-page="case-studies">
+  <header class="topbar"></header>
+
+  <main class="page">
+    <aside class="toc" aria-label="On this page">
+      <span class="eyebrow">The mysteries</span>
+      <ol>
+        <li><a href="#nice-gate">The Nice gate</a></li>
+        <li><a href="#car-fob">The car fob</a></li>
+        <li><a href="#garage-fixed">The garage that still works</a></li>
+        <li><a href="#analyzer-no-read">Analyzer sees it, Read doesn't</a></li>
+        <li><a href="#badge-clone">The badge clone that fails</a></li>
+      </ol>
+    </aside>
+
+    <article class="content">
+      <p class="eyebrow">Case studies · real beginner mysteries</p>
+      <h1>"Wait, why did <span class="kicker">that</span> happen?"</h1>
+      <p class="lede">
+        Almost everyone new to the Flipper hits the same handful of confusing moments. None of them are
+        bugs. Each one is a piece of RF explaining itself — once you know what you're looking at.
+      </p>
+
+      <section id="nice-gate">
+        <h2>The Nice gate: copies once, then barely works</h2>
+        <dl class="kv">
+          <dt>Symptom</dt><dd>You capture your Nice gate remote. The replay opens the gate <b>the first time</b>. Then it stops working. Occasionally, seemingly at random, it catches again — but mostly it does nothing.</dd>
+          <dt>What's happening</dt><dd>Your gate uses a <b>rolling code</b> (the Nice <span class="pill rolling">FloR-S</span> family). Every press is a one-time password.</dd>
+          <dt>What to do</dt><dd>Stop replaying, and enroll a genuine remote through the receiver's pairing procedure instead.</dd>
+        </dl>
+        <p>
+          This is the single most common beginner mystery, and it's the cleanest demonstration of rolling
+          codes there is — so it's worth slowing down on. When you press a rolling-code remote, it doesn't
+          send a fixed message. It sends a fresh number, derived from a secret it shares with the receiver
+          and a <b>counter</b> that ticks up by one on every press. The receiver keeps its own copy of that
+          counter, and it enforces a simple rule: <b>only accept a code whose counter is ahead of the last
+          one I honoured, and refuse anything I've already seen.</b>
+        </p>
+        <p>
+          Now the whole story falls out of that one rule:
+        </p>
+        <ul>
+          <li><b>Why the first replay works:</b> you captured, say, counter #500. If the receiver last honoured #499, your #500 is a valid next step — so the gate opens, and the receiver advances its counter to 500.</li>
+          <li><b>Why it then fails:</b> your recording is <i>still</i> #500. The receiver has already moved past it. To the gate, #500 is now old news, so it's rejected. Every subsequent replay of the same capture is stale by definition.</li>
+          <li><b>Why it occasionally catches again:</b> receivers accept a small <b>window</b> of future counters — often a few hundred ahead — so a remote that was pressed a few times out of range still works when you get back. If real-remote presses and your replays happen to line up inside that window, a stale-looking code can occasionally slip through. It's coincidence, not a fix.</li>
+        </ul>
+        <div class="callout note">
+          <span class="ic">i</span>
+          <div><span class="callout-title">This is the security feature working</span>
+          A rolling-code replay failing isn't the Flipper being weak or you doing it wrong. It's the exact
+          behaviour the system was designed to produce: yesterday's recording is worthless. Understanding
+          <i>why</i> is the real skill here.</div>
+        </div>
+        <div class="callout warn">
+          <span class="ic">!</span>
+          <div><span class="callout-title">Replaying can desync your real remote</span>
+          Push enough stale or out-of-order codes at the receiver and you can drag its counter window out of
+          step with your genuine remote, so the real one stops working too until it's re-paired. Another good
+          reason to stop replaying and pair properly.</div>
+        </div>
+        <p>
+          The supported way to add a working remote to a gate you own is the one the manufacturer documents:
+          put the receiver into its pairing/learn mode and enroll a genuine remote. That's not a
+          consolation prize — it's the correct answer, and it's how these systems are meant to grow. Want to
+          watch the counter logic play out safely? Run the simulator, or read the full mechanics in
+          <a href="modules/05-raw-and-rolling.html">Module 5</a>.
+        </p>
+        <div data-widget="rolling-sim"></div>
+      </section>
+
+      <section id="car-fob">
+        <h2>The car fob that won't clone</h2>
+        <dl class="kv">
+          <dt>Symptom</dt><dd>You try to copy your car key fob so you have a spare. The Flipper reads something, but the copy never unlocks the car.</dd>
+          <dt>What's happening</dt><dd>Modern car fobs are rolling code too, so the same one-time-password logic applies — plus a car isn't designed to be taught a new remote by radio at all.</dd>
+          <dt>What to do</dt><dd>Add a spare the way cars actually do it: programming, not cloning.</dd>
+        </dl>
+        <p>
+          It's tempting to think of a spare remote as a photocopy, but that's not how cars work. The fob and
+          the car share a secret that was paired at the factory or by a dealer, and — like the gate above —
+          each press is a throwaway code, so a recording can't stand in for the real thing. Cloning the
+          radio signal was never the mechanism for adding a car remote.
+        </p>
+        <p>
+          The real path to a spare is <b>enrolling a new fob into the car</b>, which depends on the make and
+          model. Some cars have an owner-accessible programming sequence in the manual; many require dealer
+          or locksmith tooling that talks to the car's computer directly. Your owner's manual (or the
+          dealer) is the authority. The Flipper is a superb tool for <i>understanding</i> what your fob
+          transmits; it isn't a key-cutting machine.
+        </p>
+      </section>
+
+      <section id="garage-fixed">
+        <h2>The garage remote that copied perfectly — and still works</h2>
+        <dl class="kv">
+          <dt>Symptom</dt><dd>You capture an older garage-door remote, replay it, and it opens the door every single time. Unlike the gate, it never stops.</dd>
+          <dt>What's happening</dt><dd>This remote is <b>fixed code</b> <span class="pill fixed">same every press</span>. There's no counter to move past.</dd>
+          <dt>What to do</dt><dd>Nothing's wrong — enjoy it, and understand what it means.</dd>
+        </dl>
+        <p>
+          Plenty of older openers (and cheap gate remotes) send the identical message on every press —
+          often a simple protocol like <span class="pill grey">Princeton</span> with a 24-bit key. Because
+          the message never changes, a recording of it is just as valid tomorrow as today. That's exactly
+          why fixed-code devices are the perfect first capture in <a href="modules/03-protocols.html">Module
+          3</a>: they behave predictably and teach the whole capture-save-replay loop on your own hardware.
+        </p>
+        <div class="callout tip">
+          <span class="ic">&#10003;</span>
+          <div><span class="callout-title">The flip side of "it always works"</span>
+          Fixed code is convenient and also the weaker design — anything that can hear it can repeat it. If a
+          device you own protects something that matters, its fixed-code behaviour is a nudge to consider a
+          rolling-code upgrade. That's you improving <i>your own</i> security, which is always fair game.</div>
+        </div>
+      </section>
+
+      <section id="analyzer-no-read">
+        <h2>Frequency Analyzer says 433.92, but Read shows nothing</h2>
+        <dl class="kv">
+          <dt>Symptom</dt><dd>The Frequency Analyzer clearly locks onto your remote at 433.92 MHz. But when you switch to Read and press the button, nothing decodes.</dd>
+          <dt>What's happening</dt><dd>You have the <b>right frequency</b> but the wrong <b>modulation</b>, or a protocol the decoder doesn't recognise.</dd>
+          <dt>What to do</dt><dd>Change the preset; if that fails, capture with Read RAW.</dd>
+        </dl>
+        <p>
+          Finding the frequency is only half the job. Read has to <i>decode</i> the signal, and that needs
+          the right modulation preset <b>and</b> a protocol grammar it knows. If your remote speaks FSK and
+          you're listening on an AM preset (or vice versa), the energy is there but the message is
+          gibberish — like tuning to the correct station in the wrong language. Work through it in order:
+        </p>
+        <div class="table-scroll">
+          <table>
+            <thead><tr><th>Try</th><th>Why</th></tr></thead>
+            <tbody>
+              <tr><td>Confirm the frequency, then set <span class="mono">AM650</span></td><td>The most common preset; fits most fixed-code remotes.</td></tr>
+              <tr><td>Try <span class="mono">AM270</span>, then <span class="mono">FM238</span> / <span class="mono">FM476</span></td><td>You may be on the wrong modulation family entirely.</td></tr>
+              <tr><td>Switch to <b>Read RAW</b></td><td>Captures the pulses even when no decoder recognises the protocol.</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p>
+          A successful RAW capture that never decodes into a named protocol is a totally normal outcome — it
+          just means the Flipper doesn't have that grammar built in, not that you failed. The
+          <a href="reference.html#presets">presets reference</a> lists what each one is for, and
+          <a href="modules/09-troubleshooting.html">Module 9</a> turns this into a full diagnostic flow.
+        </p>
+      </section>
+
+      <section id="badge-clone">
+        <h2>I read my office badge fine, but the clone won't open the door</h2>
+        <dl class="kv">
+          <dt>Symptom</dt><dd>The Flipper reads your work or hotel badge and shows an ID. You write it to a blank, but the copy doesn't open the door.</dd>
+          <dt>What's happening</dt><dd>The door system checks <b>more than the number you can read</b> — and there's a policy layer on top of the technical one.</dd>
+          <dt>What to do</dt><dd>Treat access credentials as off-limits unless you administer the system.</dd>
+        </dl>
+        <p>
+          Reading an ID off a badge isn't the same as reproducing everything the reader validates. Many
+          access systems layer on protections a simple clone can't satisfy: cryptographic challenge-response,
+          rolling counters, anti-cloning checks, or a back-end that flags the same credential appearing in
+          two places. So a copy that reads perfectly can still fail at the door — by design.
+        </p>
+        <div class="callout legal">
+          <span class="ic">!</span>
+          <div><span class="callout-title">The bigger stop here is policy, not tech</span>
+          Your work or building badge belongs to a system someone else administers. Copying it usually breaks
+          the acceptable-use agreement you signed, even where it isn't a crime. Keep your RFID and NFC
+          practice on tags you bought to experiment with — see the
+          <a href="legal.html#rfid-policy">ground rules on access badges</a>. Learn the tech on
+          <a href="modules/06-rfid.html">your own</a> fobs.</div>
+        </div>
+      </section>
+    </article>
+  </main>
+
+  <footer class="site-footer">
+    <div class="wrap">
+      <p>Signal Path teaches RF with devices you own, for learning and legitimate testing. Radio transmission is regulated where you live; interfering with other people's devices is illegal and harmful. When in doubt: listen, don't transmit.</p>
+      <p>Signal Path · a self-guided RF course for the Flipper Zero</p>
+    </div>
+  </footer>
+
+  <script src="assets/js/site.js"></script>
+  <script src="assets/js/widgets/rolling-sim.js"></script>
+</body>
+</html>

@@ -1,0 +1,246 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Signal Path · Learn RF with the Flipper Zero</title>
+  <meta name="description" content="A hands-on, self-paced RF course for total beginners, built around the Flipper Zero and Momentum firmware.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&family=Public+Sans:ital,wght@0,400;0,500;0,600;1,400&display=swap">
+  <link rel="stylesheet" href="assets/css/site.css">
+  <script>(function(){try{var t=localStorage.getItem("signalpath.theme");if(t==="light"||t==="dark")document.documentElement.setAttribute("data-theme",t);}catch(e){}})();</script>
+  <style>
+    .ruler-card { margin-top: 34px; background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 22px 22px 16px; box-shadow: var(--shadow); }
+    .ruler-head { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; flex-wrap: wrap; margin-bottom: 26px; }
+    .ruler-head h2 { font-size: 15px; font-weight: 700; }
+    .ruler-head span { font-size: 12px; color: var(--faint); }
+    .ruler { position: relative; height: 60px; margin: 34px 6px 8px; border-bottom: 2px solid var(--line-strong); }
+    .band { position: absolute; bottom: 0; height: 26px; border-radius: 5px 5px 0 0; background: var(--cyan-soft); border: 1px solid color-mix(in srgb, var(--cyan) 45%, transparent); border-bottom: none; }
+    .band span { position: absolute; bottom: 5px; left: 50%; transform: translateX(-50%); font-family: var(--font-mono); font-size: 10px; color: var(--cyan); white-space: nowrap; font-weight: 600; }
+    .tick { position: absolute; bottom: -2px; width: 1px; height: 7px; background: var(--line-strong); }
+    .tick.major { height: 11px; background: var(--faint); }
+    .tick .lbl { position: absolute; top: 13px; left: 50%; transform: translateX(-50%); font-family: var(--font-mono); font-size: 10px; color: var(--faint); }
+    .marker { position: absolute; bottom: 0; width: 2px; height: 46px; background: var(--orange); }
+    .marker::after { content: attr(data-f); position: absolute; bottom: 50px; left: 50%; transform: translateX(-50%); font-family: var(--font-mono); font-size: 10.5px; font-weight: 600; color: var(--orange); white-space: nowrap; background: var(--orange-soft); padding: 2px 5px; border-radius: 4px; }
+    .ruler-legend { display: flex; gap: 18px; flex-wrap: wrap; margin-top: 22px; font-size: 12px; color: var(--muted); }
+    .ruler-legend i { display: inline-block; width: 22px; height: 10px; border-radius: 3px; vertical-align: middle; margin-right: 6px; }
+    .lg-band { background: var(--cyan-soft); border: 1px solid color-mix(in srgb, var(--cyan) 45%, transparent); }
+    .lg-mark { width: 3px; background: var(--orange); }
+    .how { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 16px; }
+    @media (max-width: 760px) { .how { grid-template-columns: minmax(0,1fr); } }
+    .how .card h3 { font-size: 16px; display: flex; align-items: center; gap: 10px; }
+    .how .card h3 .ic { width: 30px; height: 30px; border-radius: 9px; display: grid; place-items: center; font-family: var(--font-mono); font-size: 14px; background: var(--orange-soft); color: var(--orange); }
+    .how .card p { font-size: 14px; color: var(--muted); margin: 10px 0 0; }
+    section.home { padding: 44px 0; border-top: 1px solid var(--line); }
+    .sec-head { margin-bottom: 24px; }
+    .sec-head p { color: var(--muted); max-width: 66ch; margin: 10px 0 0; }
+    .teaser { display: grid; grid-template-columns: 1.2fr 1fr; gap: 20px; align-items: stretch; }
+    @media (max-width: 760px) { .teaser { grid-template-columns: minmax(0,1fr); } }
+    .teaser .card ul { font-size: 14px; color: var(--muted); margin-bottom: 14px; }
+  </style>
+</head>
+<body data-root="" data-page="home">
+  <header class="topbar"></header>
+
+  <div class="wrap">
+    <header class="hero">
+      <p class="eyebrow">Radio frequency · from zero · on the Flipper Zero</p>
+      <h1>Learn to <span class="kicker">read the airwaves</span>.</h1>
+      <p class="lede">
+        Your Flipper Zero is a pocket radio lab. Signal Path takes you from "what is a frequency?" to
+        confidently capturing, decoding, and replaying signals from devices you own — with labs you do
+        on the real device and simulators you play with right here.
+      </p>
+      <div class="chips" style="margin-top:24px;">
+        <span class="chip">Level: <b>Total beginner</b></span>
+        <span class="chip">Pace: <b>~6 weeks</b>, self-guided</span>
+        <span class="chip">Firmware: <b>Momentum</b></span>
+        <span class="chip">11 modules · <b>9 interactives</b> · quizzes</span>
+      </div>
+      <div class="btn-row" style="margin-top:22px;">
+        <a class="btn primary" href="primer.html">Start with the primer →</a>
+        <a class="btn" href="modules/00-setup.html">Jump to Module 0</a>
+        <a class="btn ghost" href="playground.html">Just play with the simulators</a>
+      </div>
+
+      <div class="ruler-card">
+        <div class="ruler-head">
+          <h2>Where the Flipper listens: the Sub-GHz spectrum</h2>
+          <span>300 – 928 MHz · CC1101 radio</span>
+        </div>
+        <div class="ruler" role="img" aria-label="Frequency ruler from 300 to 928 megahertz showing the three bands the Flipper Zero covers and four common frequencies.">
+          <div class="band" style="left:0%; width:7.6%;"><span>300–348</span></div>
+          <div class="band" style="left:13.9%; width:12.3%;"><span>387–464</span></div>
+          <div class="band" style="left:76.3%; width:23.7%;"><span>779–928</span></div>
+          <div class="tick major" style="left:0%;"><span class="lbl">300</span></div>
+          <div class="tick" style="left:15.9%;"></div>
+          <div class="tick major" style="left:31.8%;"><span class="lbl">500</span></div>
+          <div class="tick" style="left:47.8%;"></div>
+          <div class="tick major" style="left:63.7%;"><span class="lbl">700</span></div>
+          <div class="tick" style="left:79.6%;"></div>
+          <div class="tick major" style="left:100%;"><span class="lbl">928</span></div>
+          <div class="marker" style="left:2.4%;" data-f="315"></div>
+          <div class="marker" style="left:21.3%;" data-f="433.92"></div>
+          <div class="marker" style="left:90.4%;" data-f="868"></div>
+          <div class="marker" style="left:97.9%;" data-f="915"></div>
+        </div>
+        <div class="ruler-legend">
+          <span><i class="lg-band"></i>Bands the Flipper can tune</span>
+          <span><i class="lg-mark"></i>The four frequencies you'll meet most</span>
+        </div>
+      </div>
+
+      <div class="progress-card" style="margin-top:18px;">
+        <div class="txt">Your progress: <b data-progress-text>0 / 11</b> modules</div>
+        <div class="bar"><i data-progress-bar></i></div>
+        <button class="btn small mono" type="button" data-reset-progress>reset</button>
+      </div>
+      <div class="badges" data-badges aria-label="Badges"></div>
+      <p class="faint" style="font-size:12.5px; margin-top:10px;">Progress and badges are saved in this browser only.</p>
+    </header>
+
+    <section class="home" id="how">
+      <div class="sec-head">
+        <p class="eyebrow">How it works</p>
+        <h2>Listen first. Then transmit. Then play.</h2>
+      </div>
+      <div class="how">
+        <div class="card">
+          <h3><span class="ic">01</span> Read a module</h3>
+          <p>Each one is short and plain-spoken: one goal, the concepts behind it, and a "you've got it when" test so you know you actually learned it.</p>
+        </div>
+        <div class="card">
+          <h3><span class="ic">02</span> Do the lab on your Flipper</h3>
+          <p>Every module has a hands-on lab with remotes and fobs you own. RF only clicks with the device in your hand.</p>
+        </div>
+        <div class="card">
+          <h3><span class="ic">03</span> Play, quiz, earn badges</h3>
+          <p>Simulators let you see modulation, tune a spectrum, and watch a rolling code fail — then a quiz locks it in.</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="home" id="course">
+      <div class="sec-head">
+        <p class="eyebrow">The course</p>
+        <h2>Eleven modules, six weeks, one rule</h2>
+        <p>Only capture and replay signals from devices you own, in a space you control. Read the <a href="legal.html">ground rules</a> before Module 4 — that's where you first transmit.</p>
+      </div>
+      <div class="mod-map">
+        <a class="mod-card" href="modules/00-setup.html" data-mod-card="m00">
+          <div class="mc-top"><span class="mc-idx">0</span><span class="mc-week">Week 0</span><span class="mc-status" style="margin-left:auto"></span></div>
+          <h3>Meet your radio lab</h3>
+          <p>Navigate the Flipper, confirm Momentum, and watch live radio energy for the first time.</p>
+          <div class="mc-foot">Setup · Flipper screen simulator</div>
+        </a>
+        <a class="mod-card" href="modules/01-frequency.html" data-mod-card="m01">
+          <div class="mc-top"><span class="mc-idx">1</span><span class="mc-week">Week 1</span><span class="mc-status" style="margin-left:auto"></span></div>
+          <h3>Find the frequency</h3>
+          <p>Turn "frequency" into a real number you read off the screen for a remote in your hand.</p>
+          <div class="mc-foot">Frequency Analyzer · Spectrum scope · Tune In game</div>
+        </a>
+        <a class="mod-card" href="modules/02-modulation.html" data-mod-card="m02">
+          <div class="mc-top"><span class="mc-idx">2</span><span class="mc-week">Week 1</span><span class="mc-status" style="margin-left:auto"></span></div>
+          <h3>Hear the signal: AM vs FM</h3>
+          <p>Choose the modulation yourself and watch a signal appear or vanish.</p>
+          <div class="mc-foot">OOK vs FSK · presets · Wave Lab</div>
+        </a>
+        <a class="mod-card" href="modules/03-protocols.html" data-mod-card="m03">
+          <div class="mc-top"><span class="mc-idx">3</span><span class="mc-week">Week 2</span><span class="mc-status" style="margin-left:auto"></span></div>
+          <h3>Decode a real protocol</h3>
+          <p>Capture a fixed-code remote, name its protocol, and save your first .sub file.</p>
+          <div class="mc-foot">Pulses to bits · .sub anatomy · Pulse Decoder</div>
+        </a>
+        <a class="mod-card" href="modules/04-transmit.html" data-mod-card="m04">
+          <div class="mc-top"><span class="mc-idx">4</span><span class="mc-week">Week 2</span><span class="mc-status" style="margin-left:auto"></span></div>
+          <h3>Your first legal replay</h3>
+          <p>Cross from listening to transmitting — to your own device, in your own space.</p>
+          <div class="mc-foot">Send · range & antennas · the rules</div>
+        </a>
+        <a class="mod-card" href="modules/05-raw-and-rolling.html" data-mod-card="m05">
+          <div class="mc-top"><span class="mc-idx">5</span><span class="mc-week">Week 3</span><span class="mc-status" style="margin-left:auto"></span></div>
+          <h3>Raw signals &amp; rolling codes</h3>
+          <p>Capture what the Flipper can't name, and learn why a copied gate remote works once, then dies.</p>
+          <div class="mc-foot">Read RAW · KeeLoq · Rolling Code Sim · Nice gate case</div>
+        </a>
+        <a class="mod-card" href="modules/06-rfid.html" data-mod-card="m06">
+          <div class="mc-top"><span class="mc-idx">6</span><span class="mc-week">Week 4</span><span class="mc-status" style="margin-left:auto"></span></div>
+          <h3>125 kHz RFID</h3>
+          <p>Read, save and emulate your own building fob — and learn why it's not "radio" the way Sub-GHz is.</p>
+          <div class="mc-foot">EM4100 · HID Prox · T5577</div>
+        </a>
+        <a class="mod-card" href="modules/07-nfc.html" data-mod-card="m07">
+          <div class="mc-top"><span class="mc-idx">7</span><span class="mc-week">Week 4</span><span class="mc-status" style="margin-left:auto"></span></div>
+          <h3>NFC at 13.56 MHz</h3>
+          <p>Contactless cards, tags and what the Flipper can and can't do with them.</p>
+          <div class="mc-foot">ISO 14443 · Mifare · NTAG</div>
+        </a>
+        <a class="mod-card" href="modules/08-momentum.html" data-mod-card="m08">
+          <div class="mc-top"><span class="mc-idx">8</span><span class="mc-week">Week 5</span><span class="mc-status" style="margin-left:auto"></span></div>
+          <h3>Momentum power features</h3>
+          <p>Extended frequencies, custom presets, external radio modules and the apps worth knowing.</p>
+          <div class="mc-foot">Settings · presets · external CC1101</div>
+        </a>
+        <a class="mod-card" href="modules/09-troubleshooting.html" data-mod-card="m09">
+          <div class="mc-top"><span class="mc-idx">9</span><span class="mc-week">Week 5</span><span class="mc-status" style="margin-left:auto"></span></div>
+          <h3>Troubleshooting field guide</h3>
+          <p>"Nothing decodes", "replay does nothing", "range is terrible" — a diagnostic flow for each.</p>
+          <div class="mc-foot">Decision trees · Read vs RAW game</div>
+        </a>
+        <a class="mod-card" href="modules/10-capstone.html" data-mod-card="m10">
+          <div class="mc-top"><span class="mc-idx">10</span><span class="mc-week">Week 6</span><span class="mc-status" style="margin-left:auto"></span></div>
+          <h3>Capstone: your signal atlas</h3>
+          <p>Catalog every RF device in your home with the built-in atlas tool. Finish this and you're not a beginner.</p>
+          <div class="mc-foot">Signal Atlas tool · export</div>
+        </a>
+      </div>
+    </section>
+
+    <section class="home" id="play">
+      <div class="sec-head">
+        <p class="eyebrow">Playground</p>
+        <h2>Nine simulators you can poke at</h2>
+      </div>
+      <div class="teaser">
+        <div class="card">
+          <ul>
+            <li><b>Wave Lab</b> — type a bit pattern, watch it ride a carrier as OOK or FSK.</li>
+            <li><b>Spectrum Scope &amp; Tune In</b> — a live scope with a noise floor; press a "remote" and name its frequency.</li>
+            <li><b>Rolling Code Sim</b> — a remote, a receiver, a counter window. Capture, replay, watch it fail.</li>
+            <li><b>Pulse Decoder</b> — turn a pulse train into bits, Princeton-style.</li>
+            <li><b>Flipper Screen</b> — navigate the Sub-GHz menus with a D-pad before you touch the real one.</li>
+            <li><b>Flashcards, RF Calculator, Tool Picker, Signal Atlas</b>.</li>
+          </ul>
+          <a class="btn primary" href="playground.html">Open the playground →</a>
+        </div>
+        <div class="card flat" style="background:var(--surface-2);">
+          <p class="eyebrow">Case study</p>
+          <h3 style="font-size:17px;">"My Nice gate copies once, then barely works"</h3>
+          <p class="muted" style="font-size:14px; margin-top:8px;">The single most common beginner mystery, and the cleanest demonstration of rolling codes there is. It's the centerpiece of Module 5.</p>
+          <a class="btn small" href="case-studies.html">Read the case studies</a>
+        </div>
+      </div>
+    </section>
+
+    <section class="home" id="rules">
+      <div class="callout legal" style="margin:0;">
+        <span class="ic">!</span>
+        <div>
+          <span class="callout-title">The one rule</span>
+          Only capture and replay signals from devices <b>you own or have explicit permission to test</b>, in a space you control. Receiving is passive; transmitting is regulated and can interfere with other people. Never transmit to cars, gates, or garages that aren't yours, never jam or flood a band, and treat Momentum's region unlocks as "know your local law first." <a href="legal.html">Full ground rules →</a>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <footer class="site-footer">
+    <div class="wrap">
+      <p>Signal Path teaches RF with devices you own, for learning and legitimate testing. Radio transmission is regulated where you live; interfering with other people's devices is illegal and harmful. When in doubt: listen, don't transmit.</p>
+      <p>Signal Path · a self-guided RF course for the Flipper Zero</p>
+    </div>
+  </footer>
+
+  <script src="assets/js/site.js"></script>
+</body>
+</html>

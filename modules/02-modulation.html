@@ -1,0 +1,234 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Module 2 · Hear the signal: AM vs FM · Signal Path</title>
+  <meta name="description" content="Understand modulation by choosing it: OOK/AM versus 2-FSK/FM, what the AM270/AM650/FM238/FM476 presets mean, and why frequency and modulation are two separate dials.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&family=Public+Sans:ital,wght@0,400;0,500;0,600;1,400&display=swap">
+  <link rel="stylesheet" href="../assets/css/site.css">
+  <script>(function(){try{var t=localStorage.getItem("signalpath.theme");if(t==="light"||t==="dark")document.documentElement.setAttribute("data-theme",t);}catch(e){}})();</script>
+</head>
+<body data-root="../" data-page="m02">
+  <header class="topbar"></header>
+
+  <main class="page">
+    <aside class="toc" aria-label="On this page">
+      <span class="eyebrow">On this page</span>
+      <ol>
+        <li><a href="#goal">Goal</a></li>
+        <li><a href="#carrier">The carrier wave</a></li>
+        <li><a href="#am-vs-fm">AM vs FM, plainly</a></li>
+        <li><a href="#presets">The four presets</a></li>
+        <li><a href="#two-dials">Two independent dials</a></li>
+        <li><a href="#lab">Lab 2: sweep the presets</a></li>
+        <li><a href="#quiz">Check yourself</a></li>
+      </ol>
+    </aside>
+
+    <article class="content">
+      <div class="mod-header">
+        <div class="mod-index">2</div>
+        <div class="mod-titles">
+          <div class="mod-week">Week 1 · Tuning in</div>
+          <h1>Hear the signal: AM vs FM</h1>
+          <p class="lede">You found <em>where</em> a signal lives. Now for <em>how</em> it's shaped. Modulation is the second dial — get it wrong and a signal that's right in front of you turns to silence. Get it right and it snaps into view.</p>
+          <div class="mod-meta">
+            <span class="chip">⏱ <b>45 min</b></span>
+            <span class="chip">Gear: <b>Flipper + a known remote</b></span>
+            <span class="chip">Transmit: <b>none</b></span>
+          </div>
+        </div>
+      </div>
+
+      <section id="goal">
+        <h2>Goal</h2>
+        <p>In Module&nbsp;1 you read a frequency off the screen. But if you tried to <em>capture</em> a remote there and got nothing, this is almost always why: the frequency was right, but the <b>modulation</b> was wrong. This module makes modulation something you <em>choose</em> and immediately see the effect of — a signal appearing or vanishing as you flip a setting.</p>
+        <p>By the end you'll understand the difference between AM and FM in one sentence each, know what the four preset names mean, and have a simple habit — "try AM650, then sweep" — that solves the vast majority of "why won't this capture?" moments.</p>
+      </section>
+
+      <section id="carrier">
+        <h2>The carrier wave</h2>
+        <p>Recall the <b>carrier</b> from Module&nbsp;1: a pure, steady tone of radio energy at one frequency. On its own, a carrier says nothing — it's a held note. To carry information, the transmitter has to <b>change</b> the carrier in a pattern the receiver can read back. That deliberate changing is <b>modulation</b>: literally, "shaping" the wave.</p>
+        <p>There are only two knobs you can wiggle on a simple carrier:</p>
+        <ul>
+          <li><b>Its strength</b> (how loud) — change this and you're doing <b>amplitude</b> modulation.</li>
+          <li><b>Its pitch</b> (how fast it wiggles) — change this and you're doing <b>frequency</b> modulation.</li>
+        </ul>
+        <p>Cheap Sub-GHz remotes use the simplest possible version of each. That's the whole vocabulary you need, and it maps neatly onto two names you already half-know from car stereos: <b>AM</b> and <b>FM</b>.</p>
+      </section>
+
+      <section id="am-vs-fm">
+        <h2>AM vs FM, plainly</h2>
+        <p>Here are the two, each in one sentence, with the analogy that makes them stick:</p>
+
+        <div class="grid2">
+          <div class="card">
+            <h3 style="margin-top:0;font-size:16px"><span class="pill am">AM</span> On-Off Keying (OOK)</h3>
+            <p>The transmitter <b>switches the carrier on and off</b> — full blast for a "1," silent for a "0." It's Morse code with a flashlight: light on, light off.</p>
+            <p style="margin-bottom:0">Formally this is <b>OOK</b> (on-off keying), the bare-bones flavor of AM. Most doorbells, LED remotes, and cheap gate remotes use it because it's dead simple and cheap to build.</p>
+          </div>
+          <div class="card">
+            <h3 style="margin-top:0;font-size:16px"><span class="pill fm">FM</span> Frequency-Shift Keying (2-FSK)</h3>
+            <p>The carrier <b>stays on the whole time</b> but <b>shifts between two nearby pitches</b> — one frequency means "1," another means "0." The flashlight never turns off; it just changes color.</p>
+            <p style="margin-bottom:0">Formally this is <b>2-FSK</b>, the two-tone flavor of FM. It shrugs off certain kinds of interference better, so you'll meet it in some sensors, TPMS, and higher-end remotes.</p>
+          </div>
+        </div>
+
+        <figure class="diagram" role="img" aria-label="Two waveforms compared: OOK switches the carrier fully on and off in bursts, while 2-FSK keeps a continuous wave that alternates between a lower and a higher pitch.">
+          <svg viewBox="0 0 640 260" width="100%" xmlns="http://www.w3.org/2000/svg">
+            <!-- OOK -->
+            <text x="0" y="24" font-family="Archivo, sans-serif" font-size="15" font-weight="700" fill="currentColor">OOK / AM &#8212; on&#8211;off keying</text>
+            <text x="0" y="44" font-family="IBM Plex Mono, monospace" font-size="12" fill="var(--faint)">bits: 1 0 1 1</text>
+            <line x1="0" y1="90" x2="640" y2="90" stroke="var(--line-strong)" stroke-width="1" stroke-dasharray="3 4"/>
+            <!-- bit 1: on -->
+            <path d="M8 90 q8 -34 16 0 q8 34 16 0 q8 -34 16 0 q8 34 16 0 q8 -34 16 0 q8 34 16 0 q8 -34 16 0 q8 34 16 0" fill="none" stroke="var(--orange)" stroke-width="2"/>
+            <!-- bit 0: off (flat) -->
+            <line x1="152" y1="90" x2="296" y2="90" stroke="var(--orange)" stroke-width="2"/>
+            <!-- bit 1: on -->
+            <path d="M296 90 q8 -34 16 0 q8 34 16 0 q8 -34 16 0 q8 34 16 0 q8 -34 16 0 q8 34 16 0 q8 -34 16 0 q8 34 16 0" fill="none" stroke="var(--orange)" stroke-width="2"/>
+            <!-- bit 1: on -->
+            <path d="M440 90 q8 -34 16 0 q8 34 16 0 q8 -34 16 0 q8 34 16 0 q8 -34 16 0 q8 34 16 0 q8 -34 16 0 q8 34 16 0" fill="none" stroke="var(--orange)" stroke-width="2"/>
+            <text x="60" y="128" font-family="IBM Plex Mono, monospace" font-size="11" fill="var(--faint)">carrier ON</text>
+            <text x="196" y="128" font-family="IBM Plex Mono, monospace" font-size="11" fill="var(--faint)">silent</text>
+
+            <!-- FSK -->
+            <text x="0" y="168" font-family="Archivo, sans-serif" font-size="15" font-weight="700" fill="currentColor">2-FSK / FM &#8212; frequency-shift keying</text>
+            <text x="0" y="188" font-family="IBM Plex Mono, monospace" font-size="12" fill="var(--faint)">bits: 1 0 1 1</text>
+            <line x1="0" y1="228" x2="640" y2="228" stroke="var(--line-strong)" stroke-width="1" stroke-dasharray="3 4"/>
+            <!-- bit 1: high pitch (tight) -->
+            <path d="M8 228 q5 -26 10 0 q5 26 10 0 q5 -26 10 0 q5 26 10 0 q5 -26 10 0 q5 26 10 0 q5 -26 10 0 q5 26 10 0 q5 -26 10 0 q5 26 10 0 q5 -26 10 0 q5 26 10 0 q5 -26 10 0 q5 26 10 0" fill="none" stroke="var(--cyan)" stroke-width="2"/>
+            <!-- bit 0: low pitch (wide) -->
+            <path d="M152 228 q12 -26 24 0 q12 26 24 0 q12 -26 24 0 q12 26 24 0 q12 -26 24 0 q12 26 24 0" fill="none" stroke="var(--cyan)" stroke-width="2"/>
+            <!-- bit 1: high -->
+            <path d="M296 228 q5 -26 10 0 q5 26 10 0 q5 -26 10 0 q5 26 10 0 q5 -26 10 0 q5 26 10 0 q5 -26 10 0 q5 26 10 0 q5 -26 10 0 q5 26 10 0 q5 -26 10 0 q5 26 10 0 q5 -26 10 0 q5 26 10 0" fill="none" stroke="var(--cyan)" stroke-width="2"/>
+            <!-- bit 1: high -->
+            <path d="M440 228 q5 -26 10 0 q5 26 10 0 q5 -26 10 0 q5 26 10 0 q5 -26 10 0 q5 26 10 0 q5 -26 10 0 q5 26 10 0 q5 -26 10 0 q5 26 10 0 q5 -26 10 0 q5 26 10 0 q5 -26 10 0 q5 26 10 0" fill="none" stroke="var(--cyan)" stroke-width="2"/>
+            <text x="52" y="256" font-family="IBM Plex Mono, monospace" font-size="11" fill="var(--faint)">fast = "1"</text>
+            <text x="188" y="256" font-family="IBM Plex Mono, monospace" font-size="11" fill="var(--faint)">slow = "0"</text>
+          </svg>
+          <figcaption>OOK bursts the carrier on and off; 2-FSK keeps it on but alternates between two pitches. Same four bits, two very different shapes.</figcaption>
+        </figure>
+
+        <p>The reason this matters practically: a receiver set for <b>AM</b> is watching for the carrier getting <em>louder and quieter</em>. Point it at an <b>FM</b> signal — which never changes loudness, only pitch — and it sees a steady, featureless tone and reports… nothing. The signal is right there; the receiver is just listening for the wrong kind of change.</p>
+
+        <div class="callout note">
+          <span class="ic">?</span>
+          <div><span class="callout-title">"AM" and "OOK", "FM" and "2-FSK"</span>The Flipper's presets are named with AM/FM because that's the familiar family, but under the hood the everyday flavors are OOK and 2-FSK. For a beginner they're interchangeable: <b>AM ≈ OOK</b> (on/off), <b>FM ≈ 2-FSK</b> (two pitches). We'll use both names so you recognize either in the wild.</div>
+        </div>
+
+        <p>You cannot tell AM from FM by looking at a remote, and manufacturers rarely print it on the case. This is not a problem you solve by staring harder — it's one you solve by <em>trying</em>. The habit you'll build in the lab is exactly this: pick the frequency, then run through the modulation options until the signal reveals itself. The device already knows which one it uses; your job is only to ask the right question, and there are just four questions to ask.</p>
+
+        <p>There's a deeper reason AM dominates the cheap end. Amplitude is trivial to detect — you just measure "loud or quiet" — so an OOK receiver can be a couple of cents of components. FSK asks the receiver to distinguish two nearby pitches, which needs a slightly smarter (and pricier) front end. When a product's whole radio budget is a rounding error, OOK wins. When reliability earns its keep — a tire sensor that must be heard over engine noise, an alarm that can't afford a dropout — the extra cents for FSK start to make sense.</p>
+      </section>
+
+      <section id="presets">
+        <h2>The four presets</h2>
+        <p>The stock Flipper gives you four built-in modulation <b>presets</b>. Their names look cryptic but decode cleanly once you know the pattern: a modulation family (<b>AM</b> or <b>FM</b>) followed by a number.</p>
+
+        <div class="table-scroll">
+          <table>
+            <thead><tr><th>Preset</th><th>Family</th><th>The number is roughly…</th><th>Reach for it when</th></tr></thead>
+            <tbody>
+              <tr><td><b class="mono">AM270</b> <span class="pill am">AM</span></td><td>OOK (on/off)</td><td>a <b>narrower</b> receive window (~270)</td><td>weaker or cleaner OOK signals; less noise let in</td></tr>
+              <tr><td><b class="mono">AM650</b> <span class="pill am">AM</span></td><td>OOK (on/off)</td><td>a <b>wider</b> receive window (~650)</td><td><b>your default first try</b> — catches most OOK remotes</td></tr>
+              <tr><td><b class="mono">FM238</b> <span class="pill fm">FM</span></td><td>2-FSK (two pitches)</td><td>a <b>smaller</b> tone spread (~238 deviation)</td><td>FSK devices with a small pitch shift</td></tr>
+              <tr><td><b class="mono">FM476</b> <span class="pill fm">FM</span></td><td>2-FSK (two pitches)</td><td>a <b>larger</b> tone spread (~476 deviation)</td><td>FSK devices with a larger pitch shift</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="callout warn">
+          <span class="ic">!</span>
+          <div><span class="callout-title">About that number</span>The number means something slightly different for AM and FM, so don't over-read it. For the <b>AM presets</b> it's roughly the <b>receiver bandwidth in kHz</b> — how wide a slice of spectrum the receiver listens to (AM650 = wide, AM270 = narrow). For the <b>FM presets</b> it's the <b>frequency deviation</b> — how far apart the two FSK tones are spread (FM476 = a bigger shift, FM238 = a smaller one), not the bandwidth. Either way the intuition is the same: <b>bigger number ≈ handles a wider/louder signal (and more noise); smaller ≈ tighter and cleaner.</b></div>
+        </div>
+
+        <p>Momentum (and Unleashed) let you add <b>custom presets</b> beyond these four, loaded from a settings file on the SD card — handy for oddball devices later. For now, the four built-ins cover almost everything, and <b>AM650</b> alone covers most of your junk-drawer remotes.</p>
+
+        <h3>Watch modulation happen</h3>
+        <p>Reading about on/off versus two-pitches only gets you so far. In the Wave Lab, type a short bit pattern and watch it ride a carrier — flip between OOK and FSK and see the very shapes from the diagram above build themselves from your bits.</p>
+
+        <div data-widget="wave-lab"></div>
+
+        <p class="faint">Encode a little message and you'll earn the <b>Wave Rider</b> badge.</p>
+      </section>
+
+      <section id="two-dials">
+        <h2>Two independent dials</h2>
+        <p>Here's the mental model that prevents the most common beginner frustration. Capturing a signal means getting <b>two separate settings</b> right at once:</p>
+
+        <div class="grid2">
+          <div class="card">
+            <h3 style="margin-top:0;font-size:16px">Dial 1 · Frequency <span class="pill orange">where</span></h3>
+            <p style="margin-bottom:0">Which channel — 315, 433.92, 868, 915&nbsp;MHz. Set it with the Analyzer (Module&nbsp;1) or by knowing the device.</p>
+          </div>
+          <div class="card">
+            <h3 style="margin-top:0;font-size:16px">Dial 2 · Modulation <span class="pill cyan">how</span></h3>
+            <p style="margin-bottom:0">Which shape — AM/OOK or FM/FSK, and how wide a window. Set it with the preset.</p>
+          </div>
+        </div>
+
+        <p>These dials are <b>independent</b>. Right frequency + wrong modulation = silence. Right modulation + wrong frequency = silence. You need <em>both</em> right, at the same time, before a signal appears. That's why "I found the frequency but nothing captures" is so common — one dial was correct and the other wasn't.</p>
+
+        <div class="callout tip">
+          <span class="ic">i</span>
+          <div><span class="callout-title">The habit: lock the frequency, then sweep modulation</span>Once you know a device's frequency, fix it, then try the presets in order: <b>AM650 first</b> (it catches most things), then AM270, then FM476, then FM238. One of them will usually make the signal jump out. This "sweep" takes under a minute and answers the modulation question by experiment instead of guesswork.</div>
+        </div>
+
+        <details>
+          <summary>How do manufacturers decide AM or FM anyway?</summary>
+          <div class="d-body">
+            <p>Cost and robustness, mostly. OOK is the cheapest thing that works, so the budget end of the market — doorbells, toy remotes, LED strips — leans OOK/AM. FSK costs a little more but resists certain interference and amplitude fades, so it shows up where reliability matters more than pennies: some sensors, tire-pressure monitors, and pricier remotes. You don't have to predict it; you just have to be willing to sweep both families.</p>
+          </div>
+        </details>
+      </section>
+
+      <section id="lab">
+        <h2>Lab 2: sweep the presets</h2>
+        <div class="lab">
+          <div class="lab-kicker">Lab 2.1</div>
+          <h3>Find the winning combo</h3>
+          <p class="lab-gear">Gear: <b>Flipper + one remote whose frequency you already know</b> (from Lab 1)</p>
+          <ol>
+            <li>Open <span class="flip">Sub-GHz → Read</span> and set the <b>frequency</b> to the value you recorded for this remote in Module&nbsp;1.</li>
+            <li>Set the modulation preset to <b>AM650</b>.</li>
+            <li>Press and hold the remote's button close to the Flipper. Does <span class="flip">Read</span> react — a decoded name, or clear activity?</li>
+            <li>If nothing, change only the <b>preset</b> and try again, in order: AM270, then FM476, then FM238. Keep the frequency fixed.</li>
+            <li>When the signal jumps out, <b>write down the winning frequency + modulation pair</b> for that device. That combo is its fingerprint.</li>
+          </ol>
+        </div>
+
+        <div class="callout note">
+          <span class="ic">?</span>
+          <div><span class="callout-title">Still nothing on any preset?</span>If a remote is silent across all four presets at the right frequency, it may be a rolling-code device or need <b>Read RAW</b> — both are Module&nbsp;5 territory, not a failure on your part. Note it as "needs RAW" and move on; you're not stuck.</div>
+        </div>
+
+        <div class="win"><span class="ic">✓</span><span><b>You've got it when:</b> for at least one remote you can state its full combo out loud — "this doorbell is <b>433.92&nbsp;MHz, AM650</b>" — and you understand that if either half were wrong, you'd have seen nothing.</span></div>
+
+        <div class="callout story">
+          <span class="ic">"</span>
+          <div><span class="callout-title">The "it was there all along" moment</span>The first time you sweep from a dead-silent preset to the right one and a decoded remote suddenly fills the screen, it feels like you turned on a light in a dark room. The signal never changed — your ears did. That's modulation.</div>
+        </div>
+      </section>
+
+      <section id="quiz">
+        <h2>Check yourself</h2>
+        <div data-quiz="m02"></div>
+      </section>
+    </article>
+  </main>
+
+  <footer class="site-footer">
+    <div class="wrap">
+      <p>Signal Path teaches RF with devices you own, for learning and legitimate testing. Radio transmission is regulated where you live; interfering with other people's devices is illegal and harmful. When in doubt: listen, don't transmit.</p>
+      <p>Signal Path · a self-guided RF course for the Flipper Zero</p>
+    </div>
+  </footer>
+
+  <script src="../assets/js/site.js"></script>
+  <script src="../assets/js/data/quiz-bank.js"></script>
+  <script src="../assets/js/widgets/wave-lab.js"></script>
+</body>
+</html>

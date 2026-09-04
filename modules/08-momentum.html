@@ -1,0 +1,194 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Module 8 · Momentum power features · Signal Path</title>
+  <meta name="description" content="What Momentum firmware adds to the Flipper — extended frequencies, custom presets, external radio modules and apps — and the one thing that becomes your legal responsibility.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&family=Public+Sans:ital,wght@0,400;0,500;0,600;1,400&display=swap">
+  <link rel="stylesheet" href="../assets/css/site.css">
+  <script>(function(){try{var t=localStorage.getItem("signalpath.theme");if(t==="light"||t==="dark")document.documentElement.setAttribute("data-theme",t);}catch(e){}})();</script>
+</head>
+<body data-root="../" data-page="m08">
+  <header class="topbar"></header>
+
+  <main class="page">
+    <aside class="toc" aria-label="On this page">
+      <span class="eyebrow">On this page</span>
+      <ol>
+        <li><a href="#goal">Goal</a></li>
+        <li><a href="#forks">Forks in one minute</a></li>
+        <li><a href="#features">What Momentum adds</a></li>
+        <li><a href="#external">External radio modules</a></li>
+        <li><a href="#responsibility">Where the responsibility lands</a></li>
+        <li><a href="#lab">Lab</a></li>
+        <li><a href="#going-deeper">Going deeper</a></li>
+        <li><a href="#quiz">Check yourself</a></li>
+      </ol>
+    </aside>
+
+    <article class="content">
+      <div class="mod-header">
+        <div class="mod-index">8</div>
+        <div class="mod-titles">
+          <div class="mod-week">Week 5 · Getting more from the device</div>
+          <h1>Momentum power features</h1>
+          <p class="lede">Momentum is the firmware you're already running. This module explains what a community firmware fork actually adds — more presets, more frequencies, more hardware, more customisation — and why the most powerful feature is also the one that hands you a legal responsibility you didn't have before.</p>
+          <div class="mod-meta">
+            <span class="chip">⏱ <b>45 min</b></span>
+            <span class="chip">Gear: <b>your Flipper on Momentum</b></span>
+            <span class="chip">Optional: <b>an external CC1101 module</b></span>
+          </div>
+        </div>
+      </div>
+
+      <section id="goal">
+        <h2>Goal</h2>
+        <p>By the end of this module you can explain, in plain language, what your Momentum firmware adds on top of a stock Flipper, and you can name at least one capability it unlocks that makes <b>you</b> — not the manufacturer, not the firmware author — responsible for staying inside the law. No new transmitting happens here. This is a tour with your hands mostly in your pockets, because the single most important skill with power features is knowing when <em>not</em> to use them.</p>
+        <div class="callout note">
+          <span class="ic">i</span>
+          <div>Everything you learned in Modules 1–7 is <b>firmware-agnostic</b>. Frequencies, modulation, protocols, rolling codes, RFID and NFC behave the same no matter whose firmware is on the device. Momentum changes the <em>menus and the reach</em>, not the physics. If a menu label here doesn't match your build exactly, trust the description over the words — community firmware moves fast and renames things.</div>
+        </div>
+      </section>
+
+      <section id="forks">
+        <h2>Forks in one minute</h2>
+        <p>The Flipper Zero ships with <b>official</b> firmware from the manufacturer. Because the device's software is open, the community has produced <b>forks</b> — independent versions that start from the official code and add features. The best-known are <b>Momentum</b>, <b>Unleashed</b> and <b>RogueMaster</b>. They differ in emphasis and in how aggressively they add things, but they share a family resemblance.</p>
+        <div class="grid2">
+          <div class="card">
+            <p class="eyebrow" style="margin-bottom:6px;">Official firmware</p>
+            <p style="margin-bottom:0;">Conservative and tidy. Ships with regional transmit restrictions in place and a curated feature set. Prioritises staying comfortably inside regulations out of the box.</p>
+          </div>
+          <div class="card">
+            <p class="eyebrow" style="margin-bottom:6px;">Community forks (Momentum, Unleashed, RogueMaster…)</p>
+            <p style="margin-bottom:0;">Add customisation, extra protocols and presets, easier access to the full radio range, and more third-party apps. More capable — and they move more of the "is this legal here?" decision onto you.</p>
+          </div>
+        </div>
+        <p><b>Momentum</b>, the fork this course assumes, leans toward polish and customisation: a friendlier settings experience, cosmetic options, a broad protocol library, and support for user-supplied configuration. Think of it as the stock Flipper with the guard rails made adjustable — which is exactly why the rest of this module spends as much time on responsibility as on features.</p>
+      </section>
+
+      <section id="features">
+        <h2>What Momentum adds</h2>
+        <p>Rather than memorise menus (which change between releases), learn the <b>categories</b> of thing a fork adds. Five worth knowing:</p>
+
+        <h3>1 · Extended frequency range and region settings</h3>
+        <p>Stock firmware restricts which frequencies you can transmit on to match the region it thinks you're in. A fork typically exposes a setting that <b>relaxes or removes</b> that restriction — often described as an extended-frequency or region option in the Sub-GHz settings. Two things to be clear about:</p>
+        <ul>
+          <li>The <b>hardware</b> limit doesn't change. The internal CC1101 radio still only physically covers <b>300–348, 387–464 and 779–928&nbsp;MHz</b>. No firmware makes it reach beyond that.</li>
+          <li>What changes is the <b>software gate</b> on transmitting within that hardware range. Unlocking it lets you <em>send</em> on frequencies your region's rules may not allow — which is entirely your problem to get right.</li>
+        </ul>
+        <div class="callout warn">
+          <span class="ic">!</span>
+          <div><span class="callout-title">Unlocked ≠ allowed</span>The setting removes a software limit, not a legal one. A frequency being reachable says nothing about whether you're licensed to transmit on it where you're standing. More on this below — it's the heart of the module.</div>
+        </div>
+
+        <h3>2 · Custom modulation presets</h3>
+        <p>Recall the four stock modulation presets from <a href="02-modulation.html">Module 2</a>: <span class="pill am">AM270</span> <span class="pill am">AM650</span> <span class="pill fm">FM238</span> <span class="pill fm">FM476</span>. Forks let you go beyond those four by reading <b>additional, user-defined presets</b> from a settings file on the SD card. You edit that file to add a preset with your own parameters, and it appears alongside the built-in ones. This is how people capture and replay signals that need modulation settings the stock four don't quite match — without touching the firmware itself.</p>
+        <details>
+          <summary>What lives in a custom-preset entry (conceptually)?</summary>
+          <div class="d-body">
+            <p>Without quoting exact field names (they vary by build), a custom preset boils down to: a name you'll recognise, whether it's <b>AM</b> or <b>FM</b>, and the low-level radio register values that define the bandwidth and data-slicing behaviour. You don't need to invent these from scratch — the community shares known-good presets for specific devices, and you paste them into the settings file. The takeaway is the <em>mechanism</em>: presets are data on the SD card, not baked into the firmware, so the list is extensible.</p>
+          </div>
+        </details>
+
+        <h3>3 · A larger built-in protocol and preset library</h3>
+        <p>Forks generally ship recognising <b>more Sub-GHz protocols</b> out of the box than stock does. In practice that means a capture the official firmware would leave as raw, unnamed pulses is more likely to come back with a real protocol name on a fork — more of the "Read" (decoded) path from <a href="03-protocols.html">Module 3</a>, less falling back to Read RAW.</p>
+
+        <h3>4 · An app ecosystem</h3>
+        <p>Beyond the built-in tools, the Flipper runs <b>external applications</b> — small programs packaged as <code>.fap</code> files that you install from an apps catalog or copy to the SD card. They add everything from games to specialised RF and hardware tools. Forks tend to bundle more of these and make installing them easier.</p>
+        <div class="callout tip">
+          <span class="ic">✓</span>
+          <div>Some community apps exist purely to demonstrate that certain attacks are <em>possible</em> — floods, brute-forcers, and the like. They're educational artefacts. Running them against devices, networks or people that aren't yours is illegal and harmful, and this course gives no steps for it. Know they exist; leave them alone.</div>
+        </div>
+
+        <h3>5 · General customisation</h3>
+        <p>The gentlest category: boot and idle <b>animations</b>, a custom device <b>name</b>, interface tweaks, colour and layout options. None of it changes what the radio can do — it changes how the device feels. Pleasant, harmless, and a good place to start poking around so the settings menus stop being intimidating.</p>
+      </section>
+
+      <section id="external">
+        <h2>External radio modules</h2>
+        <p>The Flipper's internal antenna is a compromise: small enough to fit in a pocket-sized case, which means it's not tuned for maximum reach on any one band. For more range or better performance you can connect an <b>external radio module</b> — commonly an add-on board carrying its own <b>CC1101</b> and a proper antenna — to the GPIO pins on top of the device. Firmware that supports it lets you choose the external module instead of the internal radio for Sub-GHz work.</p>
+        <p>The big win is the antenna. A radio performs best with an antenna sized to the wavelength it's using, and a common, easy target is a <b>quarter-wave</b> antenna — one quarter of the signal's wavelength. Use the calculator below to feel how antenna length changes with frequency; it's the same <span class="mono">λ = c / f</span> from the primer, then divided by four.</p>
+
+        <div data-widget="rf-calc" data-opts='{"mode":"compact"}'></div>
+
+        <p>Try 433.92&nbsp;MHz: the wavelength is about <b>69&nbsp;cm</b>, so a quarter-wave antenna is roughly <b>17&nbsp;cm</b>. Now try 868&nbsp;MHz and watch the quarter-wave shrink to about half that. This is why a single stubby antenna is never optimal across the whole 300–928&nbsp;MHz range, and why an external module with an antenna matched to your target band can genuinely outreach the internal one — while a mismatched antenna can perform worse than the stock setup. Bigger isn't automatically better; <em>matched</em> is better.</p>
+        <div class="callout note">
+          <span class="ic">i</span>
+          <div>An external module improves how well you <b>hear</b> and, where legal, how far you <b>reach</b> — it does not grant any new legal permission. Better range makes staying inside the rules more important, not less: a signal that used to die in your garage now travels to your neighbour's.</div>
+        </div>
+      </section>
+
+      <section id="responsibility">
+        <h2>Where the responsibility lands</h2>
+        <p>Here's the thing to walk away with. On stock firmware, a lot of "don't transmit there" is enforced <em>for</em> you. The moment you unlock the extended-frequency setting, that enforcement moves from the device to <b>you</b>. The Flipper will now happily transmit on frequencies that, depending on where you live, may be reserved for emergency services, aviation, licensed operators, or nobody at all. The device stopped saying no. You have to.</p>
+        <div class="callout legal">
+          <span class="ic">§</span>
+          <div>
+            <span class="callout-title">The power-user's rule</span>
+            Extended transmit is the feature where legality actually bites. Radio spectrum is allocated by law and the allocations differ by country — a band that's a free-for-all hobby channel in one place is a licensed or prohibited band in another. <b>Don't unlock and blast.</b> Before you transmit on anything you couldn't transmit on before, know your local allocation, and remember the course rule: only ever send to devices <b>you own</b>, in a space <b>you control</b>. Receiving is passive and safe; transmitting is regulated and can interfere with people who are relying on that frequency.
+          </div>
+        </div>
+        <p>None of this means the features are bad. Extended range, custom presets and external modules are exactly what turn a toy into a proper learning instrument. It means the trade for that power is that you've accepted a job the manufacturer used to do. Take it seriously and Momentum is a gift. Ignore it and you're one careless transmit away from a genuinely serious problem. When in doubt, the whole course's motto still holds: <b>listen, don't transmit.</b></p>
+      </section>
+
+      <section id="lab">
+        <h2>Lab</h2>
+        <div class="lab">
+          <div class="lab-kicker">Lab 8.1</div>
+          <h3>Tour the power features — without transmitting</h3>
+          <p class="lab-gear">Gear: <b>your Flipper on Momentum</b>. No target devices. Do not transmit on anything you unlock.</p>
+          <ol>
+            <li>In the Sub-GHz settings, <b>locate</b> the extended-frequency / region option. Read what it says. <b>Do not enable-and-transmit</b> — just find it and understand what it controls.</li>
+            <li>On the SD card, find the <b>settings file that holds custom modulation presets</b> (the one that lets you add presets beyond AM270 / AM650 / FM238 / FM476). Open it read-only and look at how a preset is structured. Change nothing yet.</li>
+            <li>Find the <b>external-radio-module</b> option in the Sub-GHz settings so you know where you'd select an add-on CC1101 board if you had one.</li>
+            <li>Practise <b>reading</b> only: open <span class="flip">Sub-GHz → Read</span> and capture a remote you own, exactly as in Module 3. Confirm the fork names the protocol.</li>
+            <li>For fun and zero risk, change a cosmetic setting — a custom device <b>name</b> or an <b>animation</b> — to prove to yourself the settings menus aren't scary.</li>
+          </ol>
+        </div>
+        <div class="win"><span class="ic">✓</span><span><b>You've got it when:</b> you can explain in your own words two things Momentum adds over stock firmware, and name <b>one specific capability</b> — the extended-transmit unlock — that is now <em>your</em> legal responsibility rather than the device's. Bonus: you found the custom-preset settings file and left it exactly as you found it.</span></div>
+      </section>
+
+      <section id="going-deeper">
+        <h2>Going deeper</h2>
+        <details>
+          <summary>Should a beginner even run community firmware?</summary>
+          <div class="d-body">
+            <p>It's a reasonable choice, and it's what this course assumes — but it's a choice, not a requirement. Community firmware gives you more room to learn and more rope to hang yourself with. If you're the kind of person who reads the responsibility section twice, you'll be fine. The concepts in this course work identically on official firmware; you'd just find fewer of the power features and more of the guard rails in place.</p>
+          </div>
+        </details>
+        <details>
+          <summary>Does unlocking extended frequencies make my Flipper more powerful as a transmitter?</summary>
+          <div class="d-body">
+            <p>No — it doesn't add power or reach, it removes a software restriction on <em>which frequencies</em> you're allowed to send on. The radio's output and the internal antenna are unchanged. If you want more actual reach, that's the external-module-and-antenna conversation, not the frequency-unlock one. Two different levers; don't confuse them.</p>
+          </div>
+        </details>
+        <details>
+          <summary>Are custom presets risky?</summary>
+          <div class="d-body">
+            <p>Editing the presets file is low-risk on its own — worst case, a malformed entry is ignored or the app complains, and you restore the file. The risk isn't the preset; it's what you then <b>do</b> with it. A preset that lets you replay a signal is only ever meant for signals from devices you own. Keep a backup of the original settings file before you edit, and you can always roll back.</p>
+          </div>
+        </details>
+      </section>
+
+      <section id="quiz">
+        <h2>Check yourself</h2>
+        <div data-quiz="m08"></div>
+      </section>
+    </article>
+  </main>
+
+  <footer class="site-footer">
+    <div class="wrap">
+      <p>Signal Path teaches RF with devices you own, for learning and legitimate testing. Radio transmission is regulated where you live; interfering with other people's devices is illegal and harmful. When in doubt: listen, don't transmit.</p>
+      <p>Signal Path · a self-guided RF course for the Flipper Zero</p>
+    </div>
+  </footer>
+
+  <script src="../assets/js/site.js"></script>
+  <script src="../assets/js/widgets/rf-calc.js"></script>
+  <script src="../assets/js/data/quiz-bank.js"></script>
+</body>
+</html>

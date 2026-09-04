@@ -1,0 +1,178 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Module 4 · Your first legal replay · Signal Path</title>
+  <meta name="description" content="Cross from listening to transmitting by replaying your own saved signal to your own device — with the ground rules front and centre and a guide to why replays sometimes do nothing.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&family=Public+Sans:ital,wght@0,400;0,500;0,600;1,400&display=swap">
+  <link rel="stylesheet" href="../assets/css/site.css">
+  <script>(function(){try{var t=localStorage.getItem("signalpath.theme");if(t==="light"||t==="dark")document.documentElement.setAttribute("data-theme",t);}catch(e){}})();</script>
+</head>
+<body data-root="../" data-page="m04">
+  <header class="topbar"></header>
+
+  <main class="page">
+    <aside class="toc" aria-label="On this page">
+      <span class="eyebrow">On this page</span>
+      <ol>
+        <li><a href="#goal">Goal</a></li>
+        <li><a href="#line">The transmit line</a></li>
+        <li><a href="#send">What replay really does</a></li>
+        <li><a href="#range">Range &amp; antenna reality</a></li>
+        <li><a href="#fails">When a replay does nothing</a></li>
+        <li><a href="#lab">Lab</a></li>
+        <li><a href="#quiz">Check yourself</a></li>
+      </ol>
+    </aside>
+
+    <article class="content">
+      <div class="mod-header">
+        <div class="mod-index">4</div>
+        <div class="mod-titles">
+          <div class="mod-week">Week 2 · Transmitting</div>
+          <h1>Your first legal replay</h1>
+          <p class="lede">Everything so far has been listening — passive, invisible, harmless. This module is the moment you push a button and put energy on the air. That changes what's at stake, so we start with the rules, then make your own doorbell ring.</p>
+          <div class="mod-meta">
+            <span class="chip">⏱ <b>40 min</b></span>
+            <span class="chip">Gear: <b>your saved .sub + its device</b></span>
+            <span class="chip">Firmware: <b>Momentum</b></span>
+          </div>
+        </div>
+      </div>
+
+      <section id="goal">
+        <h2>Goal</h2>
+        <p>Take the fixed-code capture you saved in Module 3 and <b>replay</b> it — transmit it back — to trigger the device it came from. A doorbell that chimes, an LED strip that lights, a fan that spins. Then you'll try to replay a car-fob capture, watch it do absolutely nothing, and understand why. That failure is the bridge to Module 5.</p>
+        <div class="callout legal" style="margin-top:8px;">
+          <span class="ic">!</span>
+          <div><span class="callout-title">Read this before you press Send</span>
+          Receiving is passive and legal almost everywhere. <b>Transmitting is regulated</b>, and it can interfere with other people's property and safety. From here on the one rule is absolute: you only ever transmit to devices <b>you own</b>, in a space <b>you control</b>. Never to cars, gates, garages, barriers, or anything else that isn't yours — not "just to see," not "it's only a copy." Never jam or flood a band. If you're unsure whether something is yours to test, it isn't. <a href="../legal.html">Read the full ground rules →</a></div>
+        </div>
+      </section>
+
+      <section id="line">
+        <h2>The transmit line</h2>
+        <p>There is a real, bright line running through this course, and it falls exactly here. Modules 0 through 3 only <em>received</em>. A radio receiver is like an ear: it can't touch the world, only notice it. You could sit in a field and log every remote for a mile and break no law and disturb no one.</p>
+        <p>Transmitting is a mouth, not an ear. The instant you Send, your Flipper radiates a signal that other receivers — not just your intended one — can hear and act on. That's why the same act is a fun experiment on your own doorbell and a serious offence on a stranger's gate. The physics is identical; the ownership is everything.</p>
+        <div class="grid2">
+          <div class="card">
+            <h3>Fine, on your own gear</h3>
+            <ul>
+              <li>Replaying your saved doorbell to your own doorbell.</li>
+              <li>Lighting your own LED strip or fan.</li>
+              <li>Testing an old garage remote for a garage that's yours.</li>
+            </ul>
+          </div>
+          <div class="card">
+            <h3>Never</h3>
+            <ul>
+              <li>Transmitting to any car, gate, or garage that isn't yours.</li>
+              <li>Replaying a signal you captured from someone else's device.</li>
+              <li>Jamming, flooding, or "just testing" on a shared band.</li>
+            </ul>
+          </div>
+        </div>
+        <div class="callout note">
+          <span class="ic">i</span>
+          <div><span class="callout-title">Momentum unlocks are not permission</span>
+          Custom firmware can widen the frequencies your Flipper will transmit on and remove some region limits. That's a capability, not a licence. What's legal to transmit — and on which bands, at what power — is set by the law where you live, not by a menu. Know your local rules before you use extended frequencies (Module 8 covers them properly).</div>
+        </div>
+      </section>
+
+      <section id="send">
+        <h2>What replay really does</h2>
+        <p>Open <span class="flip">Sub-GHz → Saved</span>, choose your file, and pick <b>Send</b>. The Flipper reads the <code>.sub</code> you inspected in Module 3, rebuilds the pulse train from its <code>Protocol</code>, <code>Key</code>, and <code>TE</code>, sets the radio to the file's <code>Frequency</code> and <code>Preset</code>, and switches the transmitter on and off in exactly that pattern.</p>
+        <p>Here's the part worth sitting with: for a <b>fixed code</b>, the signal your Flipper sends is <b>indistinguishable from the original remote</b>. Same frequency, same modulation, same bits, same timing. The receiver has no way to tell the two apart, because from its point of view nothing is different. That's not a clever trick — it's just what "fixed" means. The message never changes, so a faithful copy of the message works forever.</p>
+        <div class="callout tip">
+          <span class="ic">✓</span>
+          <div><span class="callout-title">Decoded replay vs. raw replay</span>
+          A decoded capture (a <code>Key File</code>, like your Princeton save) is replayed by <em>regenerating</em> the pulses from the protocol. A raw capture (Module 5) is replayed by <em>playing back the recorded timings</em> directly. Both put the same signal on air; they just get there differently. For a fixed code you own, either works.</div>
+        </div>
+        <p>When it works, the result is immediate and a little uncanny: your doorbell chimes with the remote sitting untouched on the table. That's the payoff of the last three modules landing at once — frequency, modulation, protocol, and now transmission, all lined up correctly.</p>
+      </section>
+
+      <section id="range">
+        <h2>Range and antenna reality</h2>
+        <p>Your first replay might work from across the room. It might also need you standing suspiciously close to the doorbell. Both are normal, and the reason is the antenna.</p>
+        <p>The Flipper's built-in Sub-GHz antenna is <b>small</b> — it has to fit inside a pocket-sized case. A purpose-built remote often has an antenna better matched to its frequency, and sometimes more transmit power besides. So don't be surprised when your replay reaches less far than the real remote did. You're transmitting a perfect copy of the <em>message</em> through a weaker <em>mouth</em>.</p>
+        <p>Three things quietly shape how far a Sub-GHz signal carries:</p>
+        <div class="facts">
+          <div class="fact"><div class="v">Distance</div><div class="k">Signal strength falls off fast with range — a few metres can be the difference between working and silent.</div></div>
+          <div class="fact"><div class="v">Obstacles</div><div class="k">Walls, metal doors, and appliances absorb and reflect 433 MHz. Line-of-sight beats through-a-wall every time.</div></div>
+          <div class="fact"><div class="v">Orientation</div><div class="k">Antennas are directional. Rotating the Flipper, or moving it a few centimetres, can swing a dead replay to a solid one.</div></div>
+        </div>
+        <p>If a replay is weak, the fix is boring and effective: <b>get closer, clear the line of sight, and try a couple of orientations</b> before you conclude anything is wrong. Only once you've ruled out plain distance should you suspect the signal itself.</p>
+        <div class="callout note">
+          <span class="ic">i</span>
+          <div><span class="callout-title">External modules add real range</span>
+          Serious Sub-GHz range usually comes from an <b>external CC1101 module</b> with a proper antenna, which plugs into the Flipper's GPIO pins. It doesn't change what you can decode — only how far you can hear and reach. We set those up in <a href="08-momentum.html">Module 8</a>; you don't need one for anything in this module.</div>
+        </div>
+      </section>
+
+      <section id="fails">
+        <h2>When a replay does nothing</h2>
+        <p>A silent replay feels like failure, but it's usually the Flipper telling you something true. There are only a handful of reasons, and you can walk them in order. Most of the time it's not the exotic one.</p>
+        <div class="table-scroll">
+          <table>
+            <thead><tr><th>What you see</th><th>Likely cause</th><th>What to do</th></tr></thead>
+            <tbody>
+              <tr><td>Nothing, and it's a <b>car fob or modern gate</b></td><td><b>Rolling code.</b> The captured code is already spent — the receiver won't accept it again. <span class="pill rolling">rolling</span></td><td>Expected. This is not fixable by replay. See <a href="05-raw-and-rolling.html">Module 5</a>.</td></tr>
+              <tr><td>Nothing, from a device that <b>worked when you captured it</b></td><td><b>Too far, or blocked.</b> Weak internal antenna plus distance or a wall.</td><td>Step closer, clear line of sight, rotate the Flipper, try again.</td></tr>
+              <tr><td>Nothing, and Read had struggled too</td><td><b>Wrong frequency or modulation</b> saved.</td><td>Re-capture with Module 1's frequency and Module 2's modulation confirmed first.</td></tr>
+              <tr><td>Nothing, and the file is a <b>RAW recording</b></td><td>RAW replays the recorded timings; a <b>noisy or partial</b> capture plays back garbage.</td><td>Re-record a clean RAW capture (Module 5), close and interference-free.</td></tr>
+              <tr><td>Sends, but the <b>device ignores it</b></td><td>Device may be <b>rolling</b>, or the capture caught only part of the message.</td><td>Confirm it's fixed (key doesn't change on repeat presses), then re-capture cleanly.</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p>Notice how often the honest answer is "it's rolling, and that's the point." You're about to prove it to yourself in the lab, and then spend all of Module 5 understanding exactly why.</p>
+      </section>
+
+      <section id="lab">
+        <h2>Lab</h2>
+        <div class="lab">
+          <div class="lab-kicker">Lab 4.1</div>
+          <h3>Replay your fixed code to your own device</h3>
+          <p class="lab-gear">Gear: <b>your Flipper</b>, the <b>saved fixed-code .sub</b> from Module 3, and the <b>device it came from</b> (doorbell, LED remote, fan…).</p>
+          <ol>
+            <li>Put the device where you can see or hear it react — the doorbell chime in earshot, the LED strip in view.</li>
+            <li>Open <span class="flip">Sub-GHz → Saved</span> and select your named capture.</li>
+            <li>Choose <b>Send</b>. Watch and listen for the device to respond.</li>
+            <li>If nothing happens, don't touch settings yet: <b>step closer</b>, clear any wall between you, and <b>rotate the Flipper</b> before sending again. Range first, theories later.</li>
+            <li>Once it triggers, send it two or three more times to confirm it's reliable, not a fluke.</li>
+          </ol>
+        </div>
+        <div class="lab">
+          <div class="lab-kicker">Lab 4.2</div>
+          <h3>Replay a rolling code and watch it fail</h3>
+          <p class="lab-gear">Gear: <b>your own car key fob</b> or a <b>modern gate remote you own</b>. (Your car — no one else's.)</p>
+          <ol>
+            <li>In <span class="flip">Sub-GHz → Read</span>, capture a press from your own car fob. It may show a protocol with a <b>Cnt</b> value, or not decode neatly at all.</li>
+            <li>Save it, then replay it back with <b>Send</b>, standing right next to the car.</li>
+            <li>Observe: the car does <b>nothing</b>. Not a range problem — you're an arm's length away.</li>
+            <li>Write one sentence explaining why, using the word <b>rolling</b>. (Then confirm your car still works with the real fob, which it will — the receiver simply moved on.)</li>
+          </ol>
+        </div>
+        <div class="win"><span class="ic">✓</span><span><b>You've got it when:</b> your own fixed-code device reliably responds to a replay from <span class="flip">Saved → Send</span>, and you can explain — in one sentence using the word "rolling" — why the same trick does nothing to your car. If the fixed replay is weak, you fixed it by moving closer and reorienting, not by changing settings.</span></div>
+      </section>
+
+      <section id="quiz">
+        <h2>Check yourself</h2>
+        <div data-quiz="m04"></div>
+      </section>
+    </article>
+  </main>
+
+  <footer class="site-footer">
+    <div class="wrap">
+      <p>Signal Path teaches RF with devices you own, for learning and legitimate testing. Radio transmission is regulated where you live; interfering with other people's devices is illegal and harmful. When in doubt: listen, don't transmit.</p>
+      <p>Signal Path · a self-guided RF course for the Flipper Zero</p>
+    </div>
+  </footer>
+
+  <script src="../assets/js/site.js"></script>
+  <script src="../assets/js/data/quiz-bank.js"></script>
+</body>
+</html>
