@@ -6,13 +6,7 @@
     <title>Learning path · Signal Path</title>
     <meta
       name="description"
-      content="An eighteen-module Flipper Zero course from first setup to independent security research."
-    />
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      rel="stylesheet"
-      href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&family=Public+Sans:ital,wght@0,400;0,500;0,600;1,400&display=swap"
+      content="A nineteen-module Flipper Zero course from first setup to independent security research."
     />
     <link rel="stylesheet" href="assets/css/site.css" />
     <script>
@@ -24,6 +18,12 @@
         } catch (e) {}
       })();
     </script>
+    <link rel="stylesheet" href="assets/css/presentation.css" />
+    <link
+      rel="icon"
+      type="image/png"
+      href="assets/images/signal-path-logo.png"
+    />
   </head>
   <body data-root="" data-page="roadmap">
     <header class="topbar"></header>
@@ -31,8 +31,9 @@
       <p class="eyebrow">Your learning path · Romania</p>
       <h1>From first signal to independent work.</h1>
       <p class="lede">
-        Eighteen modules. A suggested twelve-week route. Learn the mechanisms,
-        test your understanding, and build evidence you can explain.
+        Nineteen modules. A suggested twelve-week core route, plus a Wi-Fi
+        hardware extension. Learn the mechanisms, test your understanding, and
+        build evidence you can explain.
       </p>
       <div class="card next-session">
         <p class="eyebrow">Continue where you left off</p>
@@ -40,7 +41,7 @@
           >0 · Meet your radio lab →</a
         >
         <p>
-          <span data-progress-text>0 / 18</span> modules marked complete. Your
+          <span data-progress-text>0 / 19</span> modules marked complete. Your
           completion marks are self-reported, not certification.
         </p>
       </div>
@@ -86,8 +87,9 @@
             <p>
               Unenrolled EM4100/T5577 and NFC practice tags; a standalone
               training reader; a breadboard, LED, 1 kΩ resistor and jumpers.
-              iButton is optional. No amplifier, external radio, or Wi-Fi board
-              is required.
+              iButton is optional. For Module 18, add the official Wi-Fi
+              Devboard and your own 2.4 GHz test AP. The core course needs no
+              external radio.
             </p>
           </div>
         </div>
@@ -135,6 +137,15 @@
               mitigations and a reproducible portfolio.
             </p>
             <div data-route="16,17"></div>
+          </div>
+          <div class="card">
+            <p class="eyebrow">Extension · After 8, 12 &amp; 15</p>
+            <h3>Take the Wi-Fi path</h3>
+            <p>
+              Official board hardware, firmware choices, debugging, recovery and
+              repeatable AP measurements. Allow 3–4 extra sessions.
+            </p>
+            <div data-route="18"></div>
           </div>
         </div>
         <noscript
@@ -222,5 +233,6 @@
     </footer>
     <script src="assets/js/site.js"></script>
     <script src="assets/js/learning.js"></script>
+    <script src="assets/js/presentation.js"></script>
   </body>
 </html>

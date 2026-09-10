@@ -4,8 +4,8 @@ The course was tested as a GitHub project site under `/signal-path/`, not only a
 
 ## Automated site checks
 
-- `python3 scripts/check-site.py`: 30 HTML pages; local targets and fragments, duplicate IDs, one page heading, and inline/external JavaScript syntax.
-- `node scripts/check-course.cjs`: 18 module routes, quiz mounting declarations and 108 valid questions/answer indexes.
+- `python3 scripts/check-site.py`: 31 HTML pages; local targets and fragments, duplicate IDs, one page heading, and inline/external JavaScript syntax.
+- `node scripts/check-course.cjs`: 19 module routes, quiz mounting declarations and 116 valid questions/answer indexes.
 - `python3 scripts/build-site.py`: stages only public content; excludes repository metadata, browser artifacts, local notebooks and app build caches.
 - `git diff --check`: no whitespace errors.
 
@@ -30,3 +30,18 @@ No physical Flipper was connected for this work. On-device launch, Back-button b
 Primary Flipper documentation was used to correct firmware assumptions, frequency/preset descriptions, RAW representation and interface behaviour. Microchip's HCS301 documentation supports the explanation of forward synchronization windows. The legal page links ANCOM's current interface index, the linked RO-IR SRD-01 edition 5/2025, and the Romanian Criminal Code. Some legislative portal requests were intermittently unavailable; the course provides the canonical act link and asks readers to check the current consolidated text.
 
 This is a course-content review, not a legal opinion or certification of a particular hardware setup.
+
+## Wi-Fi module and visual redesign — 10 September 2026
+
+Added the official ESP32-S2 board lesson, firmware comparisons, eight questions, a printable worksheet and a connection explorer. Primary documentation was checked for board targets, the three software layers, bootloader/recovery, UART/debugging, Marauder commands and security mechanisms. Board flashing and radio exercises remain untested on physical hardware.
+
+The homepage and shared presentation layer were redesigned with an original generated logo, original SVG hardware illustrations, system fonts, dark/light themes and motion controls. The source and generation prompt are recorded in `docs/brand.md`.
+
+- All 31 pages loaded in Chromium. No page-level JavaScript errors were observed; module quizzes and declared learning widgets mounted.
+- Responsive layout was checked at 320, 390, 768 and 1280 CSS pixels on all 31 pages (124 page/width combinations). The quiz selector initially overflowed at small widths; it was fixed and rechecked at all four widths. No remaining document-level horizontal overflow was found.
+- Twenty-two browser interaction checks passed: homepage interface selection; logo loading; pause/resume persistence; system reduced motion; all firmware-diagram modes; 8/8 Wi-Fi quiz scoring and saved best score; completion persistence; Module 18 notebook save/reload; roadmap inclusion; mobile menu/Escape; theme persistence; JavaScript errors.
+- The standalone quiz page also loaded all eight Module 18 questions through its scope selector.
+- Desktop home in both themes, mobile home/module, and the complete desktop firmware explorer were visually inspected. The mobile diagram's rotated-arrow hit area was corrected and its controls retested successfully.
+- The 404 page was checked separately at all four widths and its logo loaded through the absolute GitHub project path.
+
+Browser artifacts and test scripts remain in ignored `output/playwright/`; learner test entries remain in the isolated local browser storage. Neither is included in the public site artifact.

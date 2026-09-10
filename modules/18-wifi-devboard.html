@@ -1,0 +1,825 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Module 18 · Wi-Fi Devboard &amp; firmware · Signal Path</title>
+    <meta
+      name="description"
+      content="Understand the official ESP32-S2 Wi-Fi Devboard, Black Magic debugging, Marauder, captive portals, firmware installation and recovery, with controlled labs."
+    />
+    <link rel="stylesheet" href="../assets/css/site.css" />
+    <script>
+      (function () {
+        try {
+          var t = localStorage.getItem("signalpath.theme");
+          if (t === "light" || t === "dark")
+            document.documentElement.setAttribute("data-theme", t);
+        } catch (e) {}
+      })();
+    </script>
+    <link rel="stylesheet" href="../assets/css/presentation.css" />
+    <link
+      rel="icon"
+      type="image/png"
+      href="../assets/images/signal-path-logo.png"
+    />
+  </head>
+  <body data-root="../" data-page="m18">
+    <header class="topbar"></header>
+    <main id="main-content" class="page wrap">
+      <article class="content">
+        <div class="mod-header">
+          <div class="mod-index">18</div>
+          <div class="mod-titles">
+            <div class="mod-week">
+              Hardware extension · After Modules 8, 12 &amp; 15
+            </div>
+            <h1>Wi-Fi Devboard &amp; firmware</h1>
+            <p class="lede">
+              One accessory, several very different jobs. Learn which software
+              runs where, recover a known setup, and turn Wi-Fi observations
+              into evidence.
+            </p>
+            <div class="chips">
+              <span class="chip">3–4 sessions</span
+              ><span class="chip">Optional official ESP32-S2 board</span
+              ><span class="chip">Own 2.4 GHz lab access point</span>
+            </div>
+          </div>
+        </div>
+        <nav aria-label="Lesson sections" class="card">
+          <a href="#hardware">Hardware</a> ·
+          <a href="#layers">Software layers</a> ·
+          <a href="#firmwares">Firmware choices</a> ·
+          <a href="#capabilities">Security mechanisms</a> ·
+          <a href="#restore">Restore &amp; debug</a> ·
+          <a href="#marauder-lab">Marauder lab</a> ·
+          <a href="#extensions">Build further</a> · <a href="#quiz">Quiz</a>
+        </nav>
+        <div class="firmware-explorer" data-firmware-explorer>
+          <p class="eyebrow">Follow the connection</p>
+          <h2>Same board.<br />Different roles.</h2>
+          <div class="firmware-visual">
+            <div class="signal-orbit" aria-hidden="true"></div>
+            <img
+              src="../assets/images/wifi-board.svg"
+              alt="Stylized Wi-Fi board with USB-C, ESP32-S2 module and BOOT/RESET buttons"
+              width="600"
+              height="460"
+            />
+          </div>
+          <div
+            class="firmware-controls"
+            role="group"
+            aria-label="Choose the board’s role"
+          >
+            <button
+              type="button"
+              data-firmware-mode="debug"
+              aria-pressed="true"
+            >
+              Debugging</button
+            ><button
+              type="button"
+              data-firmware-mode="marauder"
+              aria-pressed="false"
+            >
+              Marauder</button
+            ><button
+              type="button"
+              data-firmware-mode="custom"
+              aria-pressed="false"
+            >
+              Your firmware
+            </button>
+          </div>
+          <div class="firmware-flow">
+            <div class="firmware-node">
+              <span>HOST</span><b>Computer</b
+              ><small>Debugger / USB or Wi-Fi</small>
+            </div>
+            <span class="flow-arrow" aria-hidden="true">→</span>
+            <div class="firmware-node">
+              <span>BOARD</span><b>Black Magic probe</b
+              ><small>ESP32-S2 / SWD</small>
+            </div>
+            <span class="flow-arrow" aria-hidden="true">→</span>
+            <div class="firmware-node">
+              <span>TARGET</span><b>Flipper Zero</b
+              ><small>Firmware under test</small>
+            </div>
+          </div>
+          <p class="firmware-explanation" aria-live="polite">
+            The computer controls the debugger. The board translates that
+            connection into SWD, so you can pause the Flipper, inspect state and
+            step through code. CMSIS-DAP is the USB-only alternative.
+          </p>
+          <p class="visual-caption">
+            Concept diagram · Illustrations are not a wiring reference.
+          </p>
+        </div>
+        <section id="hardware">
+          <h2>Meet the official board</h2>
+          <p>
+            The
+            <a href="https://flipper.net/products/wifi-devboard"
+              >WiFi Devboard sold by Flipper Devices</a
+            >
+            plugs into the top GPIO header. Its ESP32-S2-WROVER module is a
+            separate computer with its own firmware. It has a USB-C socket and
+            BOOT/RESET buttons. Start with
+            <a href="12-gpio.html">GPIO basics</a>; turn the Flipper off before
+            attaching or removing the board, align the pins, then power it on.
+          </p>
+          <div class="table-scroll">
+            <table>
+              <caption>
+                Know the hardware before choosing a firmware image
+              </caption>
+              <thead>
+                <tr>
+                  <th scope="col">Property</th>
+                  <th scope="col">What it means for a lab</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <th scope="row">2.4 GHz, 802.11 b/g/n</th>
+                  <td>
+                    Use a 2.4 GHz access point. A 5 GHz-only or 6 GHz-only
+                    network is outside this radio’s capability.
+                  </td>
+                </tr>
+                <tr>
+                  <th scope="row">ESP32-S2 has no Bluetooth radio</th>
+                  <td>
+                    Marauder’s Bluetooth features on other boards do not
+                    transfer to this one. The Flipper’s own BLE is separate.
+                  </td>
+                </tr>
+                <tr>
+                  <th scope="row">Separate USB and GPIO paths</th>
+                  <td>
+                    The board’s USB-C is used for board flashing. SWD connects a
+                    debug probe to the Flipper; UART carries serial data such as
+                    companion commands or logs.
+                  </td>
+                </tr>
+                <tr>
+                  <th scope="row">No onboard microSD slot</th>
+                  <td>
+                    PCAP storage depends on the board firmware, companion and
+                    storage configuration. A physical SD adapter is an
+                    additional hardware option.
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <p>
+            Stock board firmware makes it a development/debug probe; plugging it
+            in does not automatically give every Flipper app internet access. A
+            product called “Marauder Dev Board Pro” or an ESP32-S3 multiboard is
+            different hardware, with different images and capabilities.
+          </p>
+          <p class="source-note">
+            Sources:
+            <a
+              href="https://developer.flipper.net/flipperzero/doxygen/dev_board.html"
+              >Flipper board overview</a
+            >,
+            <a
+              href="https://docs.flipper.net/zero/development/hardware/devboard-schematics"
+              >schematics</a
+            >,
+            <a
+              href="https://documentation.espressif.com/esp32-s2_datasheet_en.html"
+              >Espressif ESP32-S2 datasheet</a
+            >,
+            <a
+              href="https://developer.flipper.net/flipperzero/doxygen/dev_board_usb_connection.html"
+              >connection guide</a
+            >,
+            <a
+              href="https://github.com/justcallmekoko/ESP32Marauder/wiki/flipper-zero"
+              >Marauder board/storage notes</a
+            >.
+          </p>
+        </section>
+        <section id="layers">
+          <h2>Three software layers to keep separate</h2>
+          <ol>
+            <li>
+              <b>Flipper firmware:</b> official firmware, Momentum, Unleashed or
+              RogueMaster runs on the handheld. It provides the operating
+              environment and app APIs. See the
+              <a href="08-momentum.html#forks">host firmware comparison</a>.
+            </li>
+            <li>
+              <b>Flipper companion app:</b> a compatible <code>.fap</code>, such
+              as WiFi Marauder, provides controls on the handheld and talks to
+              the board over UART.
+            </li>
+            <li>
+              <b>Board firmware:</b> an ESP32-S2 image runs on the accessory and
+              performs its Wi-Fi or debug functions.
+            </li>
+          </ol>
+          <p>
+            A bundled Marauder menu proves only that the companion exists. It
+            does not establish what is flashed on the board. Changing the
+            handheld’s firmware does not, by itself, replace the board image.
+            Conversely, flashing Marauder replaces the board’s debugging
+            application, not the Flipper’s operating system.
+          </p>
+          <p>
+            The
+            <a href="https://github.com/0xchocolate/flipperzero-wifi-marauder"
+              >companion’s upstream instructions</a
+            >
+            describe builds for official and Unleashed release/dev channels.
+            Match your actual firmware API or build the app against its SDK; a
+            fork is not an automatic prerequisite. Record all three versions
+            independently.
+          </p>
+        </section>
+        <section id="firmwares">
+          <h2>Choose the board’s job</h2>
+          <div class="table-scroll">
+            <table>
+              <caption>
+                Board firmware families and their purpose
+              </caption>
+              <thead>
+                <tr>
+                  <th scope="col">Choice</th>
+                  <th scope="col">What it enables</th>
+                  <th scope="col">What to verify</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <th scope="row">
+                    <a
+                      href="https://developer.flipper.net/flipperzero/doxygen/dev_board.html"
+                      >Official Black Magic / CMSIS-DAP</a
+                    >
+                  </th>
+                  <td>
+                    Flash and debug the Flipper: breakpoints, stepping, memory
+                    inspection. Black Magic debugging can use USB or Wi-Fi;
+                    CMSIS-DAP uses USB.
+                  </td>
+                  <td>
+                    Debug mode must match the computer’s debugger configuration.
+                    UART logs are documented over USB.
+                  </td>
+                </tr>
+                <tr>
+                  <th scope="row">
+                    <a href="https://github.com/justcallmekoko/ESP32Marauder"
+                      >ESP32 Marauder</a
+                    >
+                  </th>
+                  <td>
+                    Wi-Fi discovery, monitoring, capture and active security
+                    experiments. The feature set depends on hardware and
+                    release; see the mechanisms below.
+                  </td>
+                  <td>
+                    Official-board target, compatible companion, channel and
+                    capture-storage path. Generic project Bluetooth claims do
+                    not apply to the S2.
+                  </td>
+                </tr>
+                <tr>
+                  <th scope="row">
+                    <a
+                      href="https://github.com/bigbrodude6119/flipper-zero-evil-portal"
+                      >Standalone Evil Portal</a
+                    >
+                  </th>
+                  <td>
+                    A local access point and web form; submitted values can be
+                    passed to the Flipper and saved. Useful for examining
+                    captive portals and phishing mechanics.
+                  </td>
+                  <td>
+                    This project has its own board image, companion and page
+                    assets. It is distinct from
+                    <a
+                      href="https://github.com/justcallmekoko/ESP32Marauder/wiki/Evil-Portal"
+                      >Marauder’s integrated portal feature</a
+                    >.
+                  </td>
+                </tr>
+                <tr>
+                  <th scope="row">
+                    <a
+                      href="https://docs.espressif.com/projects/esp-idf/en/stable/esp32s2/get-started/index.html"
+                      >Your own ESP-IDF program</a
+                    >
+                  </th>
+                  <td>
+                    Build an ESP32-S2 application: a sensor endpoint, serial
+                    command interface, local web service or Wi-Fi measurement
+                    tool.
+                  </td>
+                  <td>
+                    Correct chip target, USB/console settings, flash layout and
+                    the actual board pinout. ESP-IDF is a development framework,
+                    not a preconfigured Flipper companion.
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <p>
+            Choose by a task you can name. “I need a breakpoint” points to
+            official board firmware; “I need to inspect my AP’s advertisements”
+            points to a Wi-Fi tool; “I need my own network protocol” points to
+            development. More menu entries do not establish compatibility,
+            correctness or mastery.
+          </p>
+        </section>
+        <section id="capabilities">
+          <h2>What the security features actually do</h2>
+          <p>
+            These are technical mechanisms, including their offensive uses. A
+            feature name is not proof that a particular target is vulnerable.
+          </p>
+          <div class="table-scroll">
+            <table>
+              <caption>
+                Mechanism, result and the limit of that result
+              </caption>
+              <thead>
+                <tr>
+                  <th scope="col">Feature</th>
+                  <th scope="col">Mechanism</th>
+                  <th scope="col">Interpretation / defense</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <th scope="row">AP discovery</th>
+                  <td>
+                    Read network advertisements; active scans also send probe
+                    requests. SSID is a network name, BSSID identifies an AP
+                    radio/interface, channel locates it, RSSI estimates received
+                    strength.
+                  </td>
+                  <td>
+                    A familiar name is not authentication. RSSI is not a
+                    distance measurement. A scan labelled “scan” is not
+                    necessarily passive.
+                  </td>
+                </tr>
+                <tr>
+                  <th scope="row">Sniffing / PCAP</th>
+                  <td>
+                    Receive selected 802.11 frames and, where supported, export
+                    a packet capture for analysis.
+                  </td>
+                  <td>
+                    One radio observes one channel at a time; hopping misses
+                    traffic. Capturing encrypted frames does not automatically
+                    reveal their contents.
+                  </td>
+                </tr>
+                <tr>
+                  <th scope="row">EAPOL / PMKID capture</th>
+                  <td>
+                    Collect authentication-related material. Suitable
+                    WPA2-Personal material can support offline password guesses
+                    on a computer.
+                  </td>
+                  <td>
+                    The capture is not a plaintext password or a guaranteed
+                    recovery. Strong unique passphrases matter; WPA3-SAE changes
+                    this attack model.
+                  </td>
+                </tr>
+                <tr>
+                  <th scope="row">Deauthentication / disassociation</th>
+                  <td>
+                    Forge management frames to try to terminate a connection.
+                    This is active traffic injection and can cause denial of
+                    service.
+                  </td>
+                  <td>
+                    Negotiated Protected Management Frames (PMF) protect
+                    relevant robust management frames. PMF is not a shield
+                    against all interference.
+                  </td>
+                </tr>
+                <tr>
+                  <th scope="row">Beacon injection / spam</th>
+                  <td>
+                    Broadcast advertisements for chosen network names,
+                    potentially crowding a device’s network list.
+                  </td>
+                  <td>
+                    An advertised SSID does not prove a working AP or usable
+                    internet connection. Inventory and wireless monitoring help
+                    identify unexpected advertisements.
+                  </td>
+                </tr>
+                <tr>
+                  <th scope="row">Evil twin / captive portal</th>
+                  <td>
+                    An impostor AP can borrow a trusted name; a portal can ask
+                    users to submit secrets to an attacker-controlled page.
+                  </td>
+                  <td>
+                    This exploits network identity and user trust; it does not
+                    decrypt WPA merely by displaying a form. Verify the network
+                    and web origin; do not enter unrelated account credentials
+                    into a Wi-Fi portal.
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <p class="source-note">
+            Primary reading:
+            <a
+              href="https://docs.espressif.com/projects/esp-idf/en/stable/esp32s2/api-guides/wifi-driver/station-scenarios.html"
+              >Espressif scanning</a
+            >,
+            <a
+              href="https://docs.espressif.com/projects/esp-idf/en/stable/esp32s2/api-guides/wifi-security.html"
+              >PMF and WPA3</a
+            >, and Marauder’s
+            <a
+              href="https://github.com/justcallmekoko/ESP32Marauder/wiki/EAPOL-PMKID-Scan"
+              >EAPOL/PMKID</a
+            >,
+            <a
+              href="https://github.com/justcallmekoko/ESP32Marauder/wiki/Deauth-Flood"
+              >deauthentication</a
+            >,
+            <a
+              href="https://github.com/justcallmekoko/ESP32Marauder/wiki/Beacon-Spam-List"
+              >beacon injection</a
+            >
+            and
+            <a
+              href="https://github.com/justcallmekoko/ESP32Marauder/wiki/Evil-Portal"
+              >portal</a
+            >
+            documentation.
+          </p>
+          <div class="callout note">
+            <span class="ic">i</span>
+            <div>
+              <span class="callout-title"
+                >Set the scope separately from the mechanism</span
+              >Use your own isolated AP and test client, with all participants
+              informed. Disconnect the AP’s WAN for these labs; that removes an
+              internet route, not the radio’s reach. In Romania, consult
+              <a
+                href="https://www.ancom.ro/category/reglementare-ro/echipamente-ro-10006/echipamente-radio/reglementari-cu-privire-la-interfete/"
+                >ANCOM’s current interfaces</a
+              >
+              for the applicable band, power and access conditions, plus the
+              <a href="../legal.html">course permission guide</a>. Regional
+              settings on the Flipper are not proof of compliance for separate
+              ESP32 firmware.
+            </div>
+          </div>
+        </section>
+        <section id="restore">
+          <h2>Lab A: establish a recovery path and read logs</h2>
+          <p>
+            Prepare a computer, a data-capable USB cable and the official board.
+            Back up your board configuration and useful lab files before
+            replacing firmware; a flash or erase may remove them. Use the
+            <a href="../downloads/wifi-devboard-notebook.md">board worksheet</a>
+            to record versions, target, source and results.
+          </p>
+          <ol class="steps">
+            <li>
+              <div>
+                Disconnect the board from the powered-off Flipper. Connect the
+                board’s own USB-C to the computer. Enter its ROM bootloader:
+                hold BOOT, press and release RESET, then release BOOT. Identify
+                the newly enumerated serial port.
+              </div>
+            </li>
+            <li>
+              <div>
+                Install uFBT in a Python virtual environment, or reuse the one
+                from <a href="15-app-development.html">Module 15</a>. With that
+                environment active, run
+                <code>python -m ufbt devboard_flash</code>. This writes the
+                official <em>board</em> firmware.
+              </div>
+            </li>
+            <li>
+              <div>
+                After a successful flash, press RESET and reconnect the cable.
+                Follow the
+                <a
+                  href="https://developer.flipper.net/flipperzero/doxygen/dev_board_fw_update.html"
+                  >manufacturer’s recovery/update guide</a
+                >
+                if it fails; first check bootloader mode, cable and port.
+              </div>
+            </li>
+            <li>
+              <div>
+                Cold-plug the board into the Flipper, power on, and connect the
+                board’s USB to the computer. Set a useful Flipper log level. Use
+                the UART/log port in a serial terminal at <b>230400 baud</b>;
+                the other interface may be the debugger. Open and close a benign
+                app and record an observed log event.
+              </div>
+            </li>
+          </ol>
+          <pre><code># macOS / Linux, in a working folder on your computer
+python3 -m venv .venv
+source .venv/bin/activate
+python -m pip install ufbt
+# Only with the intended Wi-Fi board in bootloader mode:
+python -m ufbt devboard_flash</code></pre>
+          <p>
+            On Windows, create the environment with
+            <code>py -m venv .venv</code> and activate
+            <code>.venv\Scripts\Activate.ps1</code> in PowerShell; use the same
+            <code>python -m</code> commands afterward. Locate ports in Device
+            Manager; on macOS use <code>ls /dev/cu.*</code>, on Linux
+            <code>ls /dev/ttyACM*</code>.
+          </p>
+          <p>
+            Development extension: follow
+            <a
+              href="https://developer.flipper.net/flipperzero/doxygen/dev_board_debugging_guide.html"
+              >Flipper’s debugger setup</a
+            >, match source/build symbols to the target firmware, stop at a
+            breakpoint, inspect a variable, then continue. A halted processor
+            can look like a frozen device. Use USB initially; only expose a
+            Wi-Fi debug service to your trusted lab network.
+          </p>
+          <p class="source-note">
+            Sources:
+            <a href="https://github.com/flipperdevices/flipperzero-ufbt">uFBT</a
+            >,
+            <a
+              href="https://developer.flipper.net/flipperzero/doxygen/dev_board_fw_update.html"
+              >board flashing</a
+            >,
+            <a
+              href="https://developer.flipper.net/flipperzero/doxygen/dev_board_reading_logs.html"
+              >UART log setup</a
+            >
+            and
+            <a
+              href="https://developer.flipper.net/flipperzero/doxygen/dev_board_debugging_guide.html"
+              >SWD debugging</a
+            >. The current log guide documents USB logging; do not assume Wi-Fi
+            logging is available.
+          </p>
+        </section>
+        <section id="marauder-lab">
+          <h2>Lab B: install Marauder and measure your AP</h2>
+          <ol class="steps">
+            <li>
+              <div>
+                Record the board model, Flipper firmware and companion version.
+                From
+                <a
+                  href="https://github.com/justcallmekoko/ESP32Marauder/releases"
+                  >upstream Marauder releases</a
+                >, select the image identified for the
+                <b>Flipper Zero WiFi Dev Board</b>. The current
+                <a
+                  href="https://github.com/justcallmekoko/ESP32Marauder/wiki/update-firmware"
+                  >target table</a
+                >
+                maps it to <code>_flipper.bin</code>; do not choose Dev Board
+                Pro, WROOM or multiboard S3 merely because the name says ESP32.
+              </div>
+            </li>
+            <li>
+              <div>
+                Download the intended release and record its tag and checksum;
+                compare a published checksum when supplied. Use an installer
+                linked by upstream for that exact board. Enter BOOT/RESET mode
+                through the board’s USB, verify the selected port and target,
+                and follow that release’s image/offset layout. A full flash
+                layout and an application-only update are different inputs; do
+                not guess offsets from another board.
+              </div>
+            </li>
+            <li>
+              <div>
+                Reset the board, cold-plug it into the Flipper and install a
+                compatible
+                <a
+                  href="https://github.com/0xchocolate/flipperzero-wifi-marauder"
+                  >WiFi Marauder companion</a
+                >. Verify its startup/version response before starting any radio
+                function. Use its AP-scan controls, or the CLI route below.
+              </div>
+            </li>
+            <li>
+              <div>
+                Configure your lab AP with the unique name
+                <code>SignalPath-Lab</code>, 2.4 GHz, a fixed locally permitted
+                channel and no WAN connection. Predict the name/channel you
+                should see. Start AP discovery briefly, stop it, and record only
+                your AP’s result. Check the implementation before describing
+                this as passive.
+              </div>
+            </li>
+            <li>
+              <div>
+                Repeat three observations at a fixed position, then move the
+                board to a second marked position and repeat. Keep orientation
+                and AP settings fixed. Compare RSSI variability; do not turn it
+                into metres. As a negative control, switch off your AP, clear
+                stale scan results and repeat: your AP should disappear.
+              </div>
+            </li>
+            <li>
+              <div>
+                Finish by stopping the scan and restoring the intended board
+                firmware. Repeat one known check: the Marauder version response
+                or an official UART log event. Record whether recovery actually
+                succeeded.
+              </div>
+            </li>
+          </ol>
+          <h3>Optional CLI route</h3>
+          <p>
+            For the official devboard, the upstream
+            <a href="https://github.com/justcallmekoko/ESP32Marauder/wiki/CLI"
+              >CLI guide</a
+            >
+            uses the Flipper’s USB-to-UART bridge: connect the
+            <em>Flipper’s</em> USB to the computer, open GPIO → USB-UART Bridge,
+            select USB channel 0 and 115200 baud, then open that port in your
+            terminal at the same rate. Close the companion first so only one app
+            owns UART. Reset the board and look for its banner.
+          </p>
+          <pre><code>help
+scanap
+# After a short observation, send:
+stopscan</code></pre>
+          <p>
+            Enter these in the Marauder serial terminal, not your computer’s
+            shell. Use the list command shown by your installed
+            <code>help</code> output to inspect results. Upstream pages contain
+            both <code>list</code> and <code>listap</code> naming, so the actual
+            build is the final check. Sources:
+            <a
+              href="https://github.com/justcallmekoko/ESP32Marauder/wiki/scanap"
+              >scanap</a
+            >,
+            <a href="https://github.com/justcallmekoko/ESP32Marauder/wiki/list"
+              >list</a
+            >,
+            <a
+              href="https://github.com/justcallmekoko/ESP32Marauder/wiki/stopscan"
+              >stopscan</a
+            >.
+          </p>
+        </section>
+        <section id="extensions">
+          <h2>Build toward independent work</h2>
+          <h3>Portal experiment: separate association from trust</h3>
+          <p>
+            Choose either the standalone project or Marauder’s integrated
+            portal, then follow that project’s matching instructions. Use a
+            clearly labelled <code>SignalPath-Lab</code> page saying “Training
+            page — use made-up values only,” with your own test phone and
+            invented input. Observe association, page display and any
+            submitted-value log as separate events; stop the portal afterward.
+            Explain why accepting a form submission is different from
+            authenticating a user or breaking Wi-Fi encryption. Captive-portal
+            pop-ups vary by phone; a missing pop-up alone does not prove the AP
+            failed.
+          </p>
+          <h3>Write your own board firmware</h3>
+          <p>
+            Install
+            <a
+              href="https://docs.espressif.com/projects/esp-idf/en/stable/esp32s2/get-started/index.html"
+              >Espressif’s ESP-IDF tools</a
+            >, copy its <code>hello_world</code> example into a separate working
+            folder, and select the S2 target before building:
+          </p>
+          <pre><code># In the copied example, with the ESP-IDF environment loaded:
+idf.py set-target esp32s2
+idf.py build
+# With the board selected; replace PORT with its actual serial port:
+idf.py -p PORT flash monitor</code></pre>
+          <p>
+            Check the board’s USB/console configuration if output is absent.
+            Extend the example to accept a <code>VERSION</code> command and
+            return a fixed version string over a documented UART pin pair. Then
+            write a small Flipper client using
+            <a href="15-app-development.html">Module 15</a>. Define message
+            framing, timeouts and what happens when the board is unplugged. This
+            proposed extension needs hardware testing; the course does not ship
+            a tested custom board image.
+          </p>
+        </section>
+        <section id="troubleshooting">
+          <h2>Diagnose the layer that failed</h2>
+          <ul>
+            <li>
+              <b>No flashing port:</b> check the board’s USB socket, a data
+              cable, and BOOT/RESET mode.
+            </li>
+            <li>
+              <b>Companion opens but board is silent:</b> verify the board
+              image, UART configuration and a matching command protocol. A
+              successful app launch does not test the board.
+            </li>
+            <li>
+              <b>App reports an API mismatch:</b> obtain or build a companion
+              for the handheld’s firmware SDK.
+            </li>
+            <li>
+              <b>Network missing:</b> check 2.4 GHz, channel, signal level and a
+              fresh scan before blaming encryption.
+            </li>
+            <li>
+              <b>Capture not saved:</b> verify the documented
+              serial-to-Flipper-SD or external-SD route for your exact build,
+              available space and write status.
+            </li>
+            <li>
+              <b>Debugger no longer connects:</b> confirm official board
+              firmware is restored and the selected Black Magic/CMSIS-DAP mode
+              matches the host.
+            </li>
+          </ul>
+        </section>
+        <section id="evidence">
+          <h2>Show that you can do it</h2>
+          <ul>
+            <li>
+              Explain the three software layers and choose a firmware for a
+              stated task.
+            </li>
+            <li>
+              Record a board recovery and one verified log or debugger
+              observation.
+            </li>
+            <li>
+              Produce an AP observation table with a prediction, repeated
+              measurements and a negative control.
+            </li>
+            <li>
+              Explain one active technique, its assumptions and a relevant
+              defense.
+            </li>
+          </ul>
+          <p>
+            Save your findings in the
+            <a href="../notebook.html?module=m18">Module 18 notebook</a>. You
+            can use this work in the
+            <a href="17-mastery.html">mastery portfolio</a>. Without hardware,
+            complete the comparison and quiz, and label practical results
+            untested.
+          </p>
+        </section>
+        <section id="quiz">
+          <h2>Check yourself</h2>
+          <div data-quiz="m18"></div>
+        </section>
+        <section id="sources">
+          <h2>Research and version notes</h2>
+          <p class="source-note">
+            Primary sources are linked beside the claims and procedures they
+            support. Reviewed 10 September 2026. Firmware menus, images and app
+            APIs change; recheck the referenced project before flashing. These
+            procedures were documentation-reviewed, not tested on a physical
+            Wi-Fi board. See the
+            <a href="../sources.html#wifi-devboard">source register</a> for the
+            main starting points.
+          </p>
+        </section>
+      </article>
+    </main>
+    <footer class="site-footer">
+      <div class="wrap">
+        <p>
+          Practise on authorized lab equipment. In Romania, check ANCOM radio
+          conditions and privacy rules.
+        </p>
+        <p>
+          <a href="../legal.html">Romania &amp; permission</a> ·
+          <a href="../sources.html">Sources &amp; corrections</a>
+        </p>
+      </div>
+    </footer>
+    <script src="../assets/js/site.js"></script>
+    <script src="../assets/js/data/quiz-bank.js"></script>
+    <script src="../assets/js/presentation.js"></script>
+  </body>
+</html>

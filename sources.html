@@ -8,12 +8,6 @@
       name="description"
       content="Primary sources, review date, and technical corrections for Signal Path."
     />
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      rel="stylesheet"
-      href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&family=Public+Sans:ital,wght@0,400;0,500;0,600;1,400&display=swap"
-    />
     <link rel="stylesheet" href="assets/css/site.css" />
     <script>
       (function () {
@@ -24,6 +18,12 @@
         } catch (e) {}
       })();
     </script>
+    <link rel="stylesheet" href="assets/css/presentation.css" />
+    <link
+      rel="icon"
+      type="image/png"
+      href="assets/images/signal-path-logo.png"
+    />
   </head>
   <body data-root="" data-page="sources">
     <header class="topbar"></header>
@@ -139,6 +139,95 @@
           </li>
         </ul>
       </section>
+      <section id="wifi-devboard">
+        <h2>Wi-Fi Devboard and firmware</h2>
+        <p>
+          <a href="modules/18-wifi-devboard.html">Module 18</a> links individual
+          mechanisms to upstream documentation. Hardware features, board
+          firmware and companion app compatibility are separate checks.
+        </p>
+        <ul>
+          <li>
+            <a href="https://flipper.net/products/wifi-devboard"
+              >Flipper Devices: official WiFi Devboard</a
+            >
+          </li>
+          <li>
+            <a
+              href="https://developer.flipper.net/flipperzero/doxygen/dev_board.html"
+              >Flipper: board hardware and debug modes</a
+            >
+          </li>
+          <li>
+            <a
+              href="https://developer.flipper.net/flipperzero/doxygen/dev_board_fw_update.html"
+              >Flipper: board firmware update and recovery</a
+            >
+          </li>
+          <li>
+            <a
+              href="https://developer.flipper.net/flipperzero/doxygen/dev_board_reading_logs.html"
+              >Flipper: UART logs</a
+            >
+          </li>
+          <li>
+            <a
+              href="https://developer.flipper.net/flipperzero/doxygen/dev_board_debugging_guide.html"
+              >Flipper: SWD debugging</a
+            >
+          </li>
+          <li>
+            <a
+              href="https://documentation.espressif.com/esp32-s2_datasheet_en.html"
+              >Espressif: ESP32-S2 datasheet</a
+            >
+          </li>
+          <li>
+            <a
+              href="https://docs.espressif.com/projects/esp-idf/en/stable/esp32s2/get-started/index.html"
+              >Espressif: ESP-IDF for ESP32-S2</a
+            >
+          </li>
+          <li>
+            <a
+              href="https://docs.espressif.com/projects/esp-idf/en/stable/esp32s2/api-guides/wifi-security.html"
+              >Espressif: PMF and WPA3</a
+            >
+          </li>
+          <li>
+            <a
+              href="https://github.com/justcallmekoko/ESP32Marauder/wiki/update-firmware"
+              >Marauder: installation targets and methods</a
+            >
+          </li>
+          <li>
+            <a href="https://github.com/justcallmekoko/ESP32Marauder/wiki/CLI"
+              >Marauder: command interface</a
+            >
+          </li>
+          <li>
+            <a href="https://github.com/0xchocolate/flipperzero-wifi-marauder"
+              >WiFi Marauder: Flipper companion</a
+            >
+          </li>
+          <li>
+            <a href="https://github.com/bigbrodude6119/flipper-zero-evil-portal"
+              >Evil Portal: standalone board and app project</a
+            >
+          </li>
+          <li>
+            <a href="https://github.com/DarkFlippers/unleashed-firmware"
+              >Unleashed: handheld firmware</a
+            >
+          </li>
+          <li>
+            <a
+              href="https://github.com/RogueMaster/flipperzero-firmware-wPlugins"
+              >RogueMaster: handheld firmware</a
+            >
+          </li>
+        </ul>
+      </section>
       <section id="romania">
         <h2>Romania</h2>
         <ul>
@@ -209,5 +298,6 @@
       </div>
     </footer>
     <script src="assets/js/site.js"></script>
+    <script src="assets/js/presentation.js"></script>
   </body>
 </html>

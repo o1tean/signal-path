@@ -9,7 +9,7 @@ const context = {window: {}};
 vm.runInNewContext(fs.readFileSync(path.join(root,'assets/js/data/quiz-bank.js'), 'utf8'), context);
 const bank = context.window.SP_QUIZ_BANK;
 assert.equal(new Set(modules.map(m => m.id)).size, modules.length);
-assert.equal(modules.length, 18);
+assert.equal(modules.length, 19);
 for (const m of modules) {
   const html = fs.readFileSync(path.join(root,m.href),'utf8');
   assert.ok(html.includes(`data-page="${m.id}"`), `${m.id}: page id mismatch`);

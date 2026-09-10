@@ -1,4 +1,3 @@
-/* Signal Path quiz bank: explanations are part of the lesson. */
 window.SP_QUIZ_BANK = {
   "primer": [
     {
@@ -1199,6 +1198,88 @@ window.SP_QUIZ_BANK = {
       ],
       "a": 2,
       "why": "Real proficiency needs explanation, repeatability and judgment."
+    }
+  ],
+  "m18": [
+    {
+      "q": "The official Wi-Fi Devboard’s radio can use…",
+      "opts": [
+        "5 GHz and Bluetooth Classic",
+        "2.4 GHz Wi-Fi; no Bluetooth",
+        "Every radio present on other ESP32 chips"
+      ],
+      "a": 1,
+      "why": "The official accessory uses an ESP32-S2. Hardware capabilities differ between ESP32 variants."
+    },
+    {
+      "q": "A Marauder companion opens, but the board still has Black Magic firmware. What is missing?",
+      "opts": [
+        "A longer Sub-GHz antenna",
+        "An NFC key",
+        "Matching Marauder firmware on the ESP32-S2 board"
+      ],
+      "a": 2,
+      "why": "The companion is a Flipper app. It cannot issue Marauder commands to a different board application."
+    },
+    {
+      "q": "Which board firmware is intended for SWD breakpoints and stepping?",
+      "opts": [
+        "Official Black Magic / CMSIS-DAP",
+        "A standalone captive portal",
+        "Any app with Wi-Fi in its name"
+      ],
+      "a": 0,
+      "why": "The official developer firmware turns the board into a debug probe."
+    },
+    {
+      "q": "Before replacing a board image, what should you establish?",
+      "opts": [
+        "A matching target, backup and recovery path",
+        "That every ESP32 image shares flash offsets",
+        "That changing the Flipper theme updates the board"
+      ],
+      "a": 0,
+      "why": "Record the exact board and release. Image layout and recovery are specific to the target."
+    },
+    {
+      "q": "An AP discovery feature is necessarily passive. True?",
+      "opts": [
+        "Yes, because it does not associate",
+        "Yes, if it shows only SSIDs",
+        "No; active discovery sends probe requests"
+      ],
+      "a": 2,
+      "why": "Inspect the implementation. The menu label alone does not establish whether it transmits."
+    },
+    {
+      "q": "A suitable WPA2-Personal handshake capture gives you…",
+      "opts": [
+        "The plaintext password immediately",
+        "Material that may support offline password guesses",
+        "Proof that WPA3-SAE is broken"
+      ],
+      "a": 1,
+      "why": "A capture and a recovered password are different results. Strong passphrases resist guessing."
+    },
+    {
+      "q": "What does negotiated PMF help protect?",
+      "opts": [
+        "All RF energy in the room",
+        "Relevant robust management frames, including deauthentication",
+        "A user who types a password into any website"
+      ],
+      "a": 1,
+      "why": "PMF addresses specific management-frame attacks; it does not eliminate all interference or phishing."
+    },
+    {
+      "q": "Why switch off your lab AP and repeat a fresh scan?",
+      "opts": [
+        "To crack its encryption",
+        "To increase RSSI",
+        "To test whether the observed entry actually depends on that AP"
+      ],
+      "a": 2,
+      "why": "A negative control helps separate a current observation from stale results or a different transmitter."
     }
   ]
 };

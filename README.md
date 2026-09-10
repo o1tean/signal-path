@@ -2,18 +2,22 @@
 
 [Open the course](https://o1tean.github.io/signal-path/) · [Learning path](https://o1tean.github.io/signal-path/roadmap.html) · [Romanian lab guide](https://o1tean.github.io/signal-path/legal.html)
 
-A self-paced Flipper Zero course from first setup to independent projects and authorized security research. Plain HTML, CSS and JavaScript; no application backend or runtime packages. Google Fonts supplies the optional web fonts. Course progress and notebook entries stay in the browser; GitHub Pages serves the site.
+A self-paced Flipper Zero course from first setup to independent projects and authorized security research. Plain HTML, CSS and JavaScript; no application backend or runtime packages. System fonts keep pages fast and independent of external font services. Course progress and notebook entries stay in the browser; GitHub Pages serves the site.
 
-- **18 modules** with a suggested twelve-week path, concrete labs, explanations and evidence criteria.
-- **108 quiz questions** with explanations and per-module best scores.
+- **19 modules** with a suggested twelve-week core path and optional Wi-Fi extension, concrete labs, explanations and evidence criteria.
+- **116 quiz questions** with explanations and per-module best scores.
 - **10 interactive learning tools** using synthetic signals, plus an atlas for lab observations.
 - **A learning notebook** for predictions, findings, review dates and retrieval practice. JSON backup/restore moves progress, scores, badges, atlas and notes between browsers.
 - **A small C application** in `examples/lab-companion`, built with the official uFBT toolchain.
 - **Romanian references** from ANCOM and the Criminal Code, alongside primary Flipper and Microchip sources. Reviewed 10 September 2026; recheck changing requirements before a hardware lab.
 
-The first eleven modules cover RF fundamentals, Sub-GHz, rolling codes, RFID/NFC, firmware literacy and an initial signal atlas. Modules 11–17 add infrared, GPIO, USB/BLE, iButton/U2F, app development, controlled security research and a reproducible final portfolio. Official firmware is a supported starting point; Momentum is optional.
+The first eleven modules cover RF fundamentals, Sub-GHz, rolling codes, RFID/NFC, firmware literacy and an initial signal atlas. Modules 11–17 add infrared, GPIO, USB/BLE, iButton/U2F, app development, controlled security research and a reproducible final portfolio. Module 18 adds the optional official Wi-Fi Devboard: Black Magic/CMSIS-DAP, Marauder, captive portals, custom ESP-IDF development, recovery and a controlled AP lab. Official firmware is a supported starting point; community forks are optional.
 
 The course explains dual-use mechanisms and defenses. Practical exercises use controlled, authorized equipment. Educational intent or device ownership does not replace permission, applicable radio conditions or data/privacy obligations. Completion badges are self-reported progress, not certification.
+
+## Visual design
+
+An original Signal Path logo, graphite/white surfaces, warm orange accents, responsive hardware illustrations and interactive connection diagrams. Motion respects system reduced-motion settings, has a persistent pause control, and pauses offscreen. No scroll hijacking or animation dependency. See [brand notes](docs/brand.md) for the generated logo prompt and asset paths.
 
 ## Run locally
 

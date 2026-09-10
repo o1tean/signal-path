@@ -29,7 +29,8 @@
     {"id": "m14", "n": 14, "week": "Week 9", "title": "iButton and U2F: identity is not authentication", "href": "modules/14-contact-and-authentication.html", "badge": "contact-and-authentication"},
     {"id": "m15", "n": 15, "week": "Week 10", "title": "Build your first Flipper app", "href": "modules/15-app-development.html", "badge": "app-development"},
     {"id": "m16", "n": 16, "week": "Week 11", "title": "Authorized security research: test the claim", "href": "modules/16-security-lab.html", "badge": "security-lab"},
-    {"id": "m17", "n": 17, "week": "Week 11–12", "title": "Mastery project: explain, measure, teach", "href": "modules/17-mastery.html", "badge": "mastery"}
+    {"id": "m17", "n": 17, "week": "Week 11–12", "title": "Mastery project: explain, measure, teach", "href": "modules/17-mastery.html", "badge": "mastery"},
+    {"id":"m18","n":18,"week":"Hardware extension","title":"Wi-Fi Devboard & firmware","href":"modules/18-wifi-devboard.html","badge":"wifi-devboard"}
   ];
 
   SP.BADGES = [
@@ -52,6 +53,7 @@
     {"id": "security-lab", "ic": "◇", "name": "Authorized security research", "how": "Finish Module 16"},
     {"id": "mastery", "ic": "◇", "name": "Mastery project", "how": "Finish Module 17"},
 
+    { id: "wifi-devboard", ic: "◉", name: "Wi-Fi Explorer", how: "Finish Module 18" },
     { id: "tuned-in",          ic: "◉", name: "Tuned In",           how: "Score 5 in the Tune In game" },
     { id: "wave-rider",        ic: "≈", name: "Wave Rider",         how: "Encode a message in the Wave Lab" },
     { id: "out-of-sync",       ic: "⊘", name: "Out of Sync",        how: "Watch a replay fail in the Rolling Code Sim" },

@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 460" fill="none">
+  <title>Concept illustration of the official ESP32-S2 Wi-Fi board; not a pinout</title>
+  <defs><linearGradient id="pcb" x1="190" y1="100" x2="410" y2="360" gradientUnits="userSpaceOnUse"><stop stop-color="#353d43"/><stop offset="1" stop-color="#12181b"/></linearGradient><linearGradient id="metal" x1="210" y1="180" x2="354" y2="272" gradientUnits="userSpaceOnUse"><stop stop-color="#e3e6e4"/><stop offset=".5" stop-color="#a9b0b1"/><stop offset="1" stop-color="#777f85"/></linearGradient><linearGradient id="gold" x1="0" y1="345" x2="0" y2="396" gradientUnits="userSpaceOnUse"><stop stop-color="#f4d4a2"/><stop offset="1" stop-color="#a27234"/></linearGradient></defs>
+  <g transform="rotate(-9 300 230)">
+    <rect x="175" y="85" width="257" height="285" rx="15" fill="#000" opacity=".3"/>
+    <rect x="166" y="75" width="257" height="285" rx="15" fill="url(#pcb)" stroke="#566164" stroke-width="2"/>
+    <g stroke="#525d5b" stroke-width="2"><path d="M184 95v180h30v55h27m160-214h-38v50h-20m50 116h-26v55h-38m-117-30h-23v-20m20-123h-20v52h-18"/><path d="M212 308v31h169v-36"/></g>
+    <rect x="240" y="63" width="85" height="44" rx="9" fill="url(#metal)"/><rect x="254" y="69" width="57" height="14" rx="7" fill="#192026"/><path d="M263 76h40" stroke="#9ea8aa" stroke-width="2"/>
+    <rect x="213" y="132" width="133" height="152" rx="3" fill="#2e3338" stroke="#828b89"/>
+    <path d="M225 174v-29h14v20h15v-20h14v20h14v-20h14v20h15v-20h18v30" stroke="#bb9457" stroke-width="5"/>
+    <rect x="213" y="186" width="133" height="98" rx="3" fill="url(#metal)"/>
+    <g fill="#485358" font-family="monospace"><text x="228" y="217" font-size="13" font-weight="bold">ESP32-S2</text><text x="228" y="236" font-size="10">WROVER</text><text x="228" y="258" font-size="9">2.4 GHz Wi-Fi</text></g>
+    <g fill="#d8ddda" font-family="monospace" font-size="8"><text x="365" y="140">BOOT</text><text x="365" y="225">RESET</text></g>
+    <rect x="367" y="148" width="30" height="29" rx="3" fill="#a9b0ae"/><circle cx="382" cy="162" r="9" fill="#1b2023"/>
+    <rect x="367" y="234" width="30" height="29" rx="3" fill="#a9b0ae"/><circle cx="382" cy="248" r="9" fill="#1b2023"/>
+    <rect x="378" y="290" width="7" height="10" rx="2" fill="#64cfa4"/>
+    <g fill="#727977"><rect x="188" y="126" width="8" height="13" rx="2"/><rect x="188" y="151" width="8" height="13" rx="2"/><rect x="219" y="298" width="22" height="12" rx="2"/><rect x="248" y="298" width="9" height="12" rx="2"/><rect x="265" y="298" width="9" height="12" rx="2"/></g>
+    <g stroke="url(#gold)" stroke-width="7"><path d="M197 351v41m15-41v41m15-41v41m15-41v41m15-41v41m15-41v41m15-41v41m15-41v41m15-41v41m15-41v41m15-41v41m15-41v41m15-41v41m15-41v41"/></g>
+    <rect x="184" y="337" width="226" height="19" rx="3" fill="#090c0e"/><path d="M188 341h216" stroke="#48504e"/>
+    <circle cx="180" cy="89" r="5" stroke="#8a9083" stroke-width="3"/><circle cx="409" cy="89" r="5" stroke="#8a9083" stroke-width="3"/>
+  </g>
+</svg>
