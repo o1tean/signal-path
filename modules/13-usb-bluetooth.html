@@ -1,0 +1,176 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Module 13 · USB and Bluetooth: understand trust · Signal Path</title>
+    <meta
+      name="description"
+      content="Use a tiny, visible keyboard script to understand why input devices must be trusted, then review your own Bluetooth pairing."
+    />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&family=Public+Sans:ital,wght@0,400;0,500;0,600;1,400&display=swap"
+    />
+    <link rel="stylesheet" href="../assets/css/site.css" />
+    <script>
+      (function () {
+        try {
+          var t = localStorage.getItem("signalpath.theme");
+          if (t === "light" || t === "dark")
+            document.documentElement.setAttribute("data-theme", t);
+        } catch (e) {}
+      })();
+    </script>
+  </head>
+  <body data-root="../" data-page="m13">
+    <header class="topbar"></header>
+    <main id="main-content" class="page wrap">
+      <article class="content">
+        <div class="mod-header">
+          <div class="mod-index">13</div>
+          <div class="mod-titles">
+            <div class="mod-week">Week 8 · Beyond the RF foundation</div>
+            <h1>USB and Bluetooth: understand trust</h1>
+            <p class="lede">
+              Use a tiny, visible keyboard script to understand why input
+              devices must be trusted, then review your own Bluetooth pairing.
+            </p>
+            <div class="chips">
+              <span class="chip">45 min</span
+              ><span class="chip">Your computer + USB cable</span>
+            </div>
+          </div>
+        </div>
+        <section id="concepts">
+          <h2>Understand it</h2>
+          <p>
+            The Flipper can present itself as a human interface device, such as
+            a keyboard. The computer receives keystrokes; it does not infer the
+            author’s intent. The application’s “Bad USB” name describes a class
+            of risks, but a script can be as small as typing a sentence.
+          </p>
+          <p>
+            This exercise types only text into an editor that you open yourself.
+            It contains no shell commands, downloads, credential access, or
+            system changes. Keyboard layout and the currently focused window
+            affect what happens. Read any script in full before using it.
+          </p>
+          <pre><code>REM Signal Path: visible typing in your own text editor
+DELAY 3000
+STRING Signal Path - I control this lab.
+ENTER</code></pre>
+          <h3>Bluetooth is a separate interface</h3>
+          <p>
+            BLE pairing establishes a relationship with a specific device.
+            Pairing your Flipper with its mobile app is different from pairing
+            keyboard emulation. Record which function you are enabling. The
+            internal Sub-GHz radio does not turn into Wi-Fi through a firmware
+            change; Wi-Fi experiments need separate compatible hardware and
+            their own lab scope.
+          </p>
+        </section>
+        <section id="lab">
+          <h2>Lab: build the evidence</h2>
+          <ol class="steps">
+            <li>
+              <div>
+                On your own computer, open a blank plain-text document. Copy the
+                four-line example into a separate ASCII file named
+                <code>signal-path-hello.txt</code>. Read every line.
+              </div>
+            </li>
+            <li>
+              <div>
+                Copy that file into the Flipper SD card’s
+                <code>badusb</code> folder using qFlipper. Close qFlipper before
+                starting the HID session.
+              </div>
+            </li>
+            <li>
+              <div>
+                Choose the file in the Bad USB app and select USB mode. Confirm
+                your keyboard layout. Connect to your computer, focus the blank
+                document, and run once while watching the screen.
+              </div>
+            </li>
+            <li>
+              <div>
+                Expected result: one sentence and a newline after three seconds.
+                If the wrong window has focus, disconnect immediately. Re-focus
+                the editor before any retry.
+              </div>
+            </li>
+            <li>
+              <div>
+                Disconnect, delete the disposable document, and remove the
+                exercise file if you no longer need it.
+              </div>
+            </li>
+            <li>
+              <div>
+                Optional: pair your own phone using the official mobile app,
+                confirm the displayed code on the intended devices, then
+                practise removing that pairing. Do not scan or connect to
+                strangers’ devices.
+              </div>
+            </li>
+          </ol>
+        </section>
+        <section id="evidence">
+          <h2>Show that you can do it</h2>
+          <ul>
+            <li>
+              The exact text output, without executing any operating-system
+              commands.
+            </li>
+            <li>
+              An explanation of focus, layout, USB HID, and why script review
+              matters.
+            </li>
+            <li>A note identifying your own pairing and how you removed it.</li>
+          </ul>
+          <p>
+            Record the result in your
+            <a href="../notebook.html">learning notebook</a>. Repeat the
+            explanation tomorrow without looking at this page.
+          </p>
+        </section>
+        <section id="quiz">
+          <h2>Check yourself</h2>
+          <div data-quiz="m13"></div>
+        </section>
+        <section id="sources">
+          <h2>Sources</h2>
+          <p class="source-note">
+            Read the primary sources:
+            <a href="https://docs.flipper.net/zero/bad-usb"
+              >Flipper: USB and BLE keyboard emulation</a
+            >
+            ·
+            <a href="https://docs.flipper.net/zero/basics/first-start"
+              >Flipper: first start</a
+            >. Course review: 10 September 2026.
+          </p>
+        </section>
+      </article>
+    </main>
+    <footer class="site-footer">
+      <div class="wrap">
+        <p>
+          Practise on authorized lab equipment. In Romania, check ANCOM radio
+          conditions and privacy rules. When scope or legality is unclear, use
+          the simulators.
+        </p>
+        <p>
+          <a href="../legal.html">Romania &amp; permission</a> ·
+          <a href="../sources.html">Sources &amp; corrections</a>
+        </p>
+      </div>
+    </footer>
+    <script src="../assets/js/site.js"></script>
+    <script src="../assets/js/data/quiz-bank.js"></script>
+  </body>
+</html>

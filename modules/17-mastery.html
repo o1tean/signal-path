@@ -1,0 +1,199 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>
+      Module 17 · Mastery project: explain, measure, teach · Signal Path
+    </title>
+    <meta
+      name="description"
+      content="Demonstrate repeatable skill across interfaces and produce an honest portfolio that someone else can reproduce."
+    />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&family=Public+Sans:ital,wght@0,400;0,500;0,600;1,400&display=swap"
+    />
+    <link rel="stylesheet" href="../assets/css/site.css" />
+    <script>
+      (function () {
+        try {
+          var t = localStorage.getItem("signalpath.theme");
+          if (t === "light" || t === "dark")
+            document.documentElement.setAttribute("data-theme", t);
+        } catch (e) {}
+      })();
+    </script>
+  </head>
+  <body data-root="../" data-page="m17">
+    <header class="topbar"></header>
+    <main id="main-content" class="page wrap">
+      <article class="content">
+        <div class="mod-header">
+          <div class="mod-index">17</div>
+          <div class="mod-titles">
+            <div class="mod-week">Week 11–12 · Beyond the RF foundation</div>
+            <h1>Mastery project: explain, measure, teach</h1>
+            <p class="lede">
+              Demonstrate repeatable skill across interfaces and produce an
+              honest portfolio that someone else can reproduce.
+            </p>
+            <div class="chips">
+              <span class="chip">3–5 sessions</span
+              ><span class="chip">Your authorized lab + notebook</span>
+            </div>
+          </div>
+        </div>
+        <section id="concepts">
+          <h2>Understand it</h2>
+          <p>
+            Mastery is a practice, not a six-week promise or a completion badge.
+            You should be able to choose an appropriate tool, predict an
+            outcome, test it within scope, diagnose a failure, and explain the
+            limits of the evidence.
+          </p>
+          <h3>Measurements need limits</h3>
+          <p>
+            The Frequency Analyzer checks received signal strength at configured
+            frequencies; it is not a calibrated wideband spectrum analyzer. A
+            RAW <code>.sub</code> contains demodulated timings, not complex I/Q
+            samples. Changing payload values can indicate sensor data, a
+            counter, or another variable; it does not by itself prove encryption
+            or rolling-code security.
+          </p>
+          <p>
+            A fair comparison holds distance, orientation, battery state,
+            frequency and environment as constant as possible. Record repeats
+            and failed trials. “Five successes out of five at one metre” is
+            useful; “works everywhere” is not. Use only the permitted
+            transmissions from your existing lab, and do not increase power to
+            improve a result.
+          </p>
+          <h3>Four-part portfolio</h3>
+          <p>
+            Deliver an RF or IR comparison, a training-tag classification, a
+            small hardware/software build, and a scope-and-recovery record.
+            Synthetic simulator results are valuable, but label them separately
+            from physical measurements.
+          </p>
+        </section>
+        <section id="lab">
+          <h2>Lab: build the evidence</h2>
+          <ol class="steps">
+            <li>
+              <div>
+                Choose a question before touching the device: for example, “Does
+                changing aim affect my learned IR remote?” Define the authorized
+                target and an expected result.
+              </div>
+            </li>
+            <li>
+              <div>
+                Make a baseline and record five brief trials. Change one factor
+                and repeat. Respect your approved radio duty-cycle limits; use
+                IR or simulation if those are unresolved.
+              </div>
+            </li>
+            <li>
+              <div>
+                Classify two training tags using their documentation and the
+                appropriate app. Write which information you could read and what
+                remains unknown. Do not infer access rights from a UID.
+              </div>
+            </li>
+            <li>
+              <div>
+                Demonstrate the GPIO LED circuit or your modified app. Give
+                another person enough detail to reproduce it on their own lab
+                hardware.
+              </div>
+            </li>
+            <li>
+              <div>
+                Write a short report: question, scope, equipment/versions,
+                method, results, alternative explanations, limitations, and
+                cleanup. Redact IDs, keys, addresses, and personal information
+                before sharing.
+              </div>
+            </li>
+            <li>
+              <div>
+                Wait at least a day, then explain the mechanism without notes.
+                Revisit any missed quiz topics. Ask a knowledgeable peer to
+                challenge one conclusion; log what you revised.
+              </div>
+            </li>
+          </ol>
+        </section>
+        <section id="evidence">
+          <h2>Show that you can do it</h2>
+          <ul>
+            <li>
+              A repeatable experiment with a prediction, controlled variable,
+              and recorded failures.
+            </li>
+            <li>
+              Evidence across at least three interfaces, including one hardware
+              or software build.
+            </li>
+            <li>
+              A redacted report that distinguishes observations, inferences, and
+              untested claims.
+            </li>
+            <li>
+              A successful delayed explanation and a concrete next learning
+              question.
+            </li>
+          </ul>
+          <p>
+            Record the result in your
+            <a href="../notebook.html">learning notebook</a>. Repeat the
+            explanation tomorrow without looking at this page.
+          </p>
+        </section>
+        <section id="quiz">
+          <h2>Check yourself</h2>
+          <div data-quiz="m17"></div>
+        </section>
+        <section id="sources">
+          <h2>Sources</h2>
+          <p class="source-note">
+            Read the primary sources:
+            <a href="https://docs.flipper.net/zero/sub-ghz/read"
+              >Flipper: reading signals and presets</a
+            >
+            ·
+            <a href="https://docs.flipper.net/zero/sub-ghz/read-raw"
+              >Flipper: demodulated RAW recordings</a
+            >
+            ·
+            <a href="https://docs.flipper.net/zero/gpio-and-modules"
+              >Flipper: GPIO pinout and electrical limits</a
+            >
+            ·
+            <a href="https://docs.flipper.net/zero/development"
+              >Flipper: development documentation</a
+            >. Course review: 10 September 2026.
+          </p>
+        </section>
+      </article>
+    </main>
+    <footer class="site-footer">
+      <div class="wrap">
+        <p>
+          Practise on authorized lab equipment. In Romania, check ANCOM radio
+          conditions and privacy rules. When scope or legality is unclear, use
+          the simulators.
+        </p>
+        <p>
+          <a href="../legal.html">Romania &amp; permission</a> ·
+          <a href="../sources.html">Sources &amp; corrections</a>
+        </p>
+      </div>
+    </footer>
+    <script src="../assets/js/site.js"></script>
+    <script src="../assets/js/data/quiz-bank.js"></script>
+  </body>
+</html>

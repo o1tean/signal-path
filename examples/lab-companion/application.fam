@@ -1,0 +1,10 @@
+App(
+    appid="signal_path_companion",
+    name="Signal Path",
+    apptype=FlipperAppType.EXTERNAL,
+    entry_point="signal_path_app",
+    stack_size=2048,
+    fap_category="Tools",
+    fap_version=(1, 0),
+    fap_description="A minimal on-screen companion for the Signal Path learning lab",
+)

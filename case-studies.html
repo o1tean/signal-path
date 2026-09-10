@@ -34,58 +34,13 @@
         bugs. Each one is a piece of RF explaining itself — once you know what you're looking at.
       </p>
 
-      <section id="nice-gate">
-        <h2>The Nice gate: copies once, then barely works</h2>
-        <dl class="kv">
-          <dt>Symptom</dt><dd>You capture your Nice gate remote. The replay opens the gate <b>the first time</b>. Then it stops working. Occasionally, seemingly at random, it catches again — but mostly it does nothing.</dd>
-          <dt>What's happening</dt><dd>Your gate uses a <b>rolling code</b> (the Nice <span class="pill rolling">FloR-S</span> family). Every press is a one-time password.</dd>
-          <dt>What to do</dt><dd>Stop replaying, and enroll a genuine remote through the receiver's pairing procedure instead.</dd>
-        </dl>
-        <p>
-          This is the single most common beginner mystery, and it's the cleanest demonstration of rolling
-          codes there is — so it's worth slowing down on. When you press a rolling-code remote, it doesn't
-          send a fixed message. It sends a fresh number, derived from a secret it shares with the receiver
-          and a <b>counter</b> that ticks up by one on every press. The receiver keeps its own copy of that
-          counter, and it enforces a simple rule: <b>only accept a code whose counter is ahead of the last
-          one I honoured, and refuse anything I've already seen.</b>
-        </p>
-        <p>
-          Now the whole story falls out of that one rule:
-        </p>
-        <ul>
-          <li><b>Why the first replay works:</b> you captured, say, counter #500. If the receiver last honoured #499, your #500 is a valid next step — so the gate opens, and the receiver advances its counter to 500.</li>
-          <li><b>Why it then fails:</b> your recording is <i>still</i> #500. The receiver has already moved past it. To the gate, #500 is now old news, so it's rejected. Every subsequent replay of the same capture is stale by definition.</li>
-          <li><b>Why it occasionally catches again:</b> receivers accept a small <b>window</b> of future counters — often a few hundred ahead — so a remote that was pressed a few times out of range still works when you get back. If real-remote presses and your replays happen to line up inside that window, a stale-looking code can occasionally slip through. It's coincidence, not a fix.</li>
-        </ul>
-        <div class="callout note">
-          <span class="ic">i</span>
-          <div><span class="callout-title">This is the security feature working</span>
-          A rolling-code replay failing isn't the Flipper being weak or you doing it wrong. It's the exact
-          behaviour the system was designed to produce: yesterday's recording is worthless. Understanding
-          <i>why</i> is the real skill here.</div>
-        </div>
-        <div class="callout warn">
-          <span class="ic">!</span>
-          <div><span class="callout-title">Replaying can desync your real remote</span>
-          Push enough stale or out-of-order codes at the receiver and you can drag its counter window out of
-          step with your genuine remote, so the real one stops working too until it's re-paired. Another good
-          reason to stop replaying and pair properly.</div>
-        </div>
-        <p>
-          The supported way to add a working remote to a gate you own is the one the manufacturer documents:
-          put the receiver into its pairing/learn mode and enroll a genuine remote. That's not a
-          consolation prize — it's the correct answer, and it's how these systems are meant to grow. Want to
-          watch the counter logic play out safely? Run the simulator, or read the full mechanics in
-          <a href="modules/05-raw-and-rolling.html">Module 5</a>.
-        </p>
-        <div data-widget="rolling-sim"></div>
-      </section>
+      <section id="nice-gate"><h2>The gate that appears to accept a replay</h2><p>This is a hypothetical diagnostic example, not a verified incident involving a particular gate. In a counter-based model, a previously unused valid message may be accepted if it falls within the receiver’s forward window. Once consumed, the same message is stale.</p><p><b>A forward window does not make an old counter fresh again.</b> If an identical capture seems to work intermittently, investigate the actual protocol, whether a file contains multiple frames, whether receiver state changed, and whether you are observing the same operation. Do not claim a diagnosis from “works once” alone.</p><p>Rejected stale messages do not normally advance the receiver counter. Real products have implementation-specific synchronization and recovery behaviour, and operational fob experiments can cause loss of access. Use the simulator to explore the model; use the manufacturer’s documented process for genuine remote provisioning or repair.</p><div data-widget="rolling-sim"></div><p class="source-note">Read the primary sources: <a href="https://ww1.microchip.com/downloads/aemDocuments/documents/MCU08/ProductDocuments/DataSheets/21143C.pdf">Microchip HCS301: synchronization model (PDF)</a> · <a href="https://docs.flipper.net/zero/sub-ghz/read-raw">Flipper: demodulated RAW recordings</a> · <a href="https://docs.flipper.net/zero/sub-ghz/supported-vendors">Flipper: static and dynamic protocol support</a>. Course review: 10 September 2026.</p></section>
 
       <section id="car-fob">
         <h2>The car fob that won't clone</h2>
         <dl class="kv">
           <dt>Symptom</dt><dd>You try to copy your car key fob so you have a spare. The Flipper reads something, but the copy never unlocks the car.</dd>
-          <dt>What's happening</dt><dd>Modern car fobs are rolling code too, so the same one-time-password logic applies — plus a car isn't designed to be taught a new remote by radio at all.</dd>
+          <dt>What's happening</dt><dd>Modern car fobs are rolling code too, so the same one-time-password logic applies — provisioning and immobilizer behaviour depend on the specific vehicle and require its documented service procedure.</dd>
           <dt>What to do</dt><dd>Add a spare the way cars actually do it: programming, not cloning.</dd>
         </dl>
         <p>
@@ -185,7 +140,7 @@
 
   <footer class="site-footer">
     <div class="wrap">
-      <p>Signal Path teaches RF with devices you own, for learning and legitimate testing. Radio transmission is regulated where you live; interfering with other people's devices is illegal and harmful. When in doubt: listen, don't transmit.</p>
+      <p>Signal Path teaches RF with devices you own, for learning and legitimate testing. Radio transmission is regulated where you live; interfering with other people's devices is illegal and harmful. When scope or legality is unclear, use the simulators.</p>
       <p>Signal Path · a self-guided RF course for the Flipper Zero</p>
     </div>
   </footer>

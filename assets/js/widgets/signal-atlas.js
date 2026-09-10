@@ -2,7 +2,7 @@
    Signal Path — widget: signal-atlas  (capstone)
    A personal RF-device logger backed by SP.state.atlas (array).
    Add / edit / delete entries, load samples, export JSON or CSV
-   into a copyable textarea (no file downloads — sandbox blocks them).
+   into a copyable textarea (copyable export for portability).
    Registers as "signal-atlas".
    ============================================================ */
 (function () {
@@ -20,7 +20,7 @@
     var ui = SP.widgetShell(host, "Signal Atlas", "your personal RF-device log");
     var body = ui.body;
 
-    var CATS = ["Sub-GHz", "125 kHz RFID", "NFC"];
+    var CATS = ["Sub-GHz", "125 kHz RFID", "NFC", "Infrared", "iButton", "GPIO", "USB/BLE"];
     var MODS = ["n/a", "AM650", "AM270", "FM238", "FM476", "FSK", "other"];
     var CODES = ["Fixed", "Rolling", "Unknown"];
     var COLS = ["name", "category", "frequency", "modulation", "protocol", "codeType", "notes"];
@@ -32,7 +32,7 @@
 
     if (!compact) {
       body.appendChild(SP.el("p", { class: "readout",
-        html: "Log every remote, fob, tag and card you own. This is your reference — and the capstone deliverable." }));
+        html: "Log authorized training devices with aliases; do not store credentials or private captures here. This is your reference — and the capstone deliverable." }));
     }
 
     /* ---------- form ---------- */
@@ -207,9 +207,9 @@
     function addSamples() {
       var samples = [
         { name: "Front doorbell", category: "Sub-GHz", frequency: "433.92 MHz", modulation: "AM650", protocol: "Princeton", codeType: "Fixed", notes: "(sample) fixed 24-bit code", sample: true },
-        { name: "Car key fob", category: "Sub-GHz", frequency: "433.92 MHz", modulation: "FSK", protocol: "KeeLoq", codeType: "Rolling", notes: "(sample) counter changes every press", sample: true },
-        { name: "Office badge", category: "125 kHz RFID", frequency: "125 kHz", modulation: "n/a", protocol: "EM4100", codeType: "Fixed", notes: "(sample) 40-bit EM-Marin ID", sample: true },
-        { name: "Transit card", category: "NFC", frequency: "13.56 MHz", modulation: "n/a", protocol: "Mifare Classic", codeType: "Unknown", notes: "(sample) 13.56 MHz ISO 14443", sample: true }
+        { name: "Simulated rolling remote", category: "Sub-GHz", frequency: "433.92 MHz", modulation: "FSK", protocol: "KeeLoq", codeType: "Rolling", notes: "(sample) counter changes every press", sample: true },
+        { name: "Unenrolled training tag", category: "125 kHz RFID", frequency: "125 kHz", modulation: "n/a", protocol: "EM4100", codeType: "Fixed", notes: "(sample) 40-bit EM-Marin ID", sample: true },
+        { name: "Practice NFC card", category: "NFC", frequency: "13.56 MHz", modulation: "n/a", protocol: "Mifare Classic", codeType: "Unknown", notes: "(sample) 13.56 MHz ISO 14443", sample: true }
       ];
       var added = 0;
       samples.forEach(function (s) {
@@ -290,7 +290,8 @@
     }
     function csvCell(v) {
       v = v == null ? "" : String(v);
-      if (/[",\n]/.test(v)) v = '"' + v.replace(/"/g, '""') + '"';
+      if (/^[=+@\-\t\r]/.test(v)) v = "'" + v;
+      if (/[",\n\r]/.test(v)) v = '"' + v.replace(/"/g, '""') + '"';
       return v;
     }
     function toCSV() {
@@ -320,6 +321,6 @@
 
     renderTable();
 
-    ui.foot("Stays on this device (localStorage). Log only devices you own. Export to keep a copy elsewhere.");
+    ui.foot("Stays on this device (localStorage). Log only authorized training equipment. Export to keep a copy elsewhere.");
   });
 })();

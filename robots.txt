@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /signal-path/
+Sitemap: https://o1tean.github.io/signal-path/sitemap.xml

@@ -107,18 +107,18 @@
 
       <section id="finding-it">
         <h2>Two ways to find it: Analyzer vs Test</h2>
-        <p>The Flipper gives you two different tools for the "where" question, and beginners constantly confuse them. Here's the clean distinction.</p>
+        <p>Compare the real Frequency Analyzer with this course’s synthetic spectrum display. They illustrate related ideas but are not the same instrument.</p>
 
         <div class="grid2">
           <div class="card">
             <h3 style="margin-top:0;font-size:16px">Frequency Analyzer <span class="pill orange">measures</span></h3>
-            <p><span class="flip">Sub-GHz → Frequency Analyzer</span> hunts for the <b>strongest signal nearby</b> and tells you its exact frequency. Hold your remote almost touching the Flipper, press the button, and it prints a number.</p>
+            <p><span class="flip">Sub-GHz → Frequency Analyzer</span> hunts for the <b>strongest signal nearby</b> and reports a detected frequency from its configured scan list. Hold your remote almost touching the Flipper, press the button, and it prints a number.</p>
             <p style="margin-bottom:0">Use it to <b>discover</b> a frequency you don't know.</p>
           </div>
           <div class="card">
-            <h3 style="margin-top:0;font-size:16px">Test <span class="pill cyan">monitors</span></h3>
-            <p><span class="flip">Sub-GHz → Test</span> watches a set of <b>preset frequencies</b> and shows how much energy (RSSI — received signal strength) each is seeing right now.</p>
-            <p style="margin-bottom:0">Use it to <b>confirm activity</b> and compare which known band is loudest.</p>
+            <h3 style="margin-top:0;font-size:16px">Spectrum simulator <span class="pill cyan">models</span></h3>
+            <p>The <a href="../playground.html">browser spectrum scope</a> displays synthetic peaks and a noise floor. It is not a real Flipper firmware screen or a calibrated measurement.</p>
+            <p style="margin-bottom:0">Use it to <b>learn how to read a plot</b>, then record real analyzer observations separately.</p>
           </div>
         </div>
 
@@ -178,7 +178,7 @@
             <li>Hold your first remote <b>almost touching</b> the top of the Flipper.</li>
             <li>Press and hold the remote's button. Read the frequency the Analyzer prints. Write it down next to the device's name.</li>
             <li>Repeat for a second and third device. You're building your first personal frequency map.</li>
-            <li>Cross-check one reading: switch to <span class="flip">Sub-GHz → Test</span>, press the same remote, and confirm the matching band lights up as the loudest.</li>
+            <li>Cross-check a reading against the training remote’s label or manufacturer documentation. Record whether they agree and keep any uncertainty explicit.</li>
           </ol>
         </div>
 
@@ -199,12 +199,12 @@
         <h2>Check yourself</h2>
         <div data-quiz="m01"></div>
       </section>
-    </article>
+    <section id="sources"><h2>Verify the details</h2><p class="source-note">Read the primary sources: <a href="https://docs.flipper.net/zero/sub-ghz/frequencies">Flipper: regional frequencies</a> · <a href="https://docs.flipper.net/zero/sub-ghz/read">Flipper: reading signals and presets</a>. Course review: 10 September 2026.</p></section></article>
   </main>
 
   <footer class="site-footer">
     <div class="wrap">
-      <p>Signal Path teaches RF with devices you own, for learning and legitimate testing. Radio transmission is regulated where you live; interfering with other people's devices is illegal and harmful. When in doubt: listen, don't transmit.</p>
+      <p>Signal Path teaches RF with devices you own, for learning and legitimate testing. Radio transmission is regulated where you live; interfering with other people's devices is illegal and harmful. When scope or legality is unclear, use the simulators.</p>
       <p>Signal Path · a self-guided RF course for the Flipper Zero</p>
     </div>
   </footer>

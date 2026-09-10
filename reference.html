@@ -69,7 +69,7 @@
           A preset tells the radio <i>how</i> to listen: which modulation, and how wide a slice of
           spectrum. The four stock presets, and when to reach for each. For the <b>AM</b> presets the number is
           roughly the receiver bandwidth in kHz; for the <b>FM</b> presets it's the FSK frequency deviation
-          (how far the two tones are spread) — either way, treat them as "narrow vs wide," not exact figures.
+          from the centre frequency. FM238 is about 2.38 kHz deviation; FM476 about 47.6 kHz. Both use about 270 kHz receive bandwidth.
         </p>
         <div class="table-scroll">
           <table>
@@ -86,8 +86,7 @@
           In a saved <span class="mono">.sub</span> file, the preset appears as a
           <span class="mono">FuriHalSubGhzPreset…Async</span> token on the <span class="mono">Preset:</span>
           line — for example AM650 is written <span class="mono">FuriHalSubGhzPresetOok650Async</span>.
-          Momentum and Unleashed can add extra custom presets defined in a user settings file on the SD
-          card. If a signal won't decode, changing the preset is the second thing to try after confirming
+          Official firmware and compatible forks can load custom presets from an SD-card settings file. If a signal won't decode, changing the preset is the second thing to try after confirming
           the frequency.
         </p>
       </section>
@@ -266,12 +265,12 @@
           </div>
         </div>
       </section>
-    </article>
+    <p class="source-note">Verify presets and radio settings in the <a href="https://docs.flipper.net/zero/sub-ghz/read">official reading guide</a>. For use in Romania, start with <a href="legal.html#romania">ANCOM and the Romanian course guide</a>.</p></article>
   </main>
 
   <footer class="site-footer">
     <div class="wrap">
-      <p>Signal Path teaches RF with devices you own, for learning and legitimate testing. Radio transmission is regulated where you live; interfering with other people's devices is illegal and harmful. When in doubt: listen, don't transmit.</p>
+      <p>Signal Path teaches RF with devices you own, for learning and legitimate testing. Radio transmission is regulated where you live; interfering with other people's devices is illegal and harmful. When scope or legality is unclear, use the simulators.</p>
       <p>Signal Path · a self-guided RF course for the Flipper Zero</p>
     </div>
   </footer>

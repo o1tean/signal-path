@@ -54,8 +54,8 @@
       body.appendChild(SP.el("div", { class: "callout note", style: "margin-top:0" }, [
         SP.el("span", { class: "ic", text: "i" }),
         SP.el("div", {}, [
-          SP.el("span", { class: "callout-title", text: "You own this gate and this remote" }),
-          SP.el("div", { html: "Press the remote, record a press with the Flipper, then try to replay it. The counter is doing all the work — watch it." })
+          SP.el("span", { class: "callout-title", text: "A synthetic counter model — no radio hardware" }),
+          SP.el("div", { html: "Predict whether each simulated message will be accepted, then try it. Cryptography, radio interference, and vendor-specific recovery are not implemented here." })
         ])
       ]));
     }

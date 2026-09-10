@@ -134,18 +134,18 @@
             <tbody>
               <tr><td><b class="mono">AM270</b> <span class="pill am">AM</span></td><td>OOK (on/off)</td><td>a <b>narrower</b> receive window (~270)</td><td>weaker or cleaner OOK signals; less noise let in</td></tr>
               <tr><td><b class="mono">AM650</b> <span class="pill am">AM</span></td><td>OOK (on/off)</td><td>a <b>wider</b> receive window (~650)</td><td><b>your default first try</b> — catches most OOK remotes</td></tr>
-              <tr><td><b class="mono">FM238</b> <span class="pill fm">FM</span></td><td>2-FSK (two pitches)</td><td>a <b>smaller</b> tone spread (~238 deviation)</td><td>FSK devices with a small pitch shift</td></tr>
-              <tr><td><b class="mono">FM476</b> <span class="pill fm">FM</span></td><td>2-FSK (two pitches)</td><td>a <b>larger</b> tone spread (~476 deviation)</td><td>FSK devices with a larger pitch shift</td></tr>
+              <tr><td><b class="mono">FM238</b> <span class="pill fm">FM</span></td><td>2-FSK (two pitches)</td><td>a <b>smaller</b> deviation (~2.38 kHz)</td><td>FSK devices with a small pitch shift</td></tr>
+              <tr><td><b class="mono">FM476</b> <span class="pill fm">FM</span></td><td>2-FSK (two pitches)</td><td>a <b>larger</b> deviation (~47.6 kHz)</td><td>FSK devices with a larger pitch shift</td></tr>
             </tbody>
           </table>
         </div>
 
         <div class="callout warn">
           <span class="ic">!</span>
-          <div><span class="callout-title">About that number</span>The number means something slightly different for AM and FM, so don't over-read it. For the <b>AM presets</b> it's roughly the <b>receiver bandwidth in kHz</b> — how wide a slice of spectrum the receiver listens to (AM650 = wide, AM270 = narrow). For the <b>FM presets</b> it's the <b>frequency deviation</b> — how far apart the two FSK tones are spread (FM476 = a bigger shift, FM238 = a smaller one), not the bandwidth. Either way the intuition is the same: <b>bigger number ≈ handles a wider/louder signal (and more noise); smaller ≈ tighter and cleaner.</b></div>
+          <div><span class="callout-title">About that number</span>The number means something slightly different for AM and FM, so don't over-read it. For the <b>AM presets</b> it's roughly the <b>receiver bandwidth in kHz</b> — how wide a slice of spectrum the receiver listens to (AM650 = wide, AM270 = narrow). For the <b>FM presets</b> it's the <b>frequency deviation</b> — the offset of a tone from the centre frequency (FM476 = a bigger shift, FM238 = a smaller one), not the bandwidth. Both FM presets use approximately 270 kHz receive bandwidth. FM238 uses about 2.38 kHz deviation; FM476 about 47.6 kHz. Deviation is not signal strength.</div>
         </div>
 
-        <p>Momentum (and Unleashed) let you add <b>custom presets</b> beyond these four, loaded from a settings file on the SD card — handy for oddball devices later. For now, the four built-ins cover almost everything, and <b>AM650</b> alone covers most of your junk-drawer remotes.</p>
+        <p>Official firmware and compatible forks support <b>custom presets</b> beyond these four, loaded from a settings file on the SD card — handy for oddball devices later. For now, the four built-ins cover almost everything, and <b>AM650</b> alone covers most of your junk-drawer remotes.</p>
 
         <h3>Watch modulation happen</h3>
         <p>Reading about on/off versus two-pitches only gets you so far. In the Wave Lab, type a short bit pattern and watch it ride a carrier — flip between OOK and FSK and see the very shapes from the diagram above build themselves from your bits.</p>
@@ -217,12 +217,12 @@
         <h2>Check yourself</h2>
         <div data-quiz="m02"></div>
       </section>
-    </article>
+    <section id="sources"><h2>Verify the details</h2><p class="source-note">Read the primary sources: <a href="https://docs.flipper.net/zero/sub-ghz/read">Flipper: reading signals and presets</a>. Course review: 10 September 2026.</p></section></article>
   </main>
 
   <footer class="site-footer">
     <div class="wrap">
-      <p>Signal Path teaches RF with devices you own, for learning and legitimate testing. Radio transmission is regulated where you live; interfering with other people's devices is illegal and harmful. When in doubt: listen, don't transmit.</p>
+      <p>Signal Path teaches RF with devices you own, for learning and legitimate testing. Radio transmission is regulated where you live; interfering with other people's devices is illegal and harmful. When scope or legality is unclear, use the simulators.</p>
       <p>Signal Path · a self-guided RF course for the Flipper Zero</p>
     </div>
   </footer>

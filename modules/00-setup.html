@@ -44,9 +44,9 @@
         </div>
       </div>
 
-      <section id="goal">
+      <section id="first-start"><h2>Unbox, update, and keep a lab record</h2><ol class="steps"><li><div>Charge the device, insert a suitable microSD card, and back up any existing card data before formatting. A new card can be set up through the device’s storage menu.</div></li><li><div>Install qFlipper from the official download link or pair your own phone with the official mobile app. Use the documented firmware update process with the SD card inserted.</div></li><li><div>Record the firmware version and region shown by the device. A regional frequency list is a hardware/software setting, not a substitute for ANCOM’s conditions.</div></li><li><div>Use only a locally compliant training remote for RF exercises. If you have no suitable target yet, complete the simulators first.</div></li></ol><p class="source-note">Read the primary sources: <a href="https://docs.flipper.net/zero/basics/first-start">Flipper: first start</a> · <a href="https://docs.flipper.net/zero/basics/firmware-update">Flipper: firmware update</a>. Course review: 10 September 2026.</p></section><section id="goal">
         <h2>Goal</h2>
-        <p>You just unboxed a Flipper Zero, flashed the <b>Momentum</b> firmware, and now you are staring at a little orange gadget with a dolphin on it, wondering what you got yourself into. That is exactly the right place to start.</p>
+        <p>Start with official firmware, or record the Momentum version if you already use it. You do not need to switch firmware for the core labs. Read the <a href="../legal.html">Romanian ground rules</a> before working with hardware.</p>
         <p>This module has one job: make the device feel <em>ordinary</em>. No captures, no decoding, no transmitting — just navigating menus and confirming the radio is alive. Radio is intimidating in the abstract and completely approachable once you have watched a needle twitch when you press a doorbell. We are going to press the doorbell.</p>
         <div class="callout tip">
           <span class="ic">i</span>
@@ -74,39 +74,17 @@
           </table>
         </div>
 
-        <p>That is a lot of doors. Here is the good news: <b>this course walks through one of them.</b> Signal Path is almost entirely about the <b>Sub-GHz radio</b> — the part that listens to and repeats the little radio remotes scattered around your home. RFID and NFC get one module each near the end so you know they exist and how they differ, but Sub-GHz is where a beginner learns the most, fastest, with the least risk.</p>
+        <p>That is a lot of doors. Here is the good news: <b>the first half of this course focuses on Sub-GHz, then expands to other interfaces.</b> Signal Path is almost entirely about the <b>Sub-GHz radio</b> — the part that listens to and repeats the little radio remotes scattered around your home. RFID and NFC get one module each near the end so you know they exist and how they differ, but Sub-GHz is where a beginner learns the most, fastest, with the least risk.</p>
 
         <div class="callout note">
           <span class="ic">?</span>
           <div><span class="callout-title">Why "Sub-GHz"?</span>"Sub" means "below." Sub-GHz means "below one gigahertz" — the stretch of radio spectrum under 1,000&nbsp;MHz where cheap, short-range remotes live. The Flipper's radio chip physically covers <b>300–348, 387–464, and 779–928&nbsp;MHz</b>. Do not memorize those; you will meet the four numbers that matter in Module&nbsp;1.</div>
         </div>
 
-        <p>One more reframe that helps enormously: <b>listening is not the same as transmitting.</b> Receiving radio is passive and, for the bands the Flipper covers, generally fine to do — your car radio does it all day. Transmitting is the part that is regulated, because you are now putting energy into the air that can reach other people's devices. For all of Week&nbsp;0 and most of Week&nbsp;1, you are only ever <em>listening</em>. We will make the transmit rules crystal clear before you send a single signal.</p>
+        <p>One more reframe that helps enormously: <b>listening is not the same as transmitting.</b> Receiving radio is passive and, not a blanket permission to capture private communications. Transmitting is the part that is regulated, because you are now putting energy into the air that can reach other people's devices. For all of Week&nbsp;0 and most of Week&nbsp;1, you are only ever <em>listening</em>. We will make the transmit rules crystal clear before you send a single signal.</p>
       </section>
 
-      <section id="momentum">
-        <h2>What Momentum firmware adds</h2>
-        <p>The Flipper ships with <b>stock (official) firmware</b> made by the manufacturer. <b>Momentum</b> is a <b>community firmware</b> — a version built and maintained by volunteers that you flash onto the device in place of the stock one. (Unleashed is another popular one; they are cousins.) Same hardware, more software.</p>
-        <p>Why bother? Community firmware typically unlocks conveniences the stock build keeps conservative:</p>
-        <ul>
-          <li><b>Extended frequency range</b> — the ability to tune to more frequencies within what the radio chip physically supports, not just a short "approved" list.</li>
-          <li><b>Custom modulation presets</b> — extra receiver settings beyond the four built-in ones, loaded from a settings file on the SD card.</li>
-          <li><b>More protocols</b> — recognizes more remote "languages" out of the box.</li>
-          <li><b>Extra apps</b> and quality-of-life tweaks — a richer app catalog, interface options, and tools.</li>
-        </ul>
-
-        <div class="callout legal">
-          <span class="ic">!</span>
-          <div><span class="callout-title">Extra power is your responsibility</span>The same options that make Momentum handy — extended frequencies, unlocked transmit — can let the device transmit on frequencies or in ways that are <b>illegal in your region</b>. The firmware does not know where you live. You do. "It let me" is never the same as "it's legal here." The full ground rules live in the <a href="../legal.html">legal guide</a>, and you will read them in full before Module&nbsp;4, where you first transmit.</div>
-        </div>
-
-        <details>
-          <summary>Do I need to know which firmware version I'm on?</summary>
-          <div class="d-body">
-            <p>Not deeply — but it helps to know you're on <em>a</em> Momentum build so menu labels and available presets roughly match what this course describes. Firmware version and device info live under the Flipper's settings, near the bottom of the main menu. Community firmware updates often, so if a menu on your device is worded slightly differently or sits in a different spot than a screenshot online, that is normal and expected. We describe menus by what they <em>do</em> for exactly this reason.</p>
-          </div>
-        </details>
-      </section>
+      <section id="momentum"><h2>Choose a documented starting point</h2><p>Use official firmware for your first labs. If Momentum is already installed, record its version and keep transmit restrictions enabled. The basic RF principles apply to either. Apps, custom presets, and external CC1101 support also exist in official firmware; compare current documentation instead of assuming they require a fork.</p><p class="source-note">Read the primary sources: <a href="https://docs.flipper.net/zero/basics/first-start">Flipper: first start</a> · <a href="https://docs.flipper.net/zero/basics/firmware-update">Flipper: firmware update</a> · <a href="https://docs.flipper.net/zero/sub-ghz">Flipper: Sub-GHz hardware and menus</a>. Course review: 10 September 2026.</p></section>
 
       <section id="sd-card">
         <h2>The SD card &amp; your first file format</h2>
@@ -169,7 +147,7 @@ TE: 400</code></pre>
         <h2>What you'll need</h2>
         <p>Gather these once and the rest of the course flows. None of it is expensive or exotic — most of it is already in your house.</p>
         <ul>
-          <li><b>A Flipper Zero running Momentum</b>, charged. (Any recent Momentum build is fine.)</li>
+          <li><b>A charged Flipper Zero</b> on official firmware or a documented Momentum build.</li>
           <li><b>A microSD card</b>, seated and formatted, for saving captures later.</li>
           <li><b>A few small RF remotes you own</b> — see the prop list in the lab below.</li>
           <li><b>A notebook or a notes app.</b> You will jot down frequencies and settings; writing them down is half the learning.</li>
@@ -177,7 +155,7 @@ TE: 400</code></pre>
         </ul>
         <div class="callout legal">
           <span class="ic">!</span>
-          <div><span class="callout-title">One rule, from the very first press</span>Everything in Signal Path uses devices <b>you own</b>, in a space <b>you control</b>. We never open, unlock, or interfere with property that isn't ours. Today you are only listening, which is the gentlest thing a radio can do — but it is worth building the habit now. The complete <a href="../legal.html">ground rules</a> come before you transmit in Module&nbsp;4.</div>
+          <div><span class="callout-title">One rule, from the very first press</span>Everything in Signal Path uses devices <b>you own</b>, in a space <b>you control</b>. We never open, unlock, or interfere with property that isn't ours. Today you are only listening, which is the gentlest thing a radio can do — but it is worth building the habit now. Read the <a href="../legal.html">Romanian ground rules</a> before this hardware lab.</div>
         </div>
       </section>
 
@@ -191,10 +169,10 @@ TE: 400</code></pre>
           <p class="lab-gear">Gear: <b>Flipper only</b> — no capture, no transmit</p>
           <ol>
             <li>From the desktop, open the main menu and select <span class="flip">Sub-GHz</span>.</li>
-            <li>Choose <span class="flip">Sub-GHz → Test</span>. You'll see a live reading of the radio energy around you — a number and/or a moving indicator. This is the antenna reporting how loud the air is right now.</li>
-            <li>Note the resting level with nothing happening nearby. That baseline is the <b>noise floor</b> — the quiet hum of the world. (Its name and meaning come in Module&nbsp;1; for now, just notice it sits low.)</li>
-            <li>Grab any small remote — a wireless doorbell button is perfect — hold it a few centimeters from the Flipper, and <b>press it</b>. Watch the reading jump.</li>
-            <li>Let go. Watch it fall back to the noise floor. Press again. Feel the cause and effect.</li>
+            <li>Choose <span class="flip">Sub-GHz → Frequency Analyzer</span>. It checks configured frequencies and reports a sufficiently strong nearby signal. It is not a continuous calibrated spectrum display.</li>
+            <li>Observe the display before your test press. It may show no detected frequency; that does not mean the environment contains no radio energy.</li>
+            <li>Use your authorized, locally compliant training remote — a wireless chime button is suitable — hold it a few centimeters from the Flipper, and <b>press it</b>. Watch the reading jump.</li>
+            <li>Release the button and compare what the analyzer reports. Record the displayed frequency and the limits of this observation.</li>
           </ol>
         </div>
 
@@ -240,12 +218,12 @@ TE: 400</code></pre>
         <h2>Check yourself</h2>
         <div data-quiz="m00"></div>
       </section>
-    </article>
+    <section id="sources"><h2>Verify the details</h2><p class="source-note">Read the primary sources: <a href="https://docs.flipper.net/zero/basics/first-start">Flipper: first start</a> · <a href="https://docs.flipper.net/zero/basics/firmware-update">Flipper: firmware update</a> · <a href="https://docs.flipper.net/zero/sub-ghz">Flipper: Sub-GHz hardware and menus</a>. Course review: 10 September 2026.</p></section></article>
   </main>
 
   <footer class="site-footer">
     <div class="wrap">
-      <p>Signal Path teaches RF with devices you own, for learning and legitimate testing. Radio transmission is regulated where you live; interfering with other people's devices is illegal and harmful. When in doubt: listen, don't transmit.</p>
+      <p>Signal Path teaches RF with devices you own, for learning and legitimate testing. Radio transmission is regulated where you live; interfering with other people's devices is illegal and harmful. When scope or legality is unclear, use the simulators.</p>
       <p>Signal Path · a self-guided RF course for the Flipper Zero</p>
     </div>
   </footer>

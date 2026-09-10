@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Signal Path · Learn RF with the Flipper Zero</title>
-  <meta name="description" content="A hands-on, self-paced RF course for total beginners, built around the Flipper Zero and Momentum firmware.">
+  <meta name="description" content="A hands-on, self-paced RF course for total beginners, with Flipper Zero, official firmware, and optional Momentum.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&family=Public+Sans:ital,wght@0,400;0,500;0,600;1,400&display=swap">
@@ -49,21 +49,22 @@
       <h1>Learn to <span class="kicker">read the airwaves</span>.</h1>
       <p class="lede">
         Your Flipper Zero is a pocket radio lab. Signal Path takes you from "what is a frequency?" to
-        confidently capturing, decoding, and replaying signals from devices you own — with labs you do
+        confidently explaining and testing signals in your authorized lab — with labs you do
         on the real device and simulators you play with right here.
       </p>
       <div class="chips" style="margin-top:24px;">
         <span class="chip">Level: <b>Total beginner</b></span>
-        <span class="chip">Pace: <b>~6 weeks</b>, self-guided</span>
-        <span class="chip">Firmware: <b>Momentum</b></span>
-        <span class="chip">11 modules · <b>9 interactives</b> · quizzes</span>
+        <span class="chip">Pace: <b>~12 weeks</b>, self-guided</span>
+        <span class="chip">Firmware: <b>Official or Momentum</b></span>
+        <span class="chip">18 modules · <b>10 interactives</b> · quizzes</span>
       </div>
       <div class="btn-row" style="margin-top:22px;">
-        <a class="btn primary" href="primer.html">Start with the primer →</a>
+        <a class="btn primary" href="roadmap.html">Start the learning path →</a>
         <a class="btn" href="modules/00-setup.html">Jump to Module 0</a>
         <a class="btn ghost" href="playground.html">Just play with the simulators</a>
       </div>
 
+      <div class="next-session card"><p class="eyebrow">Your next session</p><a class="resume-link" data-resume href="modules/00-setup.html">0 · Meet your radio lab →</a><p>Read, predict, practise, then explain it tomorrow. Keep the evidence in your <a href="notebook.html">notebook</a>.</p></div>
       <div class="ruler-card">
         <div class="ruler-head">
           <h2>Where the Flipper listens: the Sub-GHz spectrum</h2>
@@ -92,7 +93,7 @@
       </div>
 
       <div class="progress-card" style="margin-top:18px;">
-        <div class="txt">Your progress: <b data-progress-text>0 / 11</b> modules</div>
+        <div class="txt">Your progress: <b data-progress-text>0 / 18</b> modules</div>
         <div class="bar"><i data-progress-bar></i></div>
         <button class="btn small mono" type="button" data-reset-progress>reset</button>
       </div>
@@ -103,7 +104,7 @@
     <section class="home" id="how">
       <div class="sec-head">
         <p class="eyebrow">How it works</p>
-        <h2>Listen first. Then transmit. Then play.</h2>
+        <h2>Understand. Practise. Prove it.</h2>
       </div>
       <div class="how">
         <div class="card">
@@ -124,14 +125,14 @@
     <section class="home" id="course">
       <div class="sec-head">
         <p class="eyebrow">The course</p>
-        <h2>Eleven modules, six weeks, one rule</h2>
-        <p>Only capture and replay signals from devices you own, in a space you control. Read the <a href="legal.html">ground rules</a> before Module 4 — that's where you first transmit.</p>
+        <h2>From first signal to independent projects</h2>
+        <p>Only capture and replay signals from devices you own, in a space you control. Read the <a href="legal.html">Romanian ground rules</a> before hardware labs. The first eleven modules build RF foundations; seven more cover other interfaces and research.</p>
       </div>
       <div class="mod-map">
         <a class="mod-card" href="modules/00-setup.html" data-mod-card="m00">
           <div class="mc-top"><span class="mc-idx">0</span><span class="mc-week">Week 0</span><span class="mc-status" style="margin-left:auto"></span></div>
           <h3>Meet your radio lab</h3>
-          <p>Navigate the Flipper, confirm Momentum, and watch live radio energy for the first time.</p>
+          <p>Navigate the Flipper, record your firmware, and watch live radio energy for the first time.</p>
           <div class="mc-foot">Setup · Flipper screen simulator</div>
         </a>
         <a class="mod-card" href="modules/01-frequency.html" data-mod-card="m01">
@@ -167,7 +168,7 @@
         <a class="mod-card" href="modules/06-rfid.html" data-mod-card="m06">
           <div class="mc-top"><span class="mc-idx">6</span><span class="mc-week">Week 4</span><span class="mc-status" style="margin-left:auto"></span></div>
           <h3>125 kHz RFID</h3>
-          <p>Read, save and emulate your own building fob — and learn why it's not "radio" the way Sub-GHz is.</p>
+          <p>Read, save and emulate a training tag — and learn why it's not "radio" the way Sub-GHz is.</p>
           <div class="mc-foot">EM4100 · HID Prox · T5577</div>
         </a>
         <a class="mod-card" href="modules/07-nfc.html" data-mod-card="m07">
@@ -178,8 +179,8 @@
         </a>
         <a class="mod-card" href="modules/08-momentum.html" data-mod-card="m08">
           <div class="mc-top"><span class="mc-idx">8</span><span class="mc-week">Week 5</span><span class="mc-status" style="margin-left:auto"></span></div>
-          <h3>Momentum power features</h3>
-          <p>Extended frequencies, custom presets, external radio modules and the apps worth knowing.</p>
+          <h3>Firmware, apps &amp; Momentum</h3>
+          <p>Make a documented firmware choice, keep backups, and distinguish stock features from fork additions.</p>
           <div class="mc-foot">Settings · presets · external CC1101</div>
         </a>
         <a class="mod-card" href="modules/09-troubleshooting.html" data-mod-card="m09">
@@ -190,17 +191,17 @@
         </a>
         <a class="mod-card" href="modules/10-capstone.html" data-mod-card="m10">
           <div class="mc-top"><span class="mc-idx">10</span><span class="mc-week">Week 6</span><span class="mc-status" style="margin-left:auto"></span></div>
-          <h3>Capstone: your signal atlas</h3>
-          <p>Catalog every RF device in your home with the built-in atlas tool. Finish this and you're not a beginner.</p>
+          <h3>Foundation project: your signal atlas</h3>
+          <p>Build an evidence-based atlas of your training devices, then continue into other interfaces.</p>
           <div class="mc-foot">Signal Atlas tool · export</div>
         </a>
-      </div>
+<a class="mod-card" href="modules/11-infrared.html" data-mod-card="m11"><div class="mc-top"><span class="mc-idx">11</span><span class="mc-week">Week 7</span><span class="mc-status"></span></div><h3>Infrared: build your own remote</h3><p>A two-button remote with meaningful labels and observed results.</p><div class="mc-foot">Practical lab · retrieval quiz · notebook</div></a><a class="mod-card" href="modules/12-gpio.html" data-mod-card="m12"><div class="mc-top"><span class="mc-idx">12</span><span class="mc-week">Week 8</span><span class="mc-status"></span></div><h3>GPIO: signals you can touch</h3><p>An annotated circuit diagram and estimated LED current.</p><div class="mc-foot">Practical lab · retrieval quiz · notebook</div></a><a class="mod-card" href="modules/13-usb-bluetooth.html" data-mod-card="m13"><div class="mc-top"><span class="mc-idx">13</span><span class="mc-week">Week 8</span><span class="mc-status"></span></div><h3>USB and Bluetooth: understand trust</h3><p>The exact text output, without executing any operating-system commands.</p><div class="mc-foot">Practical lab · retrieval quiz · notebook</div></a><a class="mod-card" href="modules/14-contact-and-authentication.html" data-mod-card="m14"><div class="mc-top"><span class="mc-idx">14</span><span class="mc-week">Week 9</span><span class="mc-status"></span></div><h3>iButton and U2F: identity is not authentication</h3><p>A supported training-key reading, or a documented unsupported result.</p><div class="mc-foot">Practical lab · retrieval quiz · notebook</div></a><a class="mod-card" href="modules/15-app-development.html" data-mod-card="m15"><div class="mc-top"><span class="mc-idx">15</span><span class="mc-week">Week 10</span><span class="mc-status"></span></div><h3>Build your first Flipper app</h3><p>A successful build with recorded toolchain and firmware versions.</p><div class="mc-foot">Practical lab · retrieval quiz · notebook</div></a><a class="mod-card" href="modules/16-security-lab.html" data-mod-card="m16"><div class="mc-top"><span class="mc-idx">16</span><span class="mc-week">Week 11</span><span class="mc-status"></span></div><h3>Authorized security research: test the claim</h3><p>A threat model identifying access, capability, target, and security property.</p><div class="mc-foot">Practical lab · retrieval quiz · notebook</div></a><a class="mod-card" href="modules/17-mastery.html" data-mod-card="m17"><div class="mc-top"><span class="mc-idx">17</span><span class="mc-week">Week 11–12</span><span class="mc-status"></span></div><h3>Mastery project: explain, measure, teach</h3><p>A repeatable experiment with a prediction, controlled variable, and recorded failures.</p><div class="mc-foot">Practical lab · retrieval quiz · notebook</div></a>      </div>
     </section>
 
     <section class="home" id="play">
       <div class="sec-head">
         <p class="eyebrow">Playground</p>
-        <h2>Nine simulators you can poke at</h2>
+        <h2>Ten interactive tools to learn with</h2>
       </div>
       <div class="teaser">
         <div class="card">
@@ -217,7 +218,7 @@
         <div class="card flat" style="background:var(--surface-2);">
           <p class="eyebrow">Case study</p>
           <h3 style="font-size:17px;">"My Nice gate copies once, then barely works"</h3>
-          <p class="muted" style="font-size:14px; margin-top:8px;">The single most common beginner mystery, and the cleanest demonstration of rolling codes there is. It's the centerpiece of Module 5.</p>
+          <p class="muted" style="font-size:14px; margin-top:8px;">A diagnostic example about freshness and uncertainty. Learn why an old code does not become valid again just because a receiver has a forward window.</p>
           <a class="btn small" href="case-studies.html">Read the case studies</a>
         </div>
       </div>
@@ -228,7 +229,7 @@
         <span class="ic">!</span>
         <div>
           <span class="callout-title">The one rule</span>
-          Only capture and replay signals from devices <b>you own or have explicit permission to test</b>, in a space you control. Receiving is passive; transmitting is regulated and can interfere with other people. Never transmit to cars, gates, or garages that aren't yours, never jam or flood a band, and treat Momentum's region unlocks as "know your local law first." <a href="legal.html">Full ground rules →</a>
+          Only capture and replay signals from devices <b>you own or have explicit permission to test</b>, in a space you control. Reception can involve private data; transmission must satisfy Romanian radio conditions. Never transmit to cars, gates, or garages that aren't yours, never jam or flood a band, and keep regional restrictions enabled for the course. <a href="legal.html">Full ground rules →</a>
         </div>
       </div>
     </section>
@@ -236,11 +237,11 @@
 
   <footer class="site-footer">
     <div class="wrap">
-      <p>Signal Path teaches RF with devices you own, for learning and legitimate testing. Radio transmission is regulated where you live; interfering with other people's devices is illegal and harmful. When in doubt: listen, don't transmit.</p>
+      <p>Signal Path teaches RF with devices you own, for learning and legitimate testing. Radio transmission is regulated where you live; interfering with other people's devices is illegal and harmful. When scope or legality is unclear, use the simulators.</p>
       <p>Signal Path · a self-guided RF course for the Flipper Zero</p>
     </div>
   </footer>
 
   <script src="assets/js/site.js"></script>
-</body>
+<script src="assets/js/learning.js"></script></body>
 </html>

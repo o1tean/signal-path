@@ -152,43 +152,9 @@ RAW_Data: 328 -456 320 -1348 980 -452 336 -444 972 -1360 340 -448</code></pre>
         <div data-widget="rolling-sim"></div>
       </section>
 
-      <section id="case">
-        <h2>Case: the gate that copies once, then dies</h2>
-        <div class="callout story">
-          <span class="ic">★</span>
-          <div><span class="callout-title">"My Nice gate copies once, then barely works."</span>
-          I captured my own Nice gate remote with the Flipper and hit Send. The gate opened — brilliant. Then it never worked again, except every so often, seemingly at random, it would spring to life for one press. I assumed the Flipper was flaky. It wasn't. The Flipper was fine. What I was watching was a rolling code defending itself.</div>
-        </div>
-        <p>Walk it through with the window you just learned. My gate is a rolling <b>Nice FloR-S</b>, so every press carries an encrypted, incrementing counter.</p>
-        <ol>
-          <li><b>Why it worked once.</b> When I captured, the code I grabbed carried a counter that was still <em>ahead</em> of what the receiver had last seen — it landed inside the acceptance window. So on Send, the receiver accepted it and opened the gate. Perfectly normal. Then it bumped "last seen" up to that value.</li>
-          <li><b>Why it then died.</b> My captured file is frozen — it always sends that <em>same</em> counter value. But the receiver had already recorded it. From then on my replay arrives with a counter at-or-behind "last seen," lands in the red zone, and is discarded as an already-used code. This is the security feature working exactly as designed, not a Flipper bug.</li>
-          <li><b>Why it occasionally sputtered back to life.</b> Real receivers are forgiving so they stay usable — they accept anything inside a forward window and have a resync path for when things drift. On the rare occasion the counters happened to realign (a resync, or my stale value briefly falling back inside an accepting state after the genuine remote and receiver drifted), the old capture slipped through for a single press. Unreliable by design — never a working copy.</li>
-          <li><b>Why hammering Send made it worse.</b> Firing the stale code over and over can nudge the receiver and the genuine remote further out of sync, which is exactly why my <em>real</em> remote started to "barely work" too. I was fighting the resync logic, not helping it.</li>
-        </ol>
-        <div class="callout tip">
-          <span class="ic">✓</span>
-          <div><span class="callout-title">The supported fix for a gate you own</span>
-          You don't defeat the rolling code — you <b>join</b> it. Enrol a genuine new remote the way the manufacturer intends: usually a learn/enrol button on the gate's control board, or pairing a new remote via an already-paired one, following the maker's procedure. That hands the new remote a properly synchronised counter, so it works every time. Copying the signal never will. <a href="../case-studies.html">See the full case study →</a></div>
-        </div>
-      </section>
+      <section id="case"><h2>Case: a replay appears to work once</h2><p>This is a hypothetical diagnostic example, not a verified incident involving a particular gate. In a counter-based model, a previously unused valid message may be accepted if it falls within the receiver’s forward window. Once consumed, the same message is stale.</p><p><b>A forward window does not make an old counter fresh again.</b> If an identical capture seems to work intermittently, investigate the actual protocol, whether a file contains multiple frames, whether receiver state changed, and whether you are observing the same operation. Do not claim a diagnosis from “works once” alone.</p><p>Rejected stale messages do not normally advance the receiver counter. Real products have implementation-specific synchronization and recovery behaviour, and operational fob experiments can cause loss of access. Use the simulator to explore the model; use the manufacturer’s documented process for genuine remote provisioning or repair.</p><p class="source-note">Read the primary sources: <a href="https://ww1.microchip.com/downloads/aemDocuments/documents/MCU08/ProductDocuments/DataSheets/21143C.pdf">Microchip HCS301: synchronization model (PDF)</a> · <a href="https://docs.flipper.net/zero/sub-ghz/read-raw">Flipper: demodulated RAW recordings</a> · <a href="https://docs.flipper.net/zero/sub-ghz/supported-vendors">Flipper: static and dynamic protocol support</a>. Course review: 10 September 2026.</p></section>
 
-      <section id="lab">
-        <h2>Lab</h2>
-        <div class="lab">
-          <div class="lab-kicker">Lab 5.1</div>
-          <h3>Capture something Read can't name, with Read RAW</h3>
-          <p class="lab-gear">Gear: <b>your Flipper</b> and a device <b>you own</b> that Module 3's <span class="flip">Read</span> couldn't decode — often a car fob or modern gate remote. (Yours only.)</p>
-          <ol>
-            <li>Confirm there's a real signal first: in <span class="flip">Sub-GHz → Frequency Analyzer</span>, press the remote and note the frequency it spikes on (Module 1).</li>
-            <li>Open <span class="flip">Sub-GHz → Read RAW</span> on that frequency and record one clean press, close and away from interference.</li>
-            <li>Save it. Note that the file's <b>Protocol is RAW</b> and there's no key — just recorded timings.</li>
-            <li>Replay it to its own device with <span class="flip">Saved → Send</span> and note what happens.</li>
-            <li>Write <b>one sentence</b> about the result using the word <b>fixed</b> or <b>rolling</b> — e.g. "It did nothing because the fob is rolling, so my captured counter is already used."</li>
-          </ol>
-        </div>
-        <div class="win"><span class="ic">✓</span><span><b>You've got it when:</b> you have a saved <b>RAW</b> capture (Protocol: RAW, no key), you've replayed it to your own device, and your one-sentence note correctly uses "fixed" or "rolling" to explain the outcome. If it's rolling, you can point to the counter as the reason the replay is dead on arrival.</span></div>
-      </section>
+      <section id="lab"><h2>Lab: RAW is a representation</h2><ol class="steps"><li><div>Use your documented fixed-code training remote from Module 3, or inspect its saved file if you cannot perform a radio lab.</div></li><li><div>Record a short press with Read RAW using the correct frequency and preset; stop promptly and save with a lab name. You do not need an unknown or security remote to learn the RAW format.</div></li><li><div>Compare the RAW file with the decoded file. Identify frequency, preset, and pulse timings. RAW contains demodulated timing data, not raw I/Q samples.</div></li><li><div>Do not infer rolling security from a failed replay. Use the simulator above to compare fresh and consumed counters. Predict each result before pressing its controls.</div></li><li><div>Record what each representation retains and what it does not tell you.</div></li></ol><p>For this lab, no physical RAW replay is required. The fixed-code replay skill is covered in Module 4.</p><p class="source-note">Read the primary sources: <a href="https://docs.flipper.net/zero/sub-ghz/read-raw">Flipper: demodulated RAW recordings</a>. Course review: 10 September 2026.</p></section>
 
       <section id="toolkit">
         <h2>Which tool for the job</h2>
@@ -207,12 +173,12 @@ RAW_Data: 328 -456 320 -1348 980 -452 336 -444 972 -1360 340 -448</code></pre>
         <h2>Check yourself</h2>
         <div data-quiz="m05"></div>
       </section>
-    </article>
+    <section id="sources"><h2>Verify the details</h2><p class="source-note">Read the primary sources: <a href="https://docs.flipper.net/zero/sub-ghz/read-raw">Flipper: demodulated RAW recordings</a> · <a href="https://ww1.microchip.com/downloads/aemDocuments/documents/MCU08/ProductDocuments/DataSheets/21143C.pdf">Microchip HCS301: synchronization model (PDF)</a>. Course review: 10 September 2026.</p></section></article>
   </main>
 
   <footer class="site-footer">
     <div class="wrap">
-      <p>Signal Path teaches RF with devices you own, for learning and legitimate testing. Radio transmission is regulated where you live; interfering with other people's devices is illegal and harmful. When in doubt: listen, don't transmit.</p>
+      <p>Signal Path teaches RF with devices you own, for learning and legitimate testing. Radio transmission is regulated where you live; interfering with other people's devices is illegal and harmful. When scope or legality is unclear, use the simulators.</p>
       <p>Signal Path · a self-guided RF course for the Flipper Zero</p>
     </div>
   </footer>

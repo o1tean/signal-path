@@ -38,25 +38,25 @@
           <div class="mod-meta">
             <span class="chip">⏱ <b>40 min</b></span>
             <span class="chip">Gear: <b>your saved .sub + its device</b></span>
-            <span class="chip">Firmware: <b>Momentum</b></span>
+            <span class="chip">Firmware: <b>Official or Momentum</b></span>
           </div>
         </div>
       </div>
 
       <section id="goal">
         <h2>Goal</h2>
-        <p>Take the fixed-code capture you saved in Module 3 and <b>replay</b> it — transmit it back — to trigger the device it came from. A doorbell that chimes, an LED strip that lights, a fan that spins. Then you'll try to replay a car-fob capture, watch it do absolutely nothing, and understand why. That failure is the bridge to Module 5.</p>
+        <p>Take the fixed-code capture you saved in Module 3 and <b>replay</b> it — transmit it back — to trigger the device it came from. A doorbell that chimes, an LED strip that lights, a fan that spins. Then compare a consumed counter in the browser simulator. Predicting that rejection is the bridge to Module 5.</p>
         <div class="callout legal" style="margin-top:8px;">
           <span class="ic">!</span>
           <div><span class="callout-title">Read this before you press Send</span>
-          Receiving is passive and legal almost everywhere. <b>Transmitting is regulated</b>, and it can interfere with other people's property and safety. From here on the one rule is absolute: you only ever transmit to devices <b>you own</b>, in a space <b>you control</b>. Never to cars, gates, garages, barriers, or anything else that isn't yours — not "just to see," not "it's only a copy." Never jam or flood a band. If you're unsure whether something is yours to test, it isn't. <a href="../legal.html">Read the full ground rules →</a></div>
+          Sub-GHz reception can still collect protected data. <b>Transmitting is regulated</b>, and it can interfere with other people's property and safety. From here on the one rule is absolute: you only ever transmit to devices <b>you own</b>, in a space <b>you control</b>. Never to cars, gates, garages, barriers, or anything else that isn't yours — not "just to see," not "it's only a copy." Never jam or flood a band. If you're unsure whether something is yours to test, it isn't. <a href="../legal.html">Read the full ground rules →</a></div>
         </div>
       </section>
 
       <section id="line">
         <h2>The transmit line</h2>
         <p>There is a real, bright line running through this course, and it falls exactly here. Modules 0 through 3 only <em>received</em>. A radio receiver is like an ear: it can't touch the world, only notice it. You could sit in a field and log every remote for a mile and break no law and disturb no one.</p>
-        <p>Transmitting is a mouth, not an ear. The instant you Send, your Flipper radiates a signal that other receivers — not just your intended one — can hear and act on. That's why the same act is a fun experiment on your own doorbell and a serious offence on a stranger's gate. The physics is identical; the ownership is everything.</p>
+        <p>Transmitting is a mouth, not an ear. The instant you Send, your Flipper radiates a signal that other receivers — not just your intended one — can hear and act on. That's why the same act is a fun experiment on your own doorbell and a serious offence on a stranger's gate. Authorization, the applicable radio conditions, and effects on others must all be considered.</p>
         <div class="grid2">
           <div class="card">
             <h3>Fine, on your own gear</h3>
@@ -107,8 +107,8 @@
         <p>If a replay is weak, the fix is boring and effective: <b>get closer, clear the line of sight, and try a couple of orientations</b> before you conclude anything is wrong. Only once you've ruled out plain distance should you suspect the signal itself.</p>
         <div class="callout note">
           <span class="ic">i</span>
-          <div><span class="callout-title">External modules add real range</span>
-          Serious Sub-GHz range usually comes from an <b>external CC1101 module</b> with a proper antenna, which plugs into the Flipper's GPIO pins. It doesn't change what you can decode — only how far you can hear and reach. We set those up in <a href="08-momentum.html">Module 8</a>; you don't need one for anything in this module.</div>
+          <div><span class="callout-title">External modules change the radio path</span>
+          Serious Sub-GHz range usually comes from an <b>external CC1101 module</b> with a proper antenna, which plugs into the Flipper's GPIO pins. Performance depends on the board, antenna, frequency, configuration and environment. Do not assume an external module always improves range or remains compliant. We set those up in <a href="08-momentum.html">Module 8</a>; you don't need one for anything in this module.</div>
         </div>
       </section>
 
@@ -131,7 +131,7 @@
       </section>
 
       <section id="lab">
-        <h2>Lab</h2>
+        <h2>Lab</h2><p>First complete the <a href="../legal.html#romania">Romanian radio checks</a>. Use a locally compliant fixed-code training chime or light with no security or safety role. If its transmit conditions remain unresolved, do the simulation lab instead.</p>
         <div class="lab">
           <div class="lab-kicker">Lab 4.1</div>
           <h3>Replay your fixed code to your own device</h3>
@@ -144,30 +144,19 @@
             <li>Once it triggers, send it two or three more times to confirm it's reliable, not a fluke.</li>
           </ol>
         </div>
-        <div class="lab">
-          <div class="lab-kicker">Lab 4.2</div>
-          <h3>Replay a rolling code and watch it fail</h3>
-          <p class="lab-gear">Gear: <b>your own car key fob</b> or a <b>modern gate remote you own</b>. (Your car — no one else's.)</p>
-          <ol>
-            <li>In <span class="flip">Sub-GHz → Read</span>, capture a press from your own car fob. It may show a protocol with a <b>Cnt</b> value, or not decode neatly at all.</li>
-            <li>Save it, then replay it back with <b>Send</b>, standing right next to the car.</li>
-            <li>Observe: the car does <b>nothing</b>. Not a range problem — you're an arm's length away.</li>
-            <li>Write one sentence explaining why, using the word <b>rolling</b>. (Then confirm your car still works with the real fob, which it will — the receiver simply moved on.)</li>
-          </ol>
-        </div>
-        <div class="win"><span class="ic">✓</span><span><b>You've got it when:</b> your own fixed-code device reliably responds to a replay from <span class="flip">Saved → Send</span>, and you can explain — in one sentence using the word "rolling" — why the same trick does nothing to your car. If the fixed replay is weak, you fixed it by moving closer and reorienting, not by changing settings.</span></div>
+        <div class="lab"><div class="lab-kicker">Lab 4.2 · simulation</div><h3>Predict a replay result</h3><p>Open the <a href="05-raw-and-rolling.html#how">rolling-code simulator</a>. Accept a fresh simulated message, then replay that same message. Record the receiver counter before and after, and explain the rejection. This replaces a physical car/gate exercise; the learning objective is the same.</p></div><div class="win"><span class="ic">✓</span><span><b>You've got it when:</b> your own fixed-code device reliably responds to a replay from <span class="flip">Saved → Send</span>, and you can explain — in one sentence using the word "rolling" — why the simulated receiver rejects a used counter. If the fixed replay is weak, you fixed it by moving closer and reorienting, not by changing settings.</span></div>
       </section>
 
       <section id="quiz">
         <h2>Check yourself</h2>
         <div data-quiz="m04"></div>
       </section>
-    </article>
+    <section id="sources"><h2>Verify the details</h2><p class="source-note">Read the primary sources: <a href="https://docs.flipper.net/zero/sub-ghz/frequencies">Flipper: regional frequencies</a> · <a href="https://www.ancom.ro/category/reglementare-ro/echipamente-ro-10006/echipamente-radio/reglementari-cu-privire-la-interfete/">ANCOM: current Romanian radio interfaces</a>. Course review: 10 September 2026.</p></section></article>
   </main>
 
   <footer class="site-footer">
     <div class="wrap">
-      <p>Signal Path teaches RF with devices you own, for learning and legitimate testing. Radio transmission is regulated where you live; interfering with other people's devices is illegal and harmful. When in doubt: listen, don't transmit.</p>
+      <p>Signal Path teaches RF with devices you own, for learning and legitimate testing. Radio transmission is regulated where you live; interfering with other people's devices is illegal and harmful. When scope or legality is unclear, use the simulators.</p>
       <p>Signal Path · a self-guided RF course for the Flipper Zero</p>
     </div>
   </footer>

@@ -1,73 +1,54 @@
 # Signal Path
 
-A hands-on, self-paced **RF course for total beginners**, built around the **Flipper Zero** (Momentum firmware). Plain HTML/CSS/JS — no build step, no dependencies, no tracking. Everything (progress, quiz scores, badges, your signal atlas) is stored in your own browser.
+[Open the course](https://o1tean.github.io/signal-path/) · [Learning path](https://o1tean.github.io/signal-path/roadmap.html) · [Romanian lab guide](https://o1tean.github.io/signal-path/legal.html)
 
-- **11 modules** (Week 0 → Week 6), each with concepts, a hands-on lab, and a quiz.
-- **10 interactive simulators**: spectrum scope, a Tune-In game, a modulation Wave Lab, an RF calculator, a pulse decoder, a rolling-code simulator, a tool picker, a Flipper-screen navigator, glossary flashcards, and a personal Signal Atlas.
-- **Primer, legal ground rules, reference tables, glossary, and case studies** (including the classic "my Nice gate copies once, then barely works").
+A self-paced Flipper Zero course from first setup to independent projects and authorized security research. Plain HTML, CSS and JavaScript; no application backend or runtime packages. Google Fonts supplies the optional web fonts. Course progress and notebook entries stay in the browser; GitHub Pages serves the site.
 
-## Run it locally
+- **18 modules** with a suggested twelve-week path, concrete labs, explanations and evidence criteria.
+- **108 quiz questions** with explanations and per-module best scores.
+- **10 interactive learning tools** using synthetic signals, plus an atlas for lab observations.
+- **A learning notebook** for predictions, findings, review dates and retrieval practice. JSON backup/restore moves progress, scores, badges, atlas and notes between browsers.
+- **A small C application** in `examples/lab-companion`, built with the official uFBT toolchain.
+- **Romanian references** from ANCOM and the Criminal Code, alongside primary Flipper and Microchip sources. Reviewed 10 September 2026; recheck changing requirements before a hardware lab.
 
-Because pages load JS via relative paths, open it through a tiny local server (not `file://`):
+The first eleven modules cover RF fundamentals, Sub-GHz, rolling codes, RFID/NFC, firmware literacy and an initial signal atlas. Modules 11–17 add infrared, GPIO, USB/BLE, iButton/U2F, app development, controlled security research and a reproducible final portfolio. Official firmware is a supported starting point; Momentum is optional.
 
-```bash
-cd signal-path
+The course explains dual-use mechanisms and defenses. Practical exercises use controlled, authorized equipment. Educational intent or device ownership does not replace permission, applicable radio conditions or data/privacy obligations. Completion badges are self-reported progress, not certification.
+
+## Run locally
+
+```sh
 python3 -m http.server 8000
 ```
 
-Then visit http://localhost:8000/ .
+Open `http://localhost:8000/`. To check the actual project subpath, serve the parent directory and open `/signal-path/`.
 
-## Host it free on GitHub Pages
+## Validate and stage
 
-1. Create a new GitHub repository (public), e.g. `signal-path`.
-2. Put the **contents of this `signal-path/` folder** at the repository root (so `index.html` is at the top level of the repo). The included `.nojekyll` file tells Pages to serve the `assets/` folder as-is.
-3. Commit and push:
+Python 3.9+ and Node.js are sufficient; there are no site dependencies to install.
 
-```bash
-git init
-git add .
-git commit -m "Signal Path: RF course for the Flipper Zero"
-git branch -M main
-git remote add origin https://github.com/<your-username>/signal-path.git
-git push -u origin main
+```sh
+python3 scripts/check-site.py
+node scripts/check-course.cjs
+python3 scripts/build-site.py
 ```
 
-4. On GitHub: **Settings → Pages → Build and deployment → Source: Deploy from a branch**, pick `main` / `/ (root)`, save.
-5. Wait a minute; your site appears at `https://<your-username>.github.io/signal-path/`.
+The checks cover local links and fragments, duplicate IDs, JavaScript syntax, module routes and quiz integrity. `_site/` contains only public site files. Browser-based checks are described in [verification.md](docs/verification.md).
 
-### Note on the 404 page
-`404.html` uses absolute (`/…`) links, which resolve correctly on a **user/organization site** (`<user>.github.io`) or a custom domain. On a **project site** served under `/signal-path/`, the 404's nav links will point at the domain root — the rest of the site is fully relative and works under any subpath. If you want a perfect 404 under a project subpath, either use a custom domain or change the four `/…` links in `404.html` to `/signal-path/…`.
+## GitHub Pages
 
-## Structure
+The production URL is **https://o1tean.github.io/signal-path/**. The `Check and deploy course` workflow validates changes, stages the static files, and deploys from `main`. Pull requests run checks without deploying. Repository **Settings → Pages → Source** must be **GitHub Actions**. HTTPS is enabled; no custom domain is required.
 
-```
-signal-path/
-  index.html            course home + module map + progress
-  primer.html           the friendly big-picture intro
-  playground.html       all 10 simulators on one page
-  quiz.html             mixed + per-module quizzes
-  reference.html        frequency/preset/.sub cheat-sheets
-  glossary.html         flashcards + searchable A–Z
-  legal.html            the ground rules
-  case-studies.html     real beginner mysteries explained
-  404.html
-  .nojekyll
-  modules/00-setup.html … 10-capstone.html
-  assets/
-    css/site.css        the whole design system
-    js/site.js          shared runtime (window.SP)
-    js/data/            quiz-bank.js, glossary.js
-    js/widgets/         one file per simulator
-    favicon.svg
-```
+A failed validation prevents deployment. The workflow can also be started with **Actions → Check and deploy course → Run workflow**. The 404 page uses `/signal-path/` asset and navigation paths, so it works for missing nested project URLs.
 
 ## Editing
 
-- The **course map** (module list, order, badges) lives in one place: `SP.MODULES` and `SP.BADGES` at the top of `assets/js/site.js`.
-- **Quiz questions**: `assets/js/data/quiz-bank.js`, keyed by module id (`m00`…`m10`, `primer`).
-- **Glossary terms**: `assets/js/data/glossary.js`.
-- All colors and type are CSS custom properties at the top of `assets/css/site.css`; it supports light, dark, and system themes.
+- Course order and badges: `assets/js/site.js`.
+- Questions and explanations: `assets/js/data/quiz-bank.js`.
+- Lessons: `modules/`; new modules should be added to the home map, runtime, roadmap and quiz bank together.
+- Notebook, backups and resume links: `assets/js/learning.js`.
+- Shared design tokens and responsive styles: `assets/css/site.css`.
+- Primary sources and corrections: `sources.html`.
+- Printable lab template: `downloads/lab-notebook.md`.
 
-## A note on responsibility
-
-Signal Path teaches RF using **devices you own**, for learning and legitimate testing. Radio transmission is regulated where you live, and interfering with other people's devices is illegal and harmful. When in doubt: listen, don't transmit. See `legal.html`.
+Do not commit credential dumps, actual key values, learner backups or personal captures. Course examples and screenshots should use synthetic identifiers and training aliases.

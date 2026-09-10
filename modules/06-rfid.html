@@ -52,7 +52,7 @@
           <span class="ic">§</span>
           <div>
             <span class="callout-title">Read this before you touch a reader</span>
-            The only credential you should read, save or emulate is one you personally own — a fob for your own front door, a blank you bought, a hotel card you can keep. Being <em>able</em> to copy a workplace, apartment-building or gym badge does not make it allowed: cloning access you don't control can violate your lease, your employment terms, or the law even if the door happens to open. This module is about understanding the technology on hardware that is yours. Keep it there.
+            The only credential you should read, save or emulate is one you personally own — an unenrolled practice tag you bought, used with a standalone training reader. Being <em>able</em> to copy a workplace, apartment-building or gym badge does not make it allowed: cloning access you don't control can violate your lease, your employment terms, or the law even if the door happens to open. This module is about understanding the technology on hardware that is yours. Keep it there.
           </div>
         </div>
       </section>
@@ -183,7 +183,7 @@
 
         <h3>The T5577: a blank that can pretend to be anything</h3>
         <p>Reading and emulating live entirely on the Flipper. To make a real physical copy you need a <b>writable</b> tag, and the workhorse there is the <b>T5577</b>. Out of the factory a T5577 is a blank — a chip that can be configured to <em>imitate</em> other 125&nbsp;kHz formats. Write an EM4100 ID to it and it behaves like an EM4100 tag; configure it for HID Prox and it presents that instead. That flexibility is why a single pack of T5577 fobs and cards can stand in for most of the low-frequency tags you'll encounter.</p>
-        <p>The idea to lock in: <b>reading</b> a tag captures its number; <b>writing</b> puts that captured number onto a blank so a copy exists in the world. The first is passive and harmless. The second creates a working credential — which is precisely why the legal line matters, and why the only ID you should ever write to a blank is one you're entitled to duplicate.</p>
+        <p>The idea to lock in: <b>reading</b> a tag captures its number; <b>writing</b> puts that captured number onto a blank so a copy exists in the world. Reading actively powers the tag and can copy sensitive identifying data. The second creates a working credential — which is precisely why the legal line matters, and why the only ID you should ever write to a blank is one you're entitled to duplicate.</p>
         <div class="callout tip">
           <span class="ic">✓</span>
           <div>A cheap starter kit is a few <b>T5577</b> cards and fobs plus one <b>EM4100</b> tag you buy new. Now you can read a blank, write a made-up ID to it, read it back, and emulate it — a complete round trip with nothing but hardware you own outright.</div>
@@ -195,12 +195,12 @@
         <div class="lab">
           <div class="lab-kicker">Lab 6.1</div>
           <h3>Read, save and emulate your own fob</h3>
-          <p class="lab-gear">Gear: <b>a 125 kHz fob or card you own</b> (your own front-door fob, or a fresh EM4100/T5577 tag you bought)</p>
+          <p class="lab-gear">Gear: <b>a 125 kHz fob or card you own</b> (a fresh EM4100/T5577 training tag not enrolled in an access system)</p>
           <ol>
             <li>Open the <span class="flip">125 kHz RFID</span> app and choose <span class="flip">125 kHz RFID → Read</span>.</li>
             <li>Lay the fob <b>flat against the back</b> of the Flipper and hold still. The antenna coil is inside the case, so contact beats hovering.</li>
             <li>Watch the screen name a <b>protocol</b> (EM4100, HID Prox, Indala…) and show an <b>ID</b>. If it stays blank, reposition the fob and try again — coil alignment is fussy.</li>
-            <li>Choose <b>Save</b> and give it a clear name like <span class="mono">frontdoor-mine</span>.</li>
+            <li>Choose <b>Save</b> and give it a clear name like <span class="mono">training-tag-01</span>.</li>
             <li>Go to <span class="flip">Saved</span>, open your capture, and pick <b>Emulate</b>. The Flipper is now impersonating that tag.</li>
             <li>Hold the emulating Flipper to <b>your own</b> reader — the one the fob already opens. Confirm it behaves like the fob. Do not test this on any reader that isn't yours.</li>
           </ol>
@@ -253,12 +253,12 @@
         <h2>Check yourself</h2>
         <div data-quiz="m06"></div>
       </section>
-    </article>
+    <section id="sources"><h2>Verify the details</h2><p class="source-note">Read the primary sources: <a href="https://docs.flipper.net/zero/rfid">Flipper: LF RFID</a>. Course review: 10 September 2026.</p></section></article>
   </main>
 
   <footer class="site-footer">
     <div class="wrap">
-      <p>Signal Path teaches RF with devices you own, for learning and legitimate testing. Radio transmission is regulated where you live; interfering with other people's devices is illegal and harmful. When in doubt: listen, don't transmit.</p>
+      <p>Signal Path teaches RF with devices you own, for learning and legitimate testing. Radio transmission is regulated where you live; interfering with other people's devices is illegal and harmful. When scope or legality is unclear, use the simulators.</p>
       <p>Signal Path · a self-guided RF course for the Flipper Zero</p>
     </div>
   </footer>

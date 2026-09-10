@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Module 10 · Capstone: your signal atlas · Signal Path</title>
+  <title>Module 10 · Foundation project: your signal atlas · Signal Path</title>
   <meta name="description" content="The real test of the course: walk your home, catalog every RF device you own, and prove you can identify, decode and classify any unknown remote.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -31,19 +31,19 @@
       <div class="mod-header">
         <div class="mod-index">10</div>
         <div class="mod-titles">
-          <div class="mod-week">Week 6 · The capstone</div>
-          <h1>Capstone: your signal atlas</h1>
-          <p class="lede">No new tricks this week. Instead, you turn the whole course loose on the real world: every remote, fob and card you own, identified and catalogued in one place.</p>
+          <div class="mod-week">Week 6 · RF foundation milestone</div>
+          <h1>Foundation project: your signal atlas</h1>
+          <p class="lede">No new tricks this week. Instead, you turn the whole course loose on the real world: your authorized training remotes and tags, identified and catalogued in one place.</p>
           <div class="mod-meta">
             <span class="chip">⏱ <b>60 min+</b></span>
-            <span class="chip">Gear: <b>Flipper + every RF thing in your home</b></span>
+            <span class="chip">Gear: <b>Flipper + your documented lab targets</b></span>
           </div>
         </div>
       </div>
 
       <section id="goal">
         <h2>Goal</h2>
-        <p>A course teaches you nothing until you can use it without the course. So this module has no fresh material to memorise. The task is simple to say and satisfying to do: walk through your home, and for every radio-frequency device you own, work out what it is and write it down. Frequency, modulation, protocol, fixed or rolling, and one honest sentence about whether a replay would work.</p>
+        <p>A course teaches you nothing until you can use it without the course. So this module has no fresh material to memorise. The task is simple to say and satisfying to do: work through your controlled lab, and for each authorized training device, work out what it is and write it down. Frequency, modulation, protocol, fixed or rolling, and one honest sentence about whether a replay would work.</p>
         <p>By the end you will have a personal <b>signal atlas</b> — a catalogue of the invisible RF around you that you built yourself, from scratch, with a tool that fits in your pocket. That atlas is the proof. If you can classify a remote you've never seen before using the same steps every time, you have actually learned this.</p>
         <div class="callout story">
           <span class="ic">★</span>
@@ -58,9 +58,9 @@
           <li><b>Identify the frequency.</b> <span class="flip">Sub-GHz → Frequency Analyzer</span>, remote held close, button held down. Read the number: usually 315, 433.92, 868 or 915 MHz. No number? It may be too weak, or on a frequency outside the analyzer's default list.</li>
           <li><b>Identify the modulation.</b> Open <span class="flip">Sub-GHz → Read</span> on that frequency and sweep the presets — <span class="pill am">AM650</span> <span class="pill am">AM270</span> <span class="pill fm">FM238</span> <span class="pill fm">FM476</span> — until it decodes. The winning preset tells you AM/OOK vs FM/FSK.</li>
           <li><b>Decode, or go raw.</b> If Read names a protocol, record it. If it stays blank but the analyzer saw a peak, capture with <span class="flip">Sub-GHz → Read RAW</span> — the signal is real, the protocol just isn't one the Flipper knows.</li>
-          <li><b>Fixed or rolling?</b> Press it several times on the Read screen. A stable key that never changes is <span class="pill fixed">fixed</span>. A <b>Cnt</b> that climbs by one each press is <span class="pill rolling">rolling</span>.</li>
+          <li><b>Fixed or rolling?</b> Press it several times on the Read screen. Compare repeated messages with the documented protocol. A changing payload could be a sensor reading or other data; a visible counter alone does not prove a secure rolling-code design. Mark uncertain classifications as unknown.</li>
           <li><b>Save and label.</b> Give it a clear name you'll recognise in a year — <code>garage-main-433</code> beats <code>Sub_042</code>. Save a real capture for every fixed-code device.</li>
-          <li><b>Note whether replay would work, and why.</b> Fixed → yes, to your own gear. Rolling → no, the counter defeats it. Raw fixed-code → usually yes. Write the reason, not just the yes/no.</li>
+          <li><b>Note whether replay would work, and why.</b> Fixed → may work when the receiver accepts the repeated message and radio conditions are met. Rolling → a consumed value is normally rejected. RAW → representation alone cannot predict acceptance. Write the reason, not just the yes/no.</li>
         </ol>
         <figure class="diagram">
           <svg viewBox="0 0 640 130" width="100%" role="img" aria-label="A six-step pipeline: frequency, then modulation, then decode or read raw, then fixed versus rolling, then save and label, then note whether replay works and why.">
@@ -113,30 +113,10 @@
         </div>
       </section>
 
-      <section id="lab">
-        <h2>Lab: catalog your home</h2>
-        <div class="lab">
-          <div class="lab-kicker">Lab 10.1</div>
-          <h3>The capstone project — your complete signal atlas</h3>
-          <p class="lab-gear">Gear: <b>your Flipper, and every RF device you own</b> — Sub-GHz remotes (garage, gate, car, ceiling fan, cheap plug sockets, doorbell, weather station), 125 kHz fobs, and 13.56 MHz cards.</p>
-          <ol>
-            <li><b>Round them up.</b> Walk every room and gather everything with a button or a tap-to-work card. You'll find more than you expect — remotes hide in drawers.</li>
-            <li><b>Run the workflow on each Sub-GHz device.</b> Frequency (Analyzer) → modulation (sweep the four presets) → Read or Read RAW → fixed vs rolling (watch for <b>Cnt</b>).</li>
-            <li><b>Record five things per device</b> in the atlas above: <em>frequency, modulation, protocol (or "raw"), fixed vs rolling,</em> and <em>one line on why replay would or wouldn't work.</em></li>
-            <li><b>Save a labeled capture for every fixed-code device.</b> Clear names you'll still understand in a year. Skip captures for rolling devices — you know they won't replay, and the file would only mislead future-you.</li>
-            <li><b>Add your RFID and NFC items too.</b> Note the fob type (EM4100, HID Prox, Indala) and whether it's a writable T5577, and the card type (Mifare, NTAG) for 13.56 MHz.</li>
-            <li><b>Read your atlas back.</b> Count how many are rolling vs fixed. That ratio is a real snapshot of how the security around you actually works.</li>
-          </ol>
-        </div>
-        <div class="win"><span class="ic">✓</span><span><b>You've got it when:</b> every RF device you own has a row — frequency, modulation, protocol, fixed/rolling, and a one-line reason replay would or wouldn't work — and you saved a labeled capture for each fixed-code device. If you can do that unaided, you've met the whole course.</span></div>
-        <div class="callout note">
-          <span class="ic">i</span>
-          <div><span class="callout-title">The honest sentence is the point</span>"Rolling — replay won't work because the receiver rejects the old counter" shows more understanding than any capture file. If you can write that reason for every device, the numbers on the screen have turned into real knowledge.</div>
-        </div>
-      </section>
+      <section id="lab"><h2>Lab: catalog your training devices</h2><ol class="steps"><li><div>Choose three authorized lab targets: for example a fixed-code chime, an unenrolled LF tag and an NFC practice card. Document models and firmware.</div></li><li><div>Use the appropriate app, compare observations with the device documentation, and record frequency, modulation, protocol and uncertainty. Do not classify a changing payload as rolling security without more evidence.</div></li><li><div>Use aliases in the atlas above. Keep any actual key values or credential dumps outside the notebook and the public repository.</div></li><li><div>Record whether a replay or emulation was tested, expected, or unknown. A failed test alone is not a diagnosis.</div></li><li><div>Export the atlas. Explain the classification of each target without notes, then continue to Module 11.</div></li></ol><p><b>Deliverable:</b> three documented entries, a limitation for each, and a portable export. This finishes the RF foundation, not the whole course.</p></section>
 
       <section id="next">
-        <h2>Where to go next</h2>
+        <h2>Where to go next</h2><p>Continue with <a href="11-infrared.html">Module 11: infrared</a>, then the <a href="../roadmap.html">full learning path</a> through GPIO, USB/BLE, authentication, app development, authorized security research and the mastery project.</p>
         <p>You've reached the edge of this course, not the edge of the subject. RF is deep, and the Flipper only touches part of it. A few honest directions, kept high-level — the live links live on the <a href="../reference.html">reference page</a> so they stay current:</p>
         <div class="grid2">
           <div class="card">
@@ -164,7 +144,7 @@
         </div>
         <div class="callout story">
           <span class="ic">★</span>
-          <div><span class="callout-title">You're not a beginner anymore</span>Six weeks ago "frequency" was an abstract word. Now you can walk up to a silent remote and, from nothing, tell someone its frequency, its modulation, its protocol, whether it's rolling, and whether a replay could ever work — and explain <em>why</em> for each. That's not beginner's knowledge. That's the real thing. Mark this module complete (that button below is added automatically) to earn your final badge and close out the course. Then keep listening.</div>
+          <div><span class="callout-title">Your foundation is taking shape</span>You now have a documented starting point for further experiments. Mark the module complete when you can explain your evidence, then continue through the other interfaces and the final portfolio. Leave unknowns visible; independent work includes knowing what you have not established.</div>
         </div>
       </section>
 
@@ -172,12 +152,12 @@
         <h2>Check yourself</h2>
         <div data-quiz="m10"></div>
       </section>
-    </article>
+    <section id="sources"><h2>Verify the details</h2><p class="source-note">Read the primary sources: <a href="https://docs.flipper.net/zero/sub-ghz/read">Flipper: reading signals and presets</a> · <a href="https://docs.flipper.net/zero/rfid">Flipper: LF RFID</a> · <a href="https://docs.flipper.net/zero/nfc">Flipper: NFC</a>. Course review: 10 September 2026.</p></section></article>
   </main>
 
   <footer class="site-footer">
     <div class="wrap">
-      <p>Signal Path teaches RF with devices you own, for learning and legitimate testing. Radio transmission is regulated where you live; interfering with other people's devices is illegal and harmful. When in doubt: listen, don't transmit.</p>
+      <p>Signal Path teaches RF with devices you own, for learning and legitimate testing. Radio transmission is regulated where you live; interfering with other people's devices is illegal and harmful. When scope or legality is unclear, use the simulators.</p>
       <p>Signal Path · a self-guided RF course for the Flipper Zero</p>
     </div>
   </footer>

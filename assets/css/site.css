@@ -522,3 +522,42 @@ figcaption { font-size: 12.5px; color: var(--faint); margin-top: 8px; font-famil
   .page { grid-template-columns: 1fr; padding: 0; }
   body { background: #fff; color: #000; }
 }
+
+/* Learning path and notebook share the course's existing tokens. */
+.skip-link { position: fixed; top: -100px; left: 16px; z-index: 100; padding: 12px 18px; background: var(--text); color: var(--bg); }
+.skip-link:focus { top: 8px; }
+.learning-page { padding-top: 42px; padding-bottom: 72px; }
+.learning-page > section { margin-top: 38px; }
+.learning-page h2 { margin-bottom: 18px; }
+.next-session { margin: 26px 0 20px; border-left: 4px solid var(--orange); }
+.next-session p:last-child { margin-bottom: 0; margin-top: 10px; color: var(--muted); font-size: 14px; }
+.resume-link { font-family: var(--font-display); font-weight: 700; font-size: 20px; }
+.route-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+.route-grid h3 { font-size: 21px; margin-bottom: 12px; }
+.route-links { list-style: none; padding: 0; margin: 16px 0 0; }
+.route-links a { display: block; padding: 8px 0; border-top: 1px solid var(--line); }
+.notebook-form { display: grid; gap: 10px; margin: 24px 0; }
+.notebook-form label { font-weight: 600; margin-top: 10px; }
+.notebook-form input, .notebook-form select, .notebook-form textarea { font: inherit; width: 100%; min-width: 0; color: var(--text); background: var(--surface-2); border: 1px solid var(--line-strong); border-radius: 8px; padding: 10px 12px; }
+.notebook-form textarea { resize: vertical; }
+.notebook-form p { margin-bottom: 0; font-size: 14px; color: var(--muted); }
+.import-control { display: grid; gap: 12px; margin-top: 24px; }
+.import-control input { max-width: 100%; }
+.source-note { font-size: 13px; color: var(--muted); border-top: 1px solid var(--line); padding-top: 14px; line-height: 1.7; }
+main.page:has(> .content:only-child) { grid-template-columns: minmax(0, 1fr); max-width: 850px; }
+.btn, .icon-btn, .theme-btn { min-height: 40px; }
+.topbar .brand { flex-shrink: 0; }
+@media (max-width: 1100px) { .nav-progress { display: none; } }
+@media (max-width: 860px) {
+  .topnav { display: none; position: absolute; left: 0; right: 0; top: 100%; flex-direction: column; background: var(--surface); border-bottom: 1px solid var(--line); padding: 8px 12px 12px; box-shadow: var(--shadow-lift); }
+  .topnav.open { display: flex; }
+  .topnav a { padding: 10px; font-size: 15px; }
+  .nav-toggle { display: inline-flex; margin-left: auto; }
+  .topbar-inner { position: relative; }
+}
+@media (max-width: 600px) {
+  .route-grid { grid-template-columns: 1fr; }
+  .flip { white-space: normal; overflow-wrap: anywhere; }
+  .ruler .marker:nth-last-child(2)::after { bottom: 72px; }
+  .ruler-head { margin-bottom: 42px; }
+}

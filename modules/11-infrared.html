@@ -1,0 +1,161 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Module 11 · Infrared: build your own remote · Signal Path</title>
+    <meta
+      name="description"
+      content="Learn a harmless command from your own remote, explain how infrared differs from radio, and build a small, well-labelled remote library."
+    />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&family=Public+Sans:ital,wght@0,400;0,500;0,600;1,400&display=swap"
+    />
+    <link rel="stylesheet" href="../assets/css/site.css" />
+    <script>
+      (function () {
+        try {
+          var t = localStorage.getItem("signalpath.theme");
+          if (t === "light" || t === "dark")
+            document.documentElement.setAttribute("data-theme", t);
+        } catch (e) {}
+      })();
+    </script>
+  </head>
+  <body data-root="../" data-page="m11">
+    <header class="topbar"></header>
+    <main id="main-content" class="page wrap">
+      <article class="content">
+        <div class="mod-header">
+          <div class="mod-index">11</div>
+          <div class="mod-titles">
+            <div class="mod-week">Week 7 · Beyond the RF foundation</div>
+            <h1>Infrared: build your own remote</h1>
+            <p class="lede">
+              Learn a harmless command from your own remote, explain how
+              infrared differs from radio, and build a small, well-labelled
+              remote library.
+            </p>
+            <div class="chips">
+              <span class="chip">45–60 min</span
+              ><span class="chip">Your TV + its IR remote</span>
+            </div>
+          </div>
+        </div>
+        <section id="concepts">
+          <h2>Understand it</h2>
+          <p>
+            Infrared is light outside our visible range. A remote switches an IR
+            LED in a timed pattern; the receiver recovers the command. The
+            Flipper’s built-in learning receiver demodulates a 38 kHz carrier.
+            That number describes the modulation of the light, not a Sub-GHz
+            radio frequency.
+          </p>
+          <p>
+            A decoded capture identifies a supported protocol and its fields. A
+            RAW capture stores timings when the protocol is not recognized.
+            Neither label guarantees that an appliance will respond: carrier
+            compatibility, aim, button choice, and signal quality still matter.
+          </p>
+          <h3>Make one small, observable change</h3>
+          <p>
+            Use volume-down on your own TV at a comfortable volume. Work away
+            from other IR-controlled appliances. A learned button is easier to
+            reason about than a universal remote that tries many commands. A
+            Bluetooth-only remote will not produce the expected IR capture.
+          </p>
+        </section>
+        <section id="lab">
+          <h2>Lab: build the evidence</h2>
+          <ol class="steps">
+            <li>
+              <div>
+                Start with your TV working normally. Note its model, the chosen
+                button, and what you expect to happen.
+              </div>
+            </li>
+            <li>
+              <div>
+                Open <span class="flip">Infrared → Learn New Remote</span>. Aim
+                the original remote at the Flipper’s IR receiver and press
+                volume-down once.
+              </div>
+            </li>
+            <li>
+              <div>
+                Save the button as <code>Volume_down</code> in a remote named
+                for your TV. Record whether the capture was decoded or RAW.
+              </div>
+            </li>
+            <li>
+              <div>
+                Open the saved remote, aim the Flipper at your TV, and send the
+                saved button once. Confirm one expected change. Stop if another
+                appliance responds.
+              </div>
+            </li>
+            <li>
+              <div>
+                Add one other harmless button. Change one variable, such as
+                angle, and record success or failure. Restore the original TV
+                settings.
+              </div>
+            </li>
+          </ol>
+        </section>
+        <section id="evidence">
+          <h2>Show that you can do it</h2>
+          <ul>
+            <li>
+              A two-button remote with meaningful labels and observed results.
+            </li>
+            <li>
+              An explanation of IR light versus Sub-GHz radio and why a 38 kHz
+              carrier is not 38 kHz RF.
+            </li>
+            <li>
+              One failed attempt explained with evidence, rather than a guess
+              about firmware.
+            </li>
+          </ul>
+          <p>
+            Record the result in your
+            <a href="../notebook.html">learning notebook</a>. Repeat the
+            explanation tomorrow without looking at this page.
+          </p>
+        </section>
+        <section id="quiz">
+          <h2>Check yourself</h2>
+          <div data-quiz="m11"></div>
+        </section>
+        <section id="sources">
+          <h2>Sources</h2>
+          <p class="source-note">
+            Read the primary sources:
+            <a href="https://docs.flipper.net/zero/infrared/read"
+              >Flipper: learning infrared remotes</a
+            >. Course review: 10 September 2026.
+          </p>
+        </section>
+      </article>
+    </main>
+    <footer class="site-footer">
+      <div class="wrap">
+        <p>
+          Practise on authorized lab equipment. In Romania, check ANCOM radio
+          conditions and privacy rules. When scope or legality is unclear, use
+          the simulators.
+        </p>
+        <p>
+          <a href="../legal.html">Romania &amp; permission</a> ·
+          <a href="../sources.html">Sources &amp; corrections</a>
+        </p>
+      </div>
+    </footer>
+    <script src="../assets/js/site.js"></script>
+    <script src="../assets/js/data/quiz-bank.js"></script>
+  </body>
+</html>

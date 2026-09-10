@@ -1,243 +1,258 @@
 <!doctype html>
 <html lang="en">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Ground Rules · Signal Path</title>
-  <meta name="description" content="The ground rules for learning RF responsibly: listening versus transmitting, what's fine and what's off-limits, why rolling-code replay isn't a hack, and this course's stance.">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&family=Public+Sans:ital,wght@0,400;0,500;0,600;1,400&display=swap">
-  <link rel="stylesheet" href="assets/css/site.css">
-  <script>(function(){try{var t=localStorage.getItem("signalpath.theme");if(t==="light"||t==="dark")document.documentElement.setAttribute("data-theme",t);}catch(e){}})();</script>
-</head>
-<body data-root="" data-page="legal">
-  <header class="topbar"></header>
-
-  <main class="page">
-    <aside class="toc" aria-label="On this page">
-      <span class="eyebrow">On this page</span>
-      <ol>
-        <li><a href="#one-rule">The one rule</a></li>
-        <li><a href="#listening-transmitting">Listening vs transmitting</a></li>
-        <li><a href="#green-red">Green light vs hard stop</a></li>
-        <li><a href="#rolling-not-hack">Why replay isn't a hack</a></li>
-        <li><a href="#rfid-policy">Access badges &amp; policy</a></li>
-        <li><a href="#disclosure">Responsible disclosure</a></li>
-        <li><a href="#stance">This course's stance</a></li>
-      </ol>
-    </aside>
-
-    <article class="content">
-      <p class="eyebrow">Ground rules · read before Module 4</p>
-      <h1>The rules aren't the boring part.</h1>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Romania, permission &amp; responsible labs · Signal Path</title>
+    <meta
+      name="description"
+      content="Practical Romanian learning boundaries with ANCOM and Criminal Code sources."
+    />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&family=Public+Sans:ital,wght@0,400;0,500;0,600;1,400&display=swap"
+    />
+    <link rel="stylesheet" href="assets/css/site.css" />
+    <script>
+      (function () {
+        try {
+          var t = localStorage.getItem("signalpath.theme");
+          if (t === "light" || t === "dark")
+            document.documentElement.setAttribute("data-theme", t);
+        } catch (e) {}
+      })();
+    </script>
+  </head>
+  <body data-root="" data-page="legal">
+    <header class="topbar"></header>
+    <main id="main-content" class="wrap-narrow learning-page">
+      <p class="eyebrow">Romania · read before your first hardware lab</p>
+      <h1>Curiosity, with a clear scope.</h1>
       <p class="lede">
-        They're the part that keeps this hobby fun, legal, and something you can be proud of. This page
-        is warm but serious. Read it once, and you'll know exactly where the bright line is — and why
-        it's there.
+        Education describes your purpose. Permission, privacy, and the radio
+        rules still determine what you may do.
       </p>
-
+      <p class="source-note">
+        Reviewed 10 September 2026. This is a learning guide, not individualized
+        legal advice or a guarantee that a particular test is lawful.
+      </p>
       <section id="one-rule">
-        <h2>The one rule</h2>
+        <h2>Three separate checks</h2>
+        <ol class="steps">
+          <li>
+            <div>
+              <b>Authority:</b> use equipment and data you control, or obtain
+              explicit permission from someone entitled to authorize the exact
+              test. Possessing an apartment, work, hotel, or gym badge does not
+              establish that authority.
+            </div>
+          </li>
+          <li>
+            <div>
+              <b>Radio conditions:</b> confirm the applicable Romanian
+              interface, equipment conditions, frequency, power, bandwidth, duty
+              cycle or channel-access requirements. Owning the transmitter or
+              receiver does not exempt you.
+            </div>
+          </li>
+          <li>
+            <div>
+              <b>Effect and data:</b> plan for unintended interference, private
+              communications, stored credentials, and recovery. Radio does not
+              stop at a property boundary. If a check remains unresolved, use
+              the browser simulator.
+            </div>
+          </li>
+        </ol>
+      </section>
+      <section id="romania">
+        <h2>Romania: where to check</h2>
         <p>
-          Everything on this page collapses to a single sentence, so let's put it first:
+          ANCOM publishes the Romanian radio interfaces (RO-IR), including
+          short-range devices. The current index links RO-IR SRD-01 edition
+          5/2025 for non-specific SRDs. Its alternatives have different
+          conditions: a familiar “433” or “868” label is not a complete transmit
+          authorization. Consult the applicable interface, not an old forum
+          table.
+          <a
+            href="https://www.ancom.ro/category/reglementare-ro/echipamente-ro-10006/echipamente-radio/reglementari-cu-privire-la-interfete/"
+            >ANCOM: current Romanian radio interfaces</a
+          >;
+          <a
+            href="https://www.ancom.ro/wp-content/uploads/2026/01/RO_IR_SRD_01_Dispozitive_radio_de_proximitate_cu_raza_mica_de_actiune_nespecifice_ro_2025.pdf"
+            >ANCOM RO-IR SRD-01, edition 5/2025 (PDF)</a
+          >.
         </p>
-        <div class="callout legal">
-          <span class="ic">!</span>
-          <div><span class="callout-title">Own devices, own space</span>
-          Only capture and replay signals from devices <b>you own</b>, or have explicit permission to
-          test, in a space <b>you control</b>. Never transmit toward property that isn't yours.</div>
-        </div>
         <p>
-          That's it. If you can honestly say "this is my remote, my gate, my fob, in my home or lab, and
-          I'm the only person affected," you're on solid ground for the whole course. Almost every rule
-          below is just that sentence applied to a specific situation. The moment a signal you send could
-          reach someone else's car, someone else's gate, or a shared radio band that other people are
-          relying on, you've crossed out of "learning on my own gear" and into "affecting other people" —
-          and that's where law and ethics both kick in.
+          Official Flipper firmware lists the EU transmit ranges it enables,
+          including 433.05–434.79 and 868.15–868.55 MHz. These are
+          <b>firmware ranges, not a complete statement of Romanian law</b>.
+          Equipment compliance and the applicable interface conditions still
+          matter; 315 or 915 MHz examples from another country are not
+          permission to transmit here.
+          <a href="https://docs.flipper.net/zero/sub-ghz/frequencies"
+            >Flipper: regional frequencies</a
+          >.
+        </p>
+        <p>
+          Romanian Criminal Code articles 360–365 address conduct including
+          unauthorized access, interception of non-public computer-data
+          transmissions, interference with data/systems, and certain misuse of
+          tools or access data. Article 361 is one reason “I only listened” is
+          not a universal legal defence. Whether a specific act falls within an
+          offence depends on its facts. Read the current consolidated text and
+          obtain Romanian legal advice for work outside a controlled training
+          lab.
+          <a href="https://legislatie.just.ro/Public/DetaliiDocument/109855"
+            >Romanian Criminal Code, Law 286/2009: articles 360–365</a
+          >.
         </p>
       </section>
-
       <section id="listening-transmitting">
-        <h2>Listening vs transmitting</h2>
+        <h2>Receiving is not blanket permission</h2>
         <p>
-          The most useful mental model in this whole hobby is that <b>receiving and transmitting are two
-          completely different activities</b> with completely different risk profiles.
+          Sub-GHz reception does not deliberately send a Sub-GHz command, but it
+          may collect private data. LF RFID and NFC reading actively energize
+          and communicate with a tag; “read” does not always mean a purely
+          passive receiver. Restrict captures to your authorized lab, minimize
+          stored data, and avoid publishing identifiers, keys or private
+          payloads.
         </p>
         <p>
-          <b>Receiving is passive.</b> When you listen — Frequency Analyzer, Read, Read RAW — your Flipper
-          radiates essentially nothing. You're observing energy that's already in the air. In most places,
-          quietly listening to radio for your own learning is low-risk, the same way noticing which radio
-          stations exist isn't the same as broadcasting. It's how you'll spend the large majority of this
-          course, and it's where you can be curious without much worry.
+          Keep official firmware’s region restrictions enabled. Firmware
+          restrictions reduce mistakes; they do not certify the legality of your
+          entire setup. Momentum is optional, and this course never requires a
+          region unlock, jammer, amplifier, or brute-force app.
         </p>
-        <p>
-          <b>Transmitting is regulated.</b> The instant you send your own signal, you're sharing a
-          finite, public resource — the radio spectrum — with everyone around you. That's why every
-          country has a regulator that sets the rules for who may transmit, on which frequencies, at what
-          power. The licence-free <b>ISM bands</b> (Industrial, Scientific, Medical) let small devices
-          transmit without a personal licence, but only if they stay polite: <b>low power</b>, and often a
-          <b>duty-cycle</b> limit (a cap on how much of the time you're allowed to actually be
-          transmitting, so no one hogs the channel). Those limits are baked into the certified remotes you
-          own; when <i>you</i> transmit, you're expected to respect the same spirit.
-        </p>
-        <p>Radio is governed locally, so the name on the rulebook changes with your address:</p>
-        <dl class="kv">
-          <dt>United States</dt><dd>FCC (Federal Communications Commission) &mdash; unlicensed devices fall under Part 15.</dd>
-          <dt>United Kingdom</dt><dd>Ofcom.</dd>
-          <dt>European Union</dt><dd>CEPT for spectrum allocation; ETSI writes the harmonised standards (e.g. for short-range devices).</dd>
-          <dt>Canada</dt><dd>ISED (Innovation, Science and Economic Development).</dd>
-          <dt>Australia</dt><dd>ACMA (Australian Communications and Media Authority).</dd>
-          <dt>Elsewhere</dt><dd>Nearly every country has an equivalent. If you travel with the device, the local rules travel too.</dd>
-        </dl>
-        <div class="callout note">
-          <span class="ic">i</span>
-          <div><span class="callout-title">Not legal advice</span>
-          This page explains the shape of the rules so you can stay well inside them; it isn't a substitute
-          for your own country's regulations. The safe default is the one in the footer of every page:
-          <b>when in doubt, listen, don't transmit.</b></div>
-        </div>
       </section>
-
       <section id="green-red">
-        <h2>Green light vs hard stop</h2>
-        <p>
-          Here's the practical version — a clear picture of what this hobby looks like when it's healthy,
-          and the handful of things that turn it into something harmful or illegal.
-        </p>
+        <h2>Choose an appropriate exercise</h2>
         <div class="grid2">
-          <div class="card" style="border-top:3px solid var(--green);">
-            <h3><span class="pill green">Green light</span> Go learn</h3>
-            <ul style="margin-bottom:0;">
-              <li><b>Read and analyse</b> any signal you like — receiving is how you learn.</li>
-              <li><b>Save your own</b> remotes, fobs and sensors to a personal library of <span class="mono">.sub</span> files.</li>
-              <li><b>Replay a fixed-code signal to your own device</b> — open your own garage from a capture.</li>
-              <li><b>Build a home library</b> of everything you own, and catalogue it (that's the capstone).</li>
-              <li><b>Buy cheap test remotes</b> and fobs specifically to experiment on. Blank <span class="mono">T5577</span> cards and dollar-store remotes are perfect practice targets.</li>
+          <div class="card">
+            <h3>Course lab targets</h3>
+            <ul>
+              <li>Browser simulators with synthetic signals.</li>
+              <li>Your own IR remote and TV, one known command at a time.</li>
+              <li>
+                A locally compliant, fixed-code training doorbell after the
+                radio checks.
+              </li>
+              <li>Unenrolled RFID/NFC tags and a standalone test reader.</li>
+              <li>
+                Your own computer, a visible typing demo, and a low-voltage
+                breadboard.
+              </li>
             </ul>
           </div>
-          <div class="card" style="border-top:3px solid var(--red);">
-            <h3><span class="pill red">Hard stop</span> Never do this</h3>
-            <ul style="margin-bottom:0;">
-              <li><b>Transmitting to other people's</b> cars, gates, garages, or door systems.</li>
-              <li><b>Jamming, flooding or spamming</b> a band — deliberately drowning out other devices.</li>
-              <li><b>Defeating rolling security</b> on property you don't own, by any means.</li>
-              <li><b>Blindly using Momentum's region unlocks</b> to transmit on frequencies that are illegal where you are.</li>
-              <li><b>Using "brute-force" or jammer community apps against others.</b> They exist; using them on other people's devices is illegal and harmful, and this course gives no steps for it.</li>
+          <div class="card">
+            <h3>Keep out of these labs</h3>
+            <ul>
+              <li>
+                Operational cars, gates, garages, alarms, and shared access
+                systems.
+              </li>
+              <li>Other people’s communications or credentials.</li>
+              <li>
+                Jamming, floods, deauthentication, or disruption experiments
+                over the air.
+              </li>
+              <li>Region-bypass settings and unknown downloaded payloads.</li>
+              <li>Mains-powered, medical, or safety-critical equipment.</li>
             </ul>
           </div>
         </div>
-        <div class="callout warn">
-          <span class="ic">!</span>
-          <div><span class="callout-title">The honest test</span>
-          Before you press transmit, ask: <i>"Who, other than me, could this signal reach or affect?"</i>
-          If the answer is "no one — it's my device in my space," go ahead. If it's anyone else, stop.</div>
-        </div>
-      </section>
-
-      <section id="rolling-not-hack">
-        <h2>Rolling codes &amp; why replay isn't a "hack"</h2>
         <p>
-          A lot of newcomers arrive expecting the Flipper to be a skeleton key. It isn't, and the reason
-          is worth understanding rather than resenting. Modern gates, garages and car fobs use
-          <b>rolling code</b>: the remote and receiver share a secret and a counter, so every button press
-          produces a brand-new, one-time message. Once the receiver has seen a given code, it won't accept
-          it again.
-        </p>
-        <p>
-          That's why capturing a rolling-code remote and replaying it usually does nothing — the code
-          you recorded is already spent. This is not a puzzle to be solved; it's the security feature
-          working exactly as designed. Understanding <i>why</i> replay fails — counters, acceptance
-          windows, why a copy sometimes works once and then desyncs a real remote — is genuinely educational,
-          and you'll explore it hands-on in <a href="modules/05-raw-and-rolling.html">Module 5</a> and in
-          the <a href="case-studies.html">case studies</a>.
-        </p>
-        <p>
-          What this course will <b>not</b> do is walk you through defeating that security on hardware you
-          don't own. Techniques that attack rolling code by interfering with a live transmission are
-          illegal to use against other people, and we describe them only far enough to explain why rolling
-          code exists — never as instructions. The right way to add a working remote to a gate you own is
-          to <b>enroll a genuine remote through the receiver's own pairing procedure</b>, which the
-          manufacturer documents. That's not a workaround; it's the supported answer.
+          These are course boundaries chosen for beginner exercises, not a claim
+          that every listed activity has the same legal status.
         </p>
       </section>
-
+      <section id="rolling">
+        <h2>Learn rolling codes in simulation</h2>
+        <p>
+          A used counter is rejected in the model. Repeating an old code does
+          not normally move a receiver’s counter backwards or make that code
+          valid again. Real implementations vary, and experiments on operational
+          remotes can disrupt access. Use
+          <a href="modules/05-raw-and-rolling.html">Module 5’s simulator</a>;
+          use the manufacturer’s supported provisioning process when you
+          actually need a replacement remote.
+        </p>
+        <p class="source-note">
+          Read the primary sources:
+          <a
+            href="https://ww1.microchip.com/downloads/aemDocuments/documents/MCU08/ProductDocuments/DataSheets/21143C.pdf"
+            >Microchip HCS301: synchronization model (PDF)</a
+          >
+          ·
+          <a href="https://docs.flipper.net/zero/sub-ghz/read-raw"
+            >Flipper: demodulated RAW recordings</a
+          >. Course review: 10 September 2026.
+        </p>
+      </section>
       <section id="rfid-policy">
-        <h2>A note on access badges, RFID/NFC and workplace policy</h2>
+        <h2>Permission covers the system, not just the badge</h2>
         <p>
-          Modules 6 and 7 cover <a href="modules/06-rfid.html">125 kHz RFID</a> and
-          <a href="modules/07-nfc.html">13.56 MHz NFC</a> — the tech behind building fobs and contactless
-          cards. Reading and emulating <b>your own</b> gym fob or apartment tag is a great way to learn.
-          But access credentials sit on top of a second, non-technical layer: <b>policy</b>.
+          Use newly purchased training tags that are not enrolled anywhere.
+          Reading or duplicating an issued credential may involve the operator’s
+          system and data even if the plastic is in your pocket. Written scope
+          should identify both the credential and the authorized test reader.
+          Keep real credential dumps out of this public repository and out of
+          your shareable notebook.
         </p>
-        <p>
-          Your work or building badge belongs to a system that someone else administers, and copying it —
-          even "just to see if it works" — usually violates the acceptable-use agreement you signed, even
-          where it isn't a crime. Access systems also frequently check more than the number the Flipper can
-          read: rolling counters, cryptographic challenges, or a back-end that flags a card seen in two
-          places at once. So a clone that reads perfectly may still not open the door, by design. Treat
-          badges as <b>off-limits unless you administer the system or have written permission</b>, and
-          keep your practice on tags you bought to experiment with.
-        </p>
-        <div class="callout warn">
-          <span class="ic">!</span>
-          <div><span class="callout-title">Permission is a document, not a vibe</span>
-          "I'm sure it's fine" isn't permission. For anything you don't personally own, permission means an
-          explicit yes from the person who does — ideally in writing.</div>
-        </div>
       </section>
-
+      <section id="scope">
+        <h2>A reusable scope note</h2>
+        <p>
+          Before a hardware session, write this in your private notebook. A
+          checklist records your reasoning; it does not grant authorization.
+        </p>
+        <pre>
+Objective and expected result:
+Equipment and who can authorize it:
+Permission source, permitted actions, dates and place:
+For RF: applicable RO-IR, frequency, power, bandwidth, duty cycle/access:
+Data I may collect and where I will keep it:
+Unintended effects and stop conditions:
+Recovery and cleanup plan:
+Unresolved questions (use simulation until resolved):</pre>
+      </section>
       <section id="disclosure">
-        <h2>The responsible-disclosure mindset</h2>
+        <h2>If you find a weakness</h2>
         <p>
-          As you get better, you'll eventually notice something that looks weak — a gate that still uses
-          fixed code, a sensor that leaks more than it should. What you do next is what separates a
-          hobbyist from a nuisance.
-        </p>
-        <p>
-          The responsible move is <b>report, don't exploit</b>. If it's your own device, you can simply fix
-          or replace it. If it's a product or a system that affects other people, the ethical path is to
-          tell the party who can fix it — the manufacturer, the vendor, the building manager — privately,
-          give them reasonable time, and never use the weakness against anyone in the meantime. You don't
-          need to publish a proof-of-concept to be taken seriously, and you should never test a finding on
-          equipment you don't own. Curiosity that protects people is a good look; curiosity that harms them
-          isn't curiosity any more.
+          Stop at the agreed scope. Keep only the minimum evidence, redact
+          identifying data, and privately report through the owner’s or vendor’s
+          published security channel. A disclosure policy authorizes only what
+          it explicitly includes. Do not publish a working credential or expand
+          testing to prove impact.
         </p>
       </section>
-
       <section id="stance">
-        <h2>This course's stance</h2>
+        <h2>A useful default</h2>
         <p>
-          Signal Path is unapologetically pro-curiosity. Radio is one of the most rewarding things you can
-          learn, and the Flipper Zero is a wonderful teacher. We want you poking at every signal in your
-          home, saving them, understanding them, and finishing the capstone with a complete atlas of your
-          own RF world.
+          When permission or radio conditions are unclear, stay in the
+          simulator. Ask ANCOM about spectrum conditions and an appropriately
+          qualified Romanian lawyer about the legal scope of a proposed
+          real-world test. You can keep learning while those questions are
+          resolved.
         </p>
-        <p>
-          We're just as unapologetic about the line. This course exists to help you <b>understand</b>
-          radio, not to help anyone take what isn't theirs. Every lab uses devices you own. Every
-          transmission goes to your own hardware in your own space. Where a technique could harm others, we
-          explain the concept and stop — no steps, no shortcuts, no "for educational purposes" wink. That's
-          not us being cautious for its own sake; it's what makes it possible to teach this openly at all.
-        </p>
-        <div class="callout tip">
-          <span class="ic">&#10003;</span>
-          <div><span class="callout-title">Carry this with you</span>
-          Listen freely. Transmit only to your own gear. When a signal could reach someone else, stop and
-          think first. Do that, and you'll be exactly the kind of person this hobby needs more of. Now go
-          start with <a href="modules/00-setup.html">Module 0</a>.</div>
-        </div>
+        <a class="btn primary" href="roadmap.html">Start the learning path →</a>
       </section>
-    </article>
-  </main>
-
-  <footer class="site-footer">
-    <div class="wrap">
-      <p>Signal Path teaches RF with devices you own, for learning and legitimate testing. Radio transmission is regulated where you live; interfering with other people's devices is illegal and harmful. When in doubt: listen, don't transmit.</p>
-      <p>Signal Path · a self-guided RF course for the Flipper Zero</p>
-    </div>
-  </footer>
-
-  <script src="assets/js/site.js"></script>
-</body>
+    </main>
+    <footer class="site-footer">
+      <div class="wrap">
+        <p>
+          Practise on authorized lab equipment. In Romania, check ANCOM radio
+          conditions and privacy rules. When scope or legality is unclear, use
+          the simulators.
+        </p>
+        <p>
+          <a href="legal.html">Romania &amp; permission</a> ·
+          <a href="sources.html">Sources &amp; corrections</a>
+        </p>
+      </div>
+    </footer>
+    <script src="assets/js/site.js"></script>
+  </body>
 </html>

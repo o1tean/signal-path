@@ -206,8 +206,7 @@
           Flipper these listening styles are called <b>presets</b>. The stock ones are named
           <span class="mono">AM270</span>, <span class="mono">AM650</span>,
           <span class="mono">FM238</span> and <span class="mono">FM476</span>. The letters tell you the
-          modulation family; the numbers relate roughly to how wide a slice of spectrum the preset
-          listens across (in kilohertz). You'll rarely need to know more than "try AM650 first, it fits
+          modulation family. The AM numbers describe approximate bandwidth; the FM names refer to deviation. They are not all bandwidth values. You'll rarely need to know more than "try AM650 first, it fits
           most remotes." Module 2 lets you flip between them and watch a signal appear and vanish.
         </p>
         <div class="callout tip">
@@ -301,12 +300,7 @@
 
       <section id="listening">
         <h2>6 · Listening is not transmitting</h2>
-        <p>
-          There are two very different activities in this hobby, and the difference is the whole ethical
-          and legal story. <b>Receiving</b> — listening to what's already in the air, decoding it, saving
-          it — is passive. Your Flipper radiates nothing; you're a cork bobbing on the pond. It's
-          low-risk and it's how you'll spend most of this course.
-        </p>
+        <p>Sub-GHz reception observes a signal without deliberately transmitting a Sub-GHz command. It can still collect protected information. RFID/NFC reading is different again: the reader actively powers and communicates with the tag. Authorization, privacy and radio conditions all matter.</p>
         <p>
           <b>Transmitting</b> — putting your own wiggle into the air — is a different thing entirely. It's
           regulated everywhere, because your signal shares the band with everyone else's. Send at the
@@ -322,7 +316,7 @@
           Never transmit to other people's cars, gates or garages; never jam or flood a band. Momentum's
           region unlocks can enable frequencies that are illegal to transmit on where you live — knowing
           your local rules is your job, not the firmware's. The full, warm-but-serious version is in the
-          <a href="legal.html">ground rules</a>, and you should read it before Module 4, where you first
+          <a href="legal.html">ground rules</a>, and you should read it before hardware labs; Module 4 is where you first
           transmit.</div>
         </div>
       </section>
@@ -371,7 +365,7 @@
 
   <footer class="site-footer">
     <div class="wrap">
-      <p>Signal Path teaches RF with devices you own, for learning and legitimate testing. Radio transmission is regulated where you live; interfering with other people's devices is illegal and harmful. When in doubt: listen, don't transmit.</p>
+      <p>Signal Path teaches RF with devices you own, for learning and legitimate testing. Radio transmission is regulated where you live; interfering with other people's devices is illegal and harmful. When scope or legality is unclear, use the simulators.</p>
       <p>Signal Path · a self-guided RF course for the Flipper Zero</p>
     </div>
   </footer>

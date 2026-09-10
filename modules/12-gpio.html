@@ -1,0 +1,172 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Module 12 · GPIO: signals you can touch · Signal Path</title>
+    <meta
+      name="description"
+      content="Build a low-current LED circuit and learn to check a pinout before connecting hardware."
+    />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&family=Public+Sans:ital,wght@0,400;0,500;0,600;1,400&display=swap"
+    />
+    <link rel="stylesheet" href="../assets/css/site.css" />
+    <script>
+      (function () {
+        try {
+          var t = localStorage.getItem("signalpath.theme");
+          if (t === "light" || t === "dark")
+            document.documentElement.setAttribute("data-theme", t);
+        } catch (e) {}
+      })();
+    </script>
+  </head>
+  <body data-root="../" data-page="m12">
+    <header class="topbar"></header>
+    <main id="main-content" class="page wrap">
+      <article class="content">
+        <div class="mod-header">
+          <div class="mod-index">12</div>
+          <div class="mod-titles">
+            <div class="mod-week">Week 8 · Beyond the RF foundation</div>
+            <h1>GPIO: signals you can touch</h1>
+            <p class="lede">
+              Build a low-current LED circuit and learn to check a pinout before
+              connecting hardware.
+            </p>
+            <div class="chips">
+              <span class="chip">60–90 min</span
+              ><span class="chip">Breadboard, LED, 1 kΩ resistor, jumpers</span>
+            </div>
+          </div>
+        </div>
+        <section id="concepts">
+          <h2>Understand it</h2>
+          <p>
+            GPIO pins are electrical connections. A logic output represents a
+            low or high voltage; it is not a general-purpose power supply.
+            Follow the current Flipper pinout and use 3.3 V logic for these
+            exercises. The separate 5 V supply pin does not mean an arbitrary
+            signal pin is safe for 5 V.
+          </p>
+          <p>
+            An LED needs a series resistor. With a 3.3 V output, a red LED of
+            approximately 2 V forward voltage, and a 1 kΩ resistor, the
+            estimated current is (3.3 − 2) / 1000 ≈ 1.3 mA. Forward voltage
+            varies; this is a conservative teaching circuit, not a device
+            measurement.
+          </p>
+          <h3>UART, SPI and I²C</h3>
+          <p>
+            UART exchanges asynchronous serial data: endpoints must agree on
+            baud rate and framing, and TX connects to the other end’s RX. SPI
+            uses a clock and a chip-select signal. I²C shares clock and data
+            lines with pull-ups and device addresses. All require compatible
+            electrical levels and a common reference. A connector’s shape is not
+            enough to identify its voltage.
+          </p>
+        </section>
+        <section id="lab">
+          <h2>Lab: build the evidence</h2>
+          <ol class="steps">
+            <li>
+              <div>
+                Disconnect USB and turn off the Flipper before wiring. Open the
+                official pinout. Identify PA7 (pin 2) and GND (pin 8) by label
+                and orientation, not by counting from memory.
+              </div>
+            </li>
+            <li>
+              <div>
+                On the breadboard connect PA7 → 1 kΩ resistor → LED anode;
+                connect LED cathode → GND. Check that no supply pins are
+                shorted. If you cannot identify LED polarity, use its datasheet
+                first.
+              </div>
+            </li>
+            <li>
+              <div>
+                Power the Flipper. Open
+                <span class="flip">GPIO → GPIO Manual Control</span>, select
+                PA7, and use the on-screen control to change its output. Observe
+                the LED. Do not connect this circuit to a mains-powered board.
+              </div>
+            </li>
+            <li>
+              <div>
+                If it does not light, power down before checking polarity,
+                resistor value, continuity, and the selected pin. Change one
+                thing at a time.
+              </div>
+            </li>
+            <li>
+              <div>
+                Set the output inactive, switch off, and disconnect. Draw the
+                circuit with pin names, resistor value, and expected current.
+              </div>
+            </li>
+            <li>
+              <div>
+                For a follow-up, read the USB–UART bridge documentation and draw
+                the TX/RX/GND connections to a documented 3.3 V training board.
+                Verify its pinout and power arrangement before a future
+                connection.
+              </div>
+            </li>
+          </ol>
+        </section>
+        <section id="evidence">
+          <h2>Show that you can do it</h2>
+          <ul>
+            <li>An annotated circuit diagram and estimated LED current.</li>
+            <li>
+              An observed high/low result with a controlled troubleshooting
+              step.
+            </li>
+            <li>
+              A clear explanation of why unknown voltages, RS-232 levels, and
+              mains boards are excluded.
+            </li>
+          </ul>
+          <p>
+            Record the result in your
+            <a href="../notebook.html">learning notebook</a>. Repeat the
+            explanation tomorrow without looking at this page.
+          </p>
+        </section>
+        <section id="quiz">
+          <h2>Check yourself</h2>
+          <div data-quiz="m12"></div>
+        </section>
+        <section id="sources">
+          <h2>Sources</h2>
+          <p class="source-note">
+            Read the primary sources:
+            <a href="https://docs.flipper.net/zero/gpio-and-modules"
+              >Flipper: GPIO pinout and electrical limits</a
+            >. Course review: 10 September 2026.
+          </p>
+        </section>
+      </article>
+    </main>
+    <footer class="site-footer">
+      <div class="wrap">
+        <p>
+          Practise on authorized lab equipment. In Romania, check ANCOM radio
+          conditions and privacy rules. When scope or legality is unclear, use
+          the simulators.
+        </p>
+        <p>
+          <a href="../legal.html">Romania &amp; permission</a> ·
+          <a href="../sources.html">Sources &amp; corrections</a>
+        </p>
+      </div>
+    </footer>
+    <script src="../assets/js/site.js"></script>
+    <script src="../assets/js/data/quiz-bank.js"></script>
+  </body>
+</html>
