@@ -45,3 +45,13 @@ The homepage and shared presentation layer were redesigned with an original gene
 - The 404 page was checked separately at all four widths and its logo loaded through the absolute GitHub project path.
 
 Browser artifacts and test scripts remain in ignored `output/playwright/`; learner test entries remain in the isolated local browser storage. Neither is included in the public site artifact.
+
+## Course structure and catalog cleanup — 15 September 2026
+
+- Existing checks pass for 31 pages and 116 quiz questions. Course checks now validate stage coverage/order, module and badge references, and catalog-before-runtime loading on every HTML entry point.
+- Compared the extracted module and badge metadata with the previous Git version: all values, IDs and ordering are identical.
+- The six-stage learning path rendered with all 19 lesson links and evidence checkpoints. Desktop and 390 px mobile stage cards were visually inspected; the mobile page had no horizontal overflow.
+- All 19 module pages loaded in the in-app browser with navigation, both pager links and mounted quiz options. No browser console errors were reported during this check.
+- Static staging and `git diff --check` pass. No runtime dependency was added.
+
+This pass did not exercise payment, authentication, refunds, hardware labs or every notebook/quiz interaction. Payment and protected delivery remain planned work; the current build still publishes all course content.

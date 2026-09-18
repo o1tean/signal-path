@@ -15,6 +15,10 @@ The first eleven modules cover RF fundamentals, Sub-GHz, rolling codes, RFID/NFC
 
 The course explains dual-use mechanisms and defenses. Practical exercises use controlled, authorized equipment. Educational intent or device ownership does not replace permission, applicable radio conditions or data/privacy obligations. Completion badges are self-reported progress, not certification.
 
+## Course product plan
+
+The next version is a custom course sold through one-time access. The learning path groups the material into a starter, four core stages and an optional Wi-Fi extension. See [course structure and paid-launch plan](docs/course-plan.md) for outcomes, payment-provider comparisons, delivery boundaries and remaining decisions. **The current site is public; no paywall is active.**
+
 ## Visual design
 
 An original Signal Path logo, graphite/white surfaces, warm orange accents, responsive hardware illustrations and interactive connection diagrams. Motion respects system reduced-motion settings, has a persistent pause control, and pauses offscreen. No scroll hijacking or animation dependency. See [brand notes](docs/brand.md) for the generated logo prompt and asset paths.
@@ -47,9 +51,9 @@ A failed validation prevents deployment. The workflow can also be started with *
 
 ## Editing
 
-- Course order and badges: `assets/js/site.js`.
+- Course order, badges and stage checkpoints: `assets/js/data/course.js` (load before `site.js`).
 - Questions and explanations: `assets/js/data/quiz-bank.js`.
-- Lessons: `modules/`; new modules should be added to the home map, runtime, roadmap and quiz bank together.
+- Lessons: `modules/`; add new modules to the catalog, its stage list, the static home map, sitemap and quiz bank. Roadmap links render from the catalog.
 - Notebook, backups and resume links: `assets/js/learning.js`.
 - Shared design tokens and responsive styles: `assets/css/site.css`.
 - Primary sources and corrections: `sources.html`.

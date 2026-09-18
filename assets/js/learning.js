@@ -26,26 +26,23 @@
   }
   document.addEventListener("sp:state", renderResume);
   renderResume();
-  document.querySelectorAll("[data-route]").forEach(function (host) {
-    var list = SP.el("ol", { class: "route-links" });
-    host
-      .getAttribute("data-route")
-      .split(",")
-      .forEach(function (n) {
-        var m = SP.MODULES.find(function (m) {
-          return m.n === Number(n);
-        });
-        if (m)
-          list.appendChild(
-            SP.el("li", {}, [
-              SP.el("a", {
-                href: SP.root + m.href,
-                text: m.n + " · " + m.title,
-              }),
-            ]),
-          );
+  document.querySelectorAll("[data-course-stages]").forEach(function (host) {
+    window.SP_COURSE.stages.forEach(function (stage) {
+      var list = SP.el("ol", { class: "route-links" });
+      stage.modules.forEach(function (id) {
+        var m = SP.MODULES.find(function (m) { return m.id === id; });
+        list.appendChild(SP.el("li", {}, [SP.el("a", {
+          href: SP.root + m.href, text: m.n + " · " + m.title
+        })]));
       });
-    host.appendChild(list);
+      host.appendChild(SP.el("div", { class: "card", id: stage.id }, [
+        SP.el("p", { class: "eyebrow", text: stage.label }),
+        SP.el("h3", { text: stage.title }),
+        SP.el("p", { text: stage.description }),
+        list,
+        SP.el("p", {}, [SP.el("b", { text: "Checkpoint: " }), stage.evidence])
+      ]));
+    });
   });
   var form = document.getElementById("notebook-form");
   if (!form) return;
