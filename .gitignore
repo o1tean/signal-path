@@ -9,3 +9,4 @@ _site/
 examples/**/dist/
 examples/**/.vscode/
 examples/**/.ufbt/
+.claude/

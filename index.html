@@ -58,6 +58,14 @@
             height="460"
             fetchpriority="high"
           />
+          <div
+            class="scene3d hero-scene"
+            data-scene3d="flipper"
+            data-label="3D model of the Flipper Zero. Drag or use arrow keys to rotate; the buttons below change the screen and add the Wi-Fi Devboard."
+            data-opts='{"hero":true,"mode":"subghz"}'
+          >
+            <span class="scene3d-caption">Drag to rotate</span>
+          </div>
           <div class="signal-readout" aria-live="polite">
             <span class="readout-label" data-signal-label
               >Sub-GHz · fixed-code lab</span
@@ -97,7 +105,7 @@
           </button>
         </div>
         <p class="visual-caption">
-          Concept illustration.
+          Official body model, rendered in your browser.
           <a data-signal-link href="modules/01-frequency.html"
             >Explore Sub-GHz →</a
           >
@@ -196,7 +204,12 @@
               width="600"
               height="460"
               loading="lazy"
-            /><span class="board-spec">ESP32-S2 / 2.4 GHz</span>
+            />            <div
+              class="scene3d"
+              data-scene3d="devboard"
+              data-label="3D model of the ESP32-S2 Wi-Fi Devboard. Drag or use arrow keys to rotate."
+            ></div>
+            <span class="board-spec">ESP32-S2 / 2.4 GHz</span>
           </div>
         </div>
       </section>
@@ -536,6 +549,7 @@
           height="96"
           loading="lazy"
         />
+        <pre class="ascii-art" data-ascii="flipper" aria-hidden="true"></pre>
         <p class="eyebrow">Stay curious. Work with care.</p>
         <h2>Understanding<br />is the real upgrade.</h2>
         <p>

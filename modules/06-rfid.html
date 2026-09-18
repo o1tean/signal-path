@@ -84,6 +84,8 @@
       <section id="how-it-works">
         <h2>How a passive tag answers</h2>
         <p>Picture two coils of wire facing each other. The reader (your Flipper, or the box by the door) drives an alternating current through <b>its</b> coil at 125&nbsp;kHz. That creates a pulsing magnetic field. Bring the tag's coil into that field and the field induces a small current in it — the same trick that makes a transformer or a wireless phone charger work. The tag has no battery, but for as long as it's in the field it has just enough power to run its tiny chip.</p>
+        <div class="scene3d" data-scene3d="nearfield" data-label="3D animation: a reader coil couples with a key fob coil through a near field; out of range, the fob has no power." data-opts='{"kind":"fob"}'><span class="scene3d-caption">Concept animation · drag to rotate</span></div>
+
         <p>Now the tag has to <b>answer</b>. It can't shout back with its own transmitter — it has no power source of its own. Instead it changes how much energy it draws from the reader's field, flicking that load on and off in a pattern. The reader feels those tiny tugs on its own coil and reads them out as ones and zeros. The tag never "broadcasts"; it modulates the reader's own field. That's why the tag can be so cheap and so thin, and why it only works up close.</p>
 
         <figure class="diagram">

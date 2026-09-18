@@ -95,6 +95,8 @@ RAW_Data: 328 -456 320 -1348 980 -452 336 -444 972 -1360 340 -448</code></pre>
       <section id="how">
         <h2>How a rolling code actually works</h2>
         <p>A rolling-code remote adds two ingredients to the fixed-code recipe: a <b>counter</b> and <b>encryption</b>.</p>
+        <div class="scene3d" data-scene3d="rolling" data-label="3D animation: a remote sends fresh counters that a receiver accepts, and a replayed counter that it rejects."><span class="scene3d-caption">Concept animation · drag to rotate</span></div>
+
         <p>The counter is just a number that goes up by one every time you press the button. Press one: counter 41. Press two: counter 42. Press three: counter 43. The remote and its paired receiver both keep track of this number, and crucially, they were <b>synchronised</b> when the remote was first enrolled.</p>
         <p>If the remote simply broadcast "I'm remote #12345, counter 42" in the clear, an eavesdropper could read the pattern and forge the next value. So the remote <b>encrypts</b> the counter (together with its identity and the button) into a scrambled block that changes completely with every increment. This is what the classic ciphers do:</p>
         <div class="table-scroll">

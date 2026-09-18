@@ -1336,3 +1336,96 @@ pre code {
     grid-template-columns: minmax(0, 1fr);
   }
 }
+
+/* ---------- 3D scenes (assets/js/scene3d.js) ---------- */
+.scene3d {
+  position: relative;
+  aspect-ratio: 16 / 9;
+  margin: 18px 0;
+  border-radius: var(--radius);
+  overflow: hidden;
+  border: 1px solid var(--line);
+  background: radial-gradient(120% 90% at 50% 0%, #17233a, #0b1220 70%);
+}
+.scene3d canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  touch-action: pan-y;
+  cursor: grab;
+  outline-offset: -3px;
+}
+.scene3d canvas:active {
+  cursor: grabbing;
+}
+.scene3d-caption {
+  position: absolute;
+  left: 12px;
+  bottom: 9px;
+  z-index: 1;
+  font: 10.5px var(--font-mono);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #9bb3d1;
+  pointer-events: none;
+}
+.scene3d.hero-scene {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  aspect-ratio: auto;
+  margin: 0;
+  border: 0;
+  border-radius: 0;
+  background: none;
+}
+.scene3d.hero-scene .scene3d-caption {
+  left: auto;
+  right: 12px;
+  bottom: 8px;
+}
+.signal-stage.has-scene3d .hero-device,
+.signal-stage.has-scene3d .hero-board,
+.board-scene.has-scene3d img {
+  display: none;
+}
+.board-scene .scene3d {
+  width: 100%;
+  margin: 0;
+  background: none;
+  border: 0;
+}
+.scene3d-failed {
+  display: none;
+}
+/* Flipper-style pixel screens and ASCII art */
+.lcd-art {
+  flex-shrink: 0;
+  width: 192px;
+  height: 96px;
+  margin-left: auto;
+  image-rendering: pixelated;
+  border-radius: 6px;
+  box-shadow: inset 0 0 0 2px rgba(0, 0, 0, 0.25), 0 1px 0 rgba(255, 255, 255, 0.3);
+}
+.ascii-art {
+  margin: 0 auto;
+  width: fit-content;
+  max-width: 100%;
+  overflow-x: auto;
+  font: 9px/1 var(--font-mono);
+  letter-spacing: 0;
+  color: var(--orange);
+  white-space: pre;
+  text-align: left;
+}
+@media (max-width: 720px) {
+  .lcd-art {
+    display: none;
+  }
+}
+@media (max-width: 640px) {
+  .scene3d {
+    aspect-ratio: 4 / 3;
+  }
+}

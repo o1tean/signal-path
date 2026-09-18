@@ -21,7 +21,7 @@ The next version is a custom course sold through one-time access. The learning p
 
 ## Visual design
 
-An original Signal Path logo, graphite/white surfaces, warm orange accents, responsive hardware illustrations and interactive connection diagrams. Motion respects system reduced-motion settings, has a persistent pause control, and pauses offscreen. No scroll hijacking or animation dependency. See [brand notes](docs/brand.md) for the generated logo prompt and asset paths.
+An original Signal Path logo, graphite/white surfaces, warm orange accents, interactive 3D scenes (the official Flipper Zero body model, a procedural Wi-Fi Devboard and animated RF concepts, rendered with a vendored three.js module) and Flipper-style pixel art screens with an original 5×7 font. Motion respects system reduced-motion settings, has a persistent pause control, and pauses offscreen. No scroll hijacking or animation dependency. See [brand notes](docs/brand.md) for the generated logo prompt and asset paths.
 
 ## Run locally
 
@@ -56,6 +56,7 @@ A failed validation prevents deployment. The workflow can also be started with *
 - Lessons: `modules/`; add new modules to the catalog, its stage list, the static home map, sitemap and quiz bank. Roadmap links render from the catalog.
 - Notebook, backups and resume links: `assets/js/learning.js`.
 - Shared design tokens and responsive styles: `assets/css/site.css`.
+- 3D scenes: `assets/js/scene3d.js` (add `<div class="scene3d" data-scene3d="name">` to a page); body model and licence in `assets/models/`; pixel font and sprites in `assets/js/presentation.js`.
 - Primary sources and corrections: `sources.html`.
 - Printable lab template: `downloads/lab-notebook.md`.
 

@@ -233,3 +233,173 @@
     document.addEventListener("DOMContentLoaded", initPresentation);
   else initPresentation();
 })();
+
+/* ============================================================
+   Pixel art (1-bit, 128x64 LCD style) + on-demand 3D loader.
+   Original artwork; drawn in the spirit of the device's screen,
+   not copied from it. Exposed as SP.pixel for scene3d.js.
+   ============================================================ */
+(function () {
+  "use strict";
+  var SP = (window.SP = window.SP || {});
+  var BG = "#f6a03a", INK = "#1b1509"; /* same values as --lcd-bg / --lcd-ink */
+
+  /* 5x7 font: key + 35 cells, row by row */
+  var FONT = {};
+  (
+    "0 .###.#...##..###.#.###..##...#.###.|1 ..#...##....#....#....#....#...###.|" +
+    "2 .###.#...#....#...#...#...#...#####|3 #####...#...#.....#.....##...#.###.|" +
+    "4 ...#...##..#.#.#..#.#####...#....#.|5 ######....####.....#....##...#.###.|" +
+    "6 ..##..#...#....####.#...##...#.###.|7 #####....#...#...#...#....#....#...|" +
+    "8 .###.#...##...#.###.#...##...#.###.|9 .###.#...##...#.####....#...#..##..|" +
+    "A .###.#...##...#######...##...##...#|B ####.#...##...#####.#...##...#####.|" +
+    "C .###.#...##....#....#....#...#.###.|D ###..#..#.#...##...##...##..#.###..|" +
+    "E ######....#....####.#....#....#####|F ######....#....####.#....#....#....|" +
+    "G .###.#...##....#.####...##...#.####|H #...##...##...#######...##...##...#|" +
+    "I .###...#....#....#....#....#...###.|J ..###...#....#....#....#.#..#..##..|" +
+    "K #...##..#.#.#..##...#.#..#..#.#...#|L #....#....#....#....#....#....#####|" +
+    "M #...###.###.#.##.#.##...##...##...#|N #...##...###..##.#.##..###...##...#|" +
+    "O .###.#...##...##...##...##...#.###.|P ####.#...##...#####.#....#....#....|" +
+    "Q .###.#...##...##...##.#.##..#..##.#|R ####.#...##...#####.#.#..#..#.#...#|" +
+    "S .#####....#.....###.....#....#####.|T #####..#....#....#....#....#....#..|" +
+    "U #...##...##...##...##...##...#.###.|V #...##...##...##...##...#.#.#...#..|" +
+    "W #...##...##...##.#.##.#.###.###...#|X #...##...#.#.#...#...#.#.#...##...#|" +
+    "Y #...##...#.#.#...#....#....#....#..|Z #####....#...#...#...#...#....#####|" +
+    ". ..........................##...##..|: ......##...##........##...##.......|" +
+    "- ...............#####...............|/ ....#....#...#...#...#...#....#....|" +
+    "% ##..###..#...#...#...#...#..###..##|+ .......#....#..#####..#....#.......|" +
+    "< ...#...#...#...#.....#.....#.....#.|> .#.....#.....#.....#...#...#...#...|" +
+    "' .##...##....#......................|, .....................##...##....#..|" +
+    "! ..#....#....#....#....#.........#..|? .###.#...#....#...#...#.........#..|" +
+    "= ..........#####.....#####..........|( ...#...#...#....#....#.....#.....#.|" +
+    ") .#.....#.....#....#....#...#...#...|* .....#.#.#.###.#####.###.#.#.#....."
+  )
+    .split("|")
+    .forEach(function (g) {
+      FONT[g.charAt(0)] = g.slice(2, 37);
+    });
+
+  /* sprites: rows of '#' (ink) and '.' */
+  var SPRITES = {
+    logo: "....######..|...#......#.|..#........#|..#.........|...##.......|.....##.....|.......##...|.........#..|..........#.|#.........#.|.#.......#..|..##...##...|....###.....",
+    antenna: ".......#.......|......###......|.....#.#.#.....|....#..#..#....|...#...#...#...|.......#.......|.......#.......|.......#.......|.......#.......|.......#.......|......###......|.....#.#.#.....|....#..#..#....|...#...#...#...|..###########..",
+    wave: "..###.......###.|.#...#.....#...#|#.....#...#.....|.......#.#......|........#.......",
+    pulses: ".####....##..###|.#..#....##..#..|.#..#....##..#..|.#..#....##..#..|##..######..##..",
+    key: "...###...|..#...#..|..#.#.#..|..#...#..|...#.#...|...#.#...|...#.#...|...#.##..|...#.#...|...#.##..|...#.#...|...###...",
+    tag: "....#####....|..##.....##..|.#.........#.|#....###....#|#...#...#...#|#...#...#...#|#....###....#|.#.........#.|..##.....##..|....#####....|.....#.#.....|.....#.#.....|.....###.....",
+    card: ".##############.|#..............#|#.####.........#|#.#..#....###..#|#.####...#...#.#|#........#.#.#.#|#........#...#.#|#.........###..#|#..............#|.##############.",
+    chip: "..#.#.#.#.#..|.###########.|#.#.......#.#|.#..#####..#.|#.#.#...#.#.#|.#..#...#..#.|#.#.#...#.#.#|.#..#####..#.|#.#.......#.#|.###########.|..#.#.#.#.#..",
+    ir: ".###.....#....|#...#...#....#|#...#..#....#.|#...#.........|#...#..#....#.|#...#...#....#|.###.....#....|.#.#..........|.#.#..........",
+    pins: "#################|#.#.#.#.#.#.#.#.#|#################|.#.#.#.#.#.#.#.#.|.#.#.#.#.#.#.#.#.",
+    usb: "....##....|...#..#...|...#..#...|...#..#...|.########.|.#......#.|.#.####.#.|.#.#..#.#.|.#.####.#.|.#......#.|.########.|....##....|....##....",
+    lock: "...#####...|..#.....#..|..#.....#..|..#.....#..|.#########.|.#.......#.|.#...#...#.|.#..###..#.|.#...#...#.|.#.......#.|.#########.",
+    flag: "#.........|######....|#.....###.|#........#|#.....###.|######....|#.........|#.........|#.........|###.......",
+    ibutton: "....#####....|..##.....##..|.#..#####..#.|#..#.....#..#|#.#.......#.#|#.#.......#.#|#.#.......#.#|#..#.....#..#|.#..#####..#.|..##.....##..|....#####....",
+    tool: ".........##.|........#..#|........#..#|.......#####|......#.....|.....#......|....#.......|...#........|.##.........|#..#........|#..#........|.##.........",
+    wifi: "....#####....|..##.....##..|.#..#####..#.|#..#.....#..#|..#..###..#..|.....#.#.....|......#......",
+    flipper:
+      "......#############################|.....#............................#|....#..##########.....######......#|...#...#........#....#..#...#.....#|..#....#........#...#.#####.#.###.#|.#.....#........#...#.#...#.#.#.#.#|#......#........#...#.#####.#.###.#|#......#........#....#..#...#.....#|#......##########.....######......#|.#................................#|..#...............................#|...#..............................#|....#.............................#|.....#............................#|......#############################",
+  };
+  Object.keys(SPRITES).forEach(function (k) {
+    SPRITES[k] = SPRITES[k].split("|");
+  });
+
+  function text(ctx, str, x, y, s) {
+    s = s || 1;
+    String(str)
+      .toUpperCase()
+      .split("")
+      .forEach(function (ch) {
+        var g = FONT[ch];
+        if (g)
+          for (var i = 0; i < 35; i++)
+            if (g.charAt(i) === "#")
+              ctx.fillRect(x + (i % 5) * s, y + Math.floor(i / 5) * s, s, s);
+        x += 6 * s;
+      });
+    return x;
+  }
+  function sprite(ctx, name, x, y, s) {
+    s = s || 1;
+    var rows = SPRITES[name] || [];
+    rows.forEach(function (row, j) {
+      for (var i = 0; i < row.length; i++)
+        if (row.charAt(i) === "#") ctx.fillRect(x + i * s, y + j * s, s, s);
+    });
+  }
+  function arc(ctx, cx, cy, r, a0, a1) {
+    for (var a = a0; a <= a1; a += 0.5 / r)
+      ctx.fillRect(Math.round(cx + Math.cos(a) * r), Math.round(cy + Math.sin(a) * r), 1, 1);
+  }
+  function wrap(str, width) {
+    var out = [], line = "";
+    String(str).toUpperCase().split(/\s+/).forEach(function (w) {
+      if ((line + " " + w).trim().length > width && line) { out.push(line); line = w; }
+      else line = (line + " " + w).trim();
+    });
+    if (line) out.push(line);
+    return out;
+  }
+  /* one animated LCD frame: title bar, icon + scan arcs, text, footer */
+  function lcd(canvas, spec, t) {
+    var ctx = canvas.getContext("2d"), f = Math.floor((t || 0) * 3);
+    ctx.fillStyle = BG; ctx.fillRect(0, 0, 128, 64);
+    ctx.fillStyle = INK;
+    text(ctx, spec.title || "", 2, 1);
+    ctx.fillRect(112, 1, 13, 7); ctx.fillRect(125, 3, 1, 3); /* battery */
+    ctx.fillStyle = BG; ctx.fillRect(113, 2, 11, 5);
+    ctx.fillStyle = INK; ctx.fillRect(114, 3, 8, 3);
+    ctx.fillRect(0, 9, 128, 1);
+    var icon = spec.icon || "logo", ih = (SPRITES[icon] || []).length, iw = ((SPRITES[icon] || [""])[0] || "").length;
+    sprite(ctx, icon, 15 - Math.floor(iw / 2), 30 - Math.floor(ih / 2));
+    for (var k = 0; k < 3; k++) if (((f + k) % 3) !== 2 || spec.anim === "bars") {
+      if (spec.anim === "bars") { if (k <= f % 4) ctx.fillRect(28 + k * 3, 34 - k * 3, 2, 3 + k * 3); }
+      else arc(ctx, 15 + iw / 2, 30, 4 + k * 3, -0.9, 0.9);
+    }
+    var x = 38;
+    if (spec.big) { x = text(ctx, spec.big, 38, 15, 2); text(ctx, spec.unit || "", x + 2, 22); }
+    (spec.lines || []).forEach(function (l, i) { text(ctx, l, 38, (spec.big ? 34 : 17) + i * 9); });
+    ctx.fillRect(0, 54, 128, 10);
+    ctx.fillStyle = BG;
+    text(ctx, (spec.foot || "") + (spec.anim ? "...".slice(0, f % 4) : ""), 3, 56);
+    text(ctx, spec.right || "", 128 - 3 - 6 * (spec.right || "").length, 56);
+    ctx.fillStyle = INK;
+  }
+  function ascii(name) {
+    var rows = SPRITES[name] || [], out = "";
+    for (var y = 0; y < rows.length; y += 2) {
+      var line = "";
+      for (var x = 0; x < rows[0].length; x++) {
+        var a = rows[y].charAt(x) === "#", b = rows[y + 1] && rows[y + 1].charAt(x) === "#";
+        line += a && b ? "█" : a ? "▀" : b ? "▄" : " ";
+      }
+      out += line.replace(/\s+$/, "") + "\n";
+    }
+    return out;
+  }
+  var MODES = {
+    subghz: { title: "SUB-GHZ", icon: "antenna", big: "433.92", unit: "MHz", lines: ["AM650  READ"], anim: "scan", foot: "SCANNING", right: "OK >" },
+    nfc: { title: "NFC", icon: "card", big: "13.56", unit: "MHz", lines: ["ISO 14443-A"], anim: "scan", foot: "READING", right: "OK >" },
+    wifi: { title: "WIFI", icon: "wifi", big: "2.4", unit: "GHz", lines: ["ESP32-S2  CH 6"], anim: "bars", foot: "SCANNING", right: "OK >" },
+  };
+  var ICONS = { m00: "logo", m01: "antenna", m02: "wave", m03: "pulses", m04: "antenna", m05: "key", m06: "tag", m07: "card", m08: "chip", m09: "tool", m10: "flag", m11: "ir", m12: "pins", m13: "usb", m14: "ibutton", m15: "chip", m16: "lock", m17: "flag", m18: "wifi" };
+  SP.pixel = { FONT: FONT, SPRITES: SPRITES, MODES: MODES, text: text, sprite: sprite, arc: arc, lcd: lcd, ascii: ascii, measure: function (s) { return String(s).length * 6 - 1; } };
+
+  function init() {
+    var root = document.body.getAttribute("data-root") || "", page = document.body.getAttribute("data-page") || "";
+    var animating = function () { return !document.documentElement.classList.contains("motion-off") && !document.hidden; };
+    /* module header: a small screen with the module's icon and title */
+    var header = document.querySelector(".mod-header"), h1 = header && header.querySelector("h1");
+    if (header && h1) {
+      var c = document.createElement("canvas"); c.width = 128; c.height = 64; c.className = "lcd-art"; c.setAttribute("aria-hidden", "true");
+      var week = header.querySelector(".mod-week"), spec = { title: "MODULE " + page.replace(/^m/, ""), icon: ICONS[page] || "logo", lines: wrap(h1.textContent, 14).slice(0, 3), anim: "scan", foot: week ? week.textContent.split("·")[0].trim() : "", right: "OK >" };
+      header.appendChild(c); lcd(c, spec, 0);
+      setInterval(function () { if (animating() && c.getBoundingClientRect().bottom > 0) lcd(c, spec, performance.now() / 1000); }, 333);
+    }
+    document.querySelectorAll("[data-ascii]").forEach(function (pre) { pre.textContent = ascii(pre.getAttribute("data-ascii")); });
+    if (document.querySelector("[data-scene3d]")) {
+      var s = document.createElement("script"); s.type = "module"; s.src = root + "assets/js/scene3d.js"; document.head.appendChild(s);
+    }
+  }
+  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", init); else init();
+})();
