@@ -1,0 +1,309 @@
+---
+id: m16
+number: 16
+slug: 16-security-lab
+title: 'Authorized security research: test the claim'
+description: Phrase one bounded security claim about a rig you own, test it with positive and negative controls, and write it up so another learner can repeat the test.
+stage: research
+week: Week 11
+access: paid
+minutes: 150
+gear:
+  - Flipper Zero on official firmware 1.4.3 or later, with its microSD card inserted
+  - a browser for the rolling-code simulator
+  - 'rig A: a fixed-code training doorbell or lab chime you own, its remote, and the .sub file you saved in Module 3'
+  - 'rig B: a standalone 125 kHz desk reader you own, with no building connection, and two unenrolled T5577 training tags holding different EM4100 IDs'
+  - your lab notebook and a printed copy of the scope note from the Romania lab guide
+transmits: own-device
+outcome: Phrase one bounded security claim about your own training rig, test it with a positive control, one trial and a negative control, and write a finding, a mitigation and a method another learner can repeat.
+prerequisites:
+  - m04
+  - m05
+  - m06
+  - m09
+tools:
+  - rolling-sim
+scenes: []
+evidence: A scope note, a bounded claim with its prediction, three control results as observed, a finding no wider than the rig, a mitigation, a cleanup record and a method another learner can repeat.
+sources:
+  - title: 'Flipper Docs: Supported vendors (static and dynamic protocols)'
+    url: https://docs.flipper.net/zero/sub-ghz/supported-vendors
+  - title: 'Flipper Docs: 125 kHz RFID'
+    url: https://docs.flipper.net/zero/rfid
+  - title: 'Flipper Docs: Reading NFC cards'
+    url: https://docs.flipper.net/zero/nfc/read
+  - title: 'Flipper Docs: Bad USB'
+    url: https://docs.flipper.net/zero/bad-usb
+  - title: 'Microchip HCS301 KeeLoq code hopping encoder data sheet (DS21143C)'
+    url: https://ww1.microchip.com/downloads/aemDocuments/documents/MCU08/ProductDocuments/DataSheets/21143C.pdf
+  - title: 'NIST CSRC Glossary: replay attack'
+    url: https://csrc.nist.gov/glossary/term/replay_attack
+  - title: 'NIST CSRC Glossary: replay resistance'
+    url: https://csrc.nist.gov/glossary/term/replay_resistance
+  - title: 'Hancke and Kuhn: An RFID Distance Bounding Protocol (SecureComm 2005)'
+    url: https://www.cl.cam.ac.uk/~mgk25/sc2005-distance.pdf
+  - title: 'OWASP: Fuzzing'
+    url: https://community.owasp.org/Fuzzing
+  - title: 'Romanian Criminal Code, Law 286/2009'
+    url: https://legislatie.just.ro/Public/DetaliiDocument/109855
+reviewed: '2026-10-13'
+badge: security-lab
+---
+
+## Outcome
+
+You can turn a security worry about a device you own into one testable claim, test it with controls on both sides, and write it up so another learner can repeat the test and argue with your conclusion.
+
+By the end you can:
+
+- write a claim that names a target, its configuration, an attacker capability, the security property under test and what you will observe;
+- read a positive control, one trial and a negative control together, and say what the three results do and do not establish;
+- tie a mitigation to the property that failed, and record the test so someone else can run it again.
+
+## Before you start
+
+- **Prerequisites:** [Module 4](/learn/04-transmit) for a fixed-code replay to your own device, [Module 5](/learn/05-raw-and-rolling) for counters and the acceptance window, [Module 6](/learn/06-rfid) for reading and emulating a training tag, and [Module 9](/learn/09-troubleshooting) for changing one variable at a time. Every Flipper step here is one you have done before; the method around it is new.
+- **Gear:** a browser and one rig. **Rig A** is a fixed-code chime you own with the `.sub` you saved in Module 3. **Rig B** is a standalone 125 kHz desk reader you own, connected to nothing, with two never-enrolled training tags. With neither, do Lab 16.1 and the paper half of Lab 16.2, labelled simulated.
+- **Firmware:** official 1.4.3 or later; menu names come from that release.
+- **Time:** about 150 minutes over two or three sessions: 40 to read, 20 in the simulator, 30 for the scope note and claim, 40 at the bench, 20 for the quiz, reflection and write-up.
+- **Transmits:** rig A sends a few one-second bursts to your chime; rig B emulates a tag centimetres from your reader. Lab 16.1 sends nothing.
+- **Scope:** your own equipment, in your own space, with a written scope note. No device that guards a door, a car, a gate, an alarm or anyone else's data.
+
+<Callout variant="legal" title="Permission is part of the experiment">
+Before the bench, complete the three checks in the [Romania lab guide](/romania-lab-guide): who can authorise the test, which radio conditions apply, and what the test could affect. Romania's Criminal Code, articles 360 to 365, covers unauthorised access, interception of non-public data transmissions and interference with data or systems. Badges from work, a gym or a building stay out of this lab even when the plastic is in your pocket. If any check stays open, stop at Lab 16.1.
+</Callout>
+
+## Understand
+
+### From worry to claim
+
+"Is my doorbell secure?" cannot be tested, because no single observation answers it. "Does my fixed-code chime ring for one replay of its own button from 1 m?" can. A testable claim fills five fields, and the method that follows hangs off them.
+
+<div class="table-scroll">
+
+| Field | Vague | Bounded | Where it goes next |
+| --- | --- | --- | --- |
+| Target and configuration | my doorbell | my chime, paired to one remote, factory code setting | the scope note and the method record |
+| Capability | someone could hack it | record one press and send it later | the trial |
+| Property | is it secure? | does the receiver reject a message it has already acted on? | the mitigation |
+| Observable | it gets hacked | the chime rings, or stays silent, within 2 s of the send | all three results |
+| Controls | none | genuine remote must ring it; a non-matching file must not | the controls table below |
+
+</div>
+
+If you cannot say in advance what "yes" and "no" will look like, you are not ready to test. Write the prediction for all three results before you touch the rig, so a surprise stays a surprise.
+
+### Four capabilities, four properties
+
+Keep what the attacker can do apart from what the defence protects.
+
+<div class="table-scroll">
+
+| Capability | What the attacker does | Property it tests | Defence that addresses it |
+| --- | --- | --- | --- |
+| <Term id="replay">Replay</Term> | records a message and sends the same bits later | freshness: is this message new? | a counter or a fresh challenge, checked by the receiver |
+| Credential copying | reproduces the data a reader relies on, such as a <Term id="uid">UID</Term> | is the credential secret? | a credential that answers a challenge with a key |
+| Relay | forwards a live exchange between the real reader and the real card | proximity: is the card actually here? | timing the round trip at the physical layer (distance bounding) |
+| Interference-assisted capture | stops the receiver hearing a press while recording it | freshness again: the recorded message is still unused | receiver-side design and spectrum rules; studied here only as a model |
+
+</div>
+
+Two relatives belong here too. **Input injection** abuses a trusted input path; Flipper's Bad USB page says a computer sees the device as a keyboard, over USB or Bluetooth Low Energy. **Fuzzing**, a testing technique for finding bugs in OWASP's words, belongs on an offline parser or your Module 15 app.
+
+**Replay.** NIST defines a replay attack as one in which the attacker replays previously captured messages. A <Term id="fixed-code">fixed-code</Term> receiver only compares bits, so a faithful recording works indefinitely. A <Term id="rolling-code">rolling-code</Term> receiver remembers the last counter it accepted. In the Microchip HCS301 data sheet, a 16-bit counter sits inside the encrypted part of each message; the receiver acts on values up to 16 ahead, wants two sequential presses up to 32K ahead, and ignores the rest back to the stored value. A copy of counter 42 is bit-perfect and still ignored once 42 has been accepted. The receiver's memory gave freshness; encryption only stops you forging a new counter. "Encrypted" and "replay resistant" are separate claims with separate tests.
+
+**Copying.** An <Term id="em4100">EM4100</Term> tag sends the same ID to every reader, and Flipper's RFID page notes that LF cards don't usually provide high levels of security. A reader that trusts the ID alone cannot tell the tag from a <Term id="t5577">T5577</Term> holding the same ID. For an unknown NFC card, Flipper's reading guide says it saves only UID, SAK and ATQA, and for <Term id="mifare-classic">MIFARE Classic</Term> it emulates only unlocked sectors. Whether a UID fools a reader depends on what else the reader asks for.
+
+**Relay.** One proxy poses as a card beside the real reader, another as a reader beside the real card. The real card answers the fresh challenge with its real key, so every cryptographic check passes.
+
+<Figure label="Two sequence diagrams. Top, replay: a remote sends counter 42 to a receiver while a recorder copies it; later the recorder sends the same counter 42 and the receiver, which has stored 42, refuses it as old. Bottom, relay: a reader sends a fresh challenge to a nearby proxy, which forwards it across a long link to a second proxy beside the real card; the card answers with a valid signature, which travels back; the reader accepts a correct, fresh answer from a card that is not near it." caption="Replay sends an old message, so a freshness check catches it. Relay forwards a new one, so freshness passes and only the time the answer took can reveal the extra distance.">
+<svg viewBox="0 0 640 380" width="100%" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+  <defs>
+    <marker id="m16-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0 0 L10 5 L0 10 z" class="fill-foreground" />
+    </marker>
+  </defs>
+  <text x="0" y="20" class="fill-foreground font-sans" font-size="15" font-weight="700">Replay: the message is old</text>
+  <text x="70" y="48" text-anchor="middle" class="fill-muted-foreground font-sans" font-size="12">remote</text>
+  <text x="320" y="48" text-anchor="middle" class="fill-muted-foreground font-sans" font-size="12">recorder</text>
+  <text x="570" y="48" text-anchor="middle" class="fill-muted-foreground font-sans" font-size="12">receiver</text>
+  <line x1="70" y1="56" x2="70" y2="160" class="stroke-border" stroke-width="1" stroke-dasharray="3 4" />
+  <line x1="320" y1="56" x2="320" y2="160" class="stroke-border" stroke-width="1" stroke-dasharray="3 4" />
+  <line x1="570" y1="56" x2="570" y2="160" class="stroke-border" stroke-width="1" stroke-dasharray="3 4" />
+  <line x1="72" y1="80" x2="566" y2="80" class="stroke-primary" stroke-width="2" marker-end="url(#m16-arrow)" />
+  <text x="190" y="74" text-anchor="middle" class="fill-primary font-mono" font-size="11">Cnt 42</text>
+  <circle cx="320" cy="80" r="4" class="fill-muted-foreground" />
+  <text x="560" y="98" text-anchor="end" class="fill-success font-mono" font-size="11">42 accepted, stored = 42</text>
+  <line x1="322" y1="134" x2="566" y2="134" class="stroke-danger" stroke-width="2" stroke-dasharray="6 3" marker-end="url(#m16-arrow)" />
+  <text x="440" y="128" text-anchor="middle" class="fill-danger font-mono" font-size="11">later: Cnt 42 again</text>
+  <text x="560" y="152" text-anchor="end" class="fill-danger font-mono" font-size="11">42 is not ahead of 42: refused</text>
+  <text x="0" y="200" class="fill-foreground font-sans" font-size="15" font-weight="700">Relay: the message is fresh, the distance is wrong</text>
+  <text x="40" y="228" text-anchor="middle" class="fill-muted-foreground font-sans" font-size="12">reader</text>
+  <text x="200" y="228" text-anchor="middle" class="fill-muted-foreground font-sans" font-size="12">proxy card</text>
+  <text x="440" y="228" text-anchor="middle" class="fill-muted-foreground font-sans" font-size="12">proxy reader</text>
+  <text x="600" y="228" text-anchor="middle" class="fill-muted-foreground font-sans" font-size="12">real card</text>
+  <line x1="40" y1="236" x2="40" y2="350" class="stroke-border" stroke-width="1" stroke-dasharray="3 4" />
+  <line x1="200" y1="236" x2="200" y2="350" class="stroke-border" stroke-width="1" stroke-dasharray="3 4" />
+  <line x1="440" y1="236" x2="440" y2="350" class="stroke-border" stroke-width="1" stroke-dasharray="3 4" />
+  <line x1="600" y1="236" x2="600" y2="350" class="stroke-border" stroke-width="1" stroke-dasharray="3 4" />
+  <line x1="42" y1="258" x2="196" y2="258" class="stroke-primary" stroke-width="2" marker-end="url(#m16-arrow)" />
+  <text x="120" y="252" text-anchor="middle" class="fill-primary font-mono" font-size="11">challenge N</text>
+  <line x1="202" y1="268" x2="436" y2="268" class="stroke-info" stroke-width="2" stroke-dasharray="2 3" marker-end="url(#m16-arrow)" />
+  <text x="320" y="262" text-anchor="middle" class="fill-info font-mono" font-size="11">long link</text>
+  <line x1="442" y1="278" x2="596" y2="278" class="stroke-primary" stroke-width="2" marker-end="url(#m16-arrow)" />
+  <line x1="598" y1="304" x2="444" y2="304" class="stroke-primary" stroke-width="2" marker-end="url(#m16-arrow)" />
+  <text x="520" y="298" text-anchor="middle" class="fill-primary font-mono" font-size="11">sign(N)</text>
+  <line x1="438" y1="314" x2="204" y2="314" class="stroke-info" stroke-width="2" stroke-dasharray="2 3" marker-end="url(#m16-arrow)" />
+  <line x1="198" y1="324" x2="44" y2="324" class="stroke-primary" stroke-width="2" marker-end="url(#m16-arrow)" />
+  <text x="48" y="346" class="fill-warning font-mono" font-size="11">valid key, fresh N, card far away: accepted</text>
+</svg>
+</Figure>
+
+Hancke and Kuhn write that relay attacks cannot easily be prevented by cryptographic protocols at the application layer. Light covers about 0.3 m per nanosecond. Relaying a card from 50 m instead of 5 cm adds about 100 m of round trip, roughly 333 ns, before any processing. A reader that only checks the answer never sees it, so "holds the key" and "is here" are two claims.
+
+**Interference-assisted capture** keeps the receiver from hearing a press while recording it, so the recorded counter stays fresh. <Term id="jamming">Jamming</Term> also blocks everyone else on that band, and radio does not stop at your wall, so it stays a model in the simulator.
+
+### What the screen is actually showing you
+
+The Flipper reports observations. You supply the verdict, and only for what you tested.
+
+- In <Flip>Sub-GHz → Read</Flip>, a protocol name is the decoder's best timing match. A dynamic protocol shows a `Cnt` line and, per Flipper's vendor page, saving is disabled for security reasons. That tells you the remote rolls, and nothing about a receiver.
+- In <Flip>125 kHz RFID → Read</Flip>, the `Hex:` line is the ID as sent. In <Flip>NFC → Read</Flip>, UID, ATQA and SAK are what any reader receives before any key is used.
+- After <Flip>Emulate</Flip> or <Flip>Send</Flip>, the Flipper only knows it transmitted. Acceptance is observed on the receiver.
+
+<div class="table-scroll">
+
+| You observed | It establishes | It does not establish |
+| --- | --- | --- |
+| a UID or EM4100 ID | the credential discloses that number to any reader | that any reader trusts the number alone |
+| your chime rang on a replay | this receiver, in this configuration, accepted this recording | that the model, the brand or every fixed-code product is affected |
+| your reader accepted an emulated ID | this reader accepts the ID without further proof | anything about readers you did not test |
+| the simulator refused a used counter | the modelled rule rejects old values | how a real vendor's receiver resynchronises; the simulator uses no real cryptography |
+
+</div>
+
+### Controls make a result readable
+
+A single "it worked" has many explanations: learning mode, a receiver that accepts anything, someone pressing the real remote. A **positive control** uses the genuine remote or tag and shows the rig can say yes. A **negative control** uses something that should fail, such as a never-enrolled tag or a non-matching button, and shows the rig can say no. Run both from the same spot as the trial, and read the trial against them.
+
+<div class="table-scroll">
+
+| Positive control | Trial | Negative control | What you can write |
+| --- | --- | --- | --- |
+| accepted | accepted | rejected | supported: this receiver accepted the copy or replay |
+| accepted | rejected | rejected | not supported in this configuration; check range, preset and timing |
+| accepted | accepted | accepted | no finding: the receiver accepts things it should not, so the trial says nothing about the credential |
+| rejected | any | any | no finding: fix the rig before testing anything |
+
+</div>
+
+### A mitigation is a second claim
+
+Name the property that failed and pick a defence that restores it: a rolling counter for freshness, a key-based credential for secrecy, physical-layer timing for proximity. "Use encryption" names no property. If you can apply the fix on your rig, rerun the same three tests: it holds when the genuine remote or tag still passes and the trial and negative control both fail. If you cannot, write "recommended, untested".
+
+### Write it so someone else can repeat it
+
+Another learner should be able to rebuild your test from the notebook entry alone. Record the hardware, firmware version and file names; the distance and orientation; the receiver's state before you began (what it had learned or enrolled, its mode); the order and time of each result; and anything you changed between them.
+
+Then hand it to a second reader, or reread it a day later, and ask: could I repeat this without asking the author, and does the finding claim more than the three results show? A useful critique points at one gap between evidence and sentence. Write "tag 1" and "tag 2" in anything you share, never the IDs. If the weakness is in a product you bought, follow the lab guide's advice on finding a weakness: stop at your scope, keep minimum evidence, and report privately through the vendor's published channel.
+
+### Misconceptions
+
+- **"Encrypted means safe from replay."** Rejecting old messages needs a counter or challenge the receiver remembers.
+- **"Real cryptography cannot be relayed."** Relay forwards the real card's real answers. Only timing reveals the distance.
+- **"The Flipper read it, so it is broken."** A UID shows the card has one; the reader decides whether it matters.
+- **"It worked once, so it always works."** One controlled trial supports a claim about one configuration; Module 17 adds repeats.
+- **"My receiver, my right to jam."** The band is shared with your neighbours.
+
+## Predict and practise
+
+Start in the simulator, where the counter a real receiver hides is visible. Then test one claim on your own rig.
+
+<Lab kicker="Lab 16.1 · simulation" title="Test a freshness claim with both controls" gear="A browser. Nothing transmits.">
+
+1. **Predict first.** Write the claim: "The simulated receiver refuses a captured press once a later counter has been accepted." Write what you expect from steps 4 and 5.
+2. **Positive control:** press **Press real remote** and confirm the gate opens. Note the receiver's last accepted value.
+3. Press **Capture next press**, then **Press real remote**. The Flipper now holds a counter the receiver never heard. Press **Press real remote** once more so the receiver accepts a later counter.
+4. **Trial:** press **Replay capture** once. Record the verdict and the receiver's last accepted value.
+5. **Contrast control:** press **Reset**, then **Capture next press** and **Press real remote**. Replay once, then again, and record both verdicts. This shows whether step 4's refusal depends on the counter's age or on the Flipper having sent it.
+6. **Rig check:** press the real remote once. A receiver that refused everything would make steps 4 and 5 meaningless.
+7. Write two sentences: what freshness added, and why a receiver that decrypts correctly but stores no counter would have opened in step 4.
+
+</Lab>
+
+<Widget name="rolling-sim" />
+
+Expected observation: step 4 is refused and the stored value does not move. In step 5 the first replay is accepted and the second refused. Step 6 is accepted.
+
+<Win>you predicted steps 4 and 5 before pressing, the positive control and rig check both said yes, and you can explain the step 5 result as a counter that was still ahead of the stored value. Label the result simulated. A refused replay earns the **Out of Sync** badge if you do not have it yet.</Win>
+
+<Lab kicker="Lab 16.2" title="Test one bounded claim on your own rig" gear="Rig A (your fixed-code chime, its remote and saved .sub) or rig B (your standalone 125 kHz reader and two unenrolled training tags). A few short transmissions to your own equipment.">
+
+1. **Scope note.** Fill in the Romania lab guide's scope note, including radio conditions for rig A, stop conditions and how you will restore the rig.
+2. **Claim and prediction.** Fill the five fields from the claim table, for example "My standalone reader, with tag 1 enrolled, treats an emulated copy of tag 1 as tag 1: the green LED lights within 2 s." Write your predicted result for the positive control, the trial and the negative control.
+3. **Positive control:** press the real remote, or present training tag 1, from the spot you will use for the trial. Record the response and the receiver's configuration.
+4. **Trial, once:** rig A, <Flip>Sub-GHz → Saved</Flip>, your file, <Flip>Emulate</Flip>, tap **Send** for about a second. Rig B, <Flip>125 kHz RFID → Saved</Flip>, tag 1, <Flip>Emulate</Flip>, Flipper's back to the reader. Record whether it accepted.
+5. **Negative control:** rig A, send a saved file for another button or device of yours that should not trigger the chime. Rig B, present never-enrolled tag 2. Never cycle through codes or guess IDs.
+6. **Interpret.** Place your three results in the controls table and write the matching sentence, plus one alternative explanation you ruled out or could not rule out.
+7. **Mitigation and cleanup.** Write one mitigation tied to the property you tested; re-test it if your rig allows, otherwise label it untested. Remove test enrolments, delete files you no longer need, and confirm the genuine remote or tag still works.
+8. **Method check.** Write the method record, then give it to another learner or reread it after a day. Note anything that had to be guessed.
+
+</Lab>
+
+Expected observation: rig A, the chime rings on the replay and stays silent for the non-matching file. Rig B, the reader accepts the emulated tag 1 and refuses tag 2. If the negative control is also accepted, your finding is about the receiver's configuration.
+
+<Win>your notebook holds a scope note, a five-field claim with its prediction, three observed results, a finding that names this receiver and configuration only, a mitigation marked tested or untested, a cleanup record, and a method a second reader could follow without asking you anything.</Win>
+
+## Check yourself
+
+<Quiz id="m16" />
+
+Two questions to answer in a sentence each, without notes:
+
+1. A draft finding reads "Brand X chimes are vulnerable to replay." Rewrite it as a sentence your three results actually support.
+2. A vendor says their card "uses AES, so it cannot be relayed". Which word in that sentence answers a different question, and what would you measure instead?
+
+## Keep evidence
+
+Open your [notebook](/learn/notebook?module=m16) and save an entry for this module. Map each lab step to a field:
+
+- **Setup:** rig, firmware, scope note in short, receiver configuration, distance and orientation.
+- **Prediction:** the five-field claim and your predicted three results, written before Lab 16.2 step 3.
+- **Observation:** the three results in order, with times, and the Lab 16.1 verdicts marked simulated.
+- **Explanation:** the controls-table row, the finding in one sentence, one alternative explanation, the mitigation (tested or untested), the cleanup, and what the second reader had to guess.
+
+Check the entry against this rubric. Adequate on every row is the bar for this module.
+
+<div class="table-scroll">
+
+| Criterion | Not yet | Adequate | Strong |
+| --- | --- | --- | --- |
+| Claim | names a product, or uses the word "secure" | names this rig, one capability, one property and the observable | also states the conditions it holds under, such as distance and mode |
+| Controls | trial only | positive control, trial and negative control, recorded as observed | controls run from the same spot, immediately before and after the trial |
+| Finding | wider than the rig | matches one row of the controls table | names an alternative explanation and how it was ruled out |
+| Mitigation | generic, such as "use encryption" | tied to the property that failed | re-tested with the same three results |
+| Method | "it worked" | hardware, firmware, configuration, geometry and order | a second reader repeated it from the entry |
+| Cleanup and privacy | missing | rig restored and genuine control re-tested | no IDs, keys or captures in the shared copy |
+
+</div>
+
+An example entry:
+
+> Rig B, official 1.4.3. Desk reader, tag 1 enrolled, tag 2 never enrolled, Flipper flat on the reader face. Claim: this reader treats an emulated tag 1 as tag 1; observable: green LED within 2 s. Predicted accept, accept, reject. 14:02 tag 1 accepted. 14:03 emulated `tag1.rfid` accepted. 14:04 tag 2 rejected. Finding: this reader, with one enrolled EM4100 ID, accepts the ID without further proof. Ruled out: enrolment mode (tag 2 refused). Mitigation: a key-based credential and reader; untested. Cleanup: tag 1 un-enrolled, genuine tag re-tested. Second reader asked which LED counts; added to the claim.
+
+Set a review date one week from today. Mark it retrieved when you can rebuild the claim table and the controls table from memory.
+
+## Continue
+
+Next is [Module 17: Mastery project](/learn/17-mastery). It keeps the bounded claim and the controls from this lesson and adds repeated trials and an explanation another learner can check.
+
+**Retrieval question for next week:** without looking, name the five fields of a testable claim, then the property a replay tests and the property a relay tests, with one defence for each.
+
+Primary sources, checked 13 October 2026:
+
+- Flipper Docs: [Supported vendors](https://docs.flipper.net/zero/sub-ghz/supported-vendors) (disabled save for dynamic protocols), [125 kHz RFID](https://docs.flipper.net/zero/rfid), [Reading NFC cards](https://docs.flipper.net/zero/nfc/read) (UID-only reads, partial MIFARE Classic emulation) and [Bad USB](https://docs.flipper.net/zero/bad-usb).
+- [Microchip HCS301 data sheet, DS21143C](https://ww1.microchip.com/downloads/aemDocuments/documents/MCU08/ProductDocuments/DataSheets/21143C.pdf) for the counter and its three windows. The data sheet calls this a typical implementation, so receivers differ.
+- NIST CSRC Glossary: [replay attack](https://csrc.nist.gov/glossary/term/replay_attack) and [replay resistance](https://csrc.nist.gov/glossary/term/replay_resistance), from SP 800-53 Rev. 5 and SP 800-63-4.
+- [Hancke and Kuhn, An RFID Distance Bounding Protocol](https://www.cl.cam.ac.uk/~mgk25/sc2005-distance.pdf), SecureComm 2005, pages 67 to 73, for relay and timing.
+- [OWASP: Fuzzing](https://community.owasp.org/Fuzzing).
+- [Romanian Criminal Code, Law 286/2009](https://legislatie.just.ro/Public/DetaliiDocument/109855), articles 360 to 365, via the [Romania lab guide](/romania-lab-guide).

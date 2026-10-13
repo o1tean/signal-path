@@ -1,0 +1,256 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Romania, permission &amp; responsible labs · Signal Path</title>
+    <meta
+      name="description"
+      content="Practical Romanian learning boundaries with ANCOM and Criminal Code sources."
+    />
+    <link rel="stylesheet" href="assets/css/site.css" />
+    <script>
+      (function () {
+        try {
+          var t = localStorage.getItem("signalpath.theme");
+          if (t === "light" || t === "dark")
+            document.documentElement.setAttribute("data-theme", t);
+        } catch (e) {}
+      })();
+    </script>
+  <link rel="stylesheet" href="assets/css/presentation.css">
+<link rel="icon" type="image/png" href="assets/images/signal-path-logo.png">
+</head>
+  <body data-root="" data-page="legal">
+    <header class="topbar"></header>
+    <main id="main-content" class="wrap-narrow learning-page">
+      <p class="eyebrow">Romania · read before your first hardware lab</p>
+      <h1>Curiosity, with a clear scope.</h1>
+      <p class="lede">
+        Education describes your purpose. Permission, privacy, and the radio
+        rules still determine what you may do.
+      </p>
+      <p class="source-note">
+        Reviewed 10 September 2026. This is a learning guide, not individualized
+        legal advice or a guarantee that a particular test is lawful.
+      </p>
+      <section id="one-rule">
+        <h2>Three separate checks</h2>
+        <ol class="steps">
+          <li>
+            <div>
+              <b>Authority:</b> use equipment and data you control, or obtain
+              explicit permission from someone entitled to authorize the exact
+              test. Possessing an apartment, work, hotel, or gym badge does not
+              establish that authority.
+            </div>
+          </li>
+          <li>
+            <div>
+              <b>Radio conditions:</b> confirm the applicable Romanian
+              interface, equipment conditions, frequency, power, bandwidth, duty
+              cycle or channel-access requirements. Owning the transmitter or
+              receiver does not exempt you.
+            </div>
+          </li>
+          <li>
+            <div>
+              <b>Effect and data:</b> plan for unintended interference, private
+              communications, stored credentials, and recovery. Radio does not
+              stop at a property boundary. If a check remains unresolved, use
+              the browser simulator.
+            </div>
+          </li>
+        </ol>
+      </section>
+      <section id="romania">
+        <h2>Romania: where to check</h2>
+        <p>
+          ANCOM publishes the Romanian radio interfaces (RO-IR), including
+          short-range devices. The current index links RO-IR SRD-01 edition
+          5/2025 for non-specific SRDs. Its alternatives have different
+          conditions: a familiar “433” or “868” label is not a complete transmit
+          authorization. Consult the applicable interface, not an old forum
+          table.
+          <a
+            href="https://www.ancom.ro/category/reglementare-ro/echipamente-ro-10006/echipamente-radio/reglementari-cu-privire-la-interfete/"
+            >ANCOM: current Romanian radio interfaces</a
+          >;
+          <a
+            href="https://www.ancom.ro/wp-content/uploads/2026/01/RO_IR_SRD_01_Dispozitive_radio_de_proximitate_cu_raza_mica_de_actiune_nespecifice_ro_2025.pdf"
+            >ANCOM RO-IR SRD-01, edition 5/2025 (PDF)</a
+          >.
+        </p>
+        <p>
+          Official Flipper firmware lists the EU transmit ranges it enables,
+          including 433.05–434.79 and 868.15–868.55 MHz. These are
+          <b>firmware ranges, not a complete statement of Romanian law</b>.
+          Equipment compliance and the applicable interface conditions still
+          matter; 315 or 915 MHz examples from another country are not
+          permission to transmit here.
+          <a href="https://docs.flipper.net/zero/sub-ghz/frequencies"
+            >Flipper: regional frequencies</a
+          >.
+        </p>
+        <p>
+          Romanian Criminal Code articles 360–365 address conduct including
+          unauthorized access, interception of non-public computer-data
+          transmissions, interference with data/systems, and certain misuse of
+          tools or access data. Article 361 is one reason “I only listened” is
+          not a universal legal defence. Whether a specific act falls within an
+          offence depends on its facts. Read the current consolidated text and
+          obtain Romanian legal advice for work outside a controlled training
+          lab.
+          <a href="https://legislatie.just.ro/Public/DetaliiDocument/109855"
+            >Romanian Criminal Code, Law 286/2009: articles 360–365</a
+          >.
+        </p>
+      </section>
+      <section id="listening-transmitting">
+        <h2>Receiving is not blanket permission</h2>
+        <p>
+          Sub-GHz reception does not deliberately send a Sub-GHz command, but it
+          may collect private data. LF RFID and NFC reading actively energize
+          and communicate with a tag; “read” does not always mean a purely
+          passive receiver. Restrict captures to your authorized lab, minimize
+          stored data, and avoid publishing identifiers, keys or private
+          payloads.
+        </p>
+        <p>
+          Keep official firmware’s region restrictions enabled. Firmware
+          restrictions reduce mistakes; they do not certify the legality of your
+          entire setup. Momentum is optional, and this course never requires a
+          region unlock, jammer, amplifier, or brute-force app.
+        </p>
+      </section>
+      <section id="green-red">
+        <h2>Choose an appropriate exercise</h2>
+        <div class="grid2">
+          <div class="card">
+            <h3>Course lab targets</h3>
+            <ul>
+              <li>Browser simulators with synthetic signals.</li>
+              <li>Your own IR remote and TV, one known command at a time.</li>
+              <li>
+                A locally compliant, fixed-code training doorbell after the
+                radio checks.
+              </li>
+              <li>Unenrolled RFID/NFC tags and a standalone test reader.</li>
+              <li>
+                Your own computer, a visible typing demo, and a low-voltage
+                breadboard.
+              </li>
+            </ul>
+          </div>
+          <div class="card">
+            <h3>Keep out of these labs</h3>
+            <ul>
+              <li>
+                Operational cars, gates, garages, alarms, and shared access
+                systems.
+              </li>
+              <li>Other people’s communications or credentials.</li>
+              <li>
+                Jamming, floods, deauthentication, or disruption experiments
+                over the air.
+              </li>
+              <li>Region-bypass settings and unknown downloaded payloads.</li>
+              <li>Mains-powered, medical, or safety-critical equipment.</li>
+            </ul>
+          </div>
+        </div>
+        <p>
+          These are course boundaries chosen for beginner exercises, not a claim
+          that every listed activity has the same legal status.
+        </p>
+      </section>
+      <section id="rolling">
+        <h2>Learn rolling codes in simulation</h2>
+        <p>
+          A used counter is rejected in the model. Repeating an old code does
+          not normally move a receiver’s counter backwards or make that code
+          valid again. Real implementations vary, and experiments on operational
+          remotes can disrupt access. Use
+          <a href="modules/05-raw-and-rolling.html">Module 5’s simulator</a>;
+          use the manufacturer’s supported provisioning process when you
+          actually need a replacement remote.
+        </p>
+        <p class="source-note">
+          Read the primary sources:
+          <a
+            href="https://ww1.microchip.com/downloads/aemDocuments/documents/MCU08/ProductDocuments/DataSheets/21143C.pdf"
+            >Microchip HCS301: synchronization model (PDF)</a
+          >
+          ·
+          <a href="https://docs.flipper.net/zero/sub-ghz/read-raw"
+            >Flipper: demodulated RAW recordings</a
+          >. Course review: 10 September 2026.
+        </p>
+      </section>
+      <section id="rfid-policy">
+        <h2>Permission covers the system, not just the badge</h2>
+        <p>
+          Use newly purchased training tags that are not enrolled anywhere.
+          Reading or duplicating an issued credential may involve the operator’s
+          system and data even if the plastic is in your pocket. Written scope
+          should identify both the credential and the authorized test reader.
+          Keep real credential dumps out of this public repository and out of
+          your shareable notebook.
+        </p>
+      </section>
+      <section id="scope">
+        <h2>A reusable scope note</h2>
+        <p>
+          Before a hardware session, write this in your private notebook. A
+          checklist records your reasoning; it does not grant authorization.
+        </p>
+        <pre>
+Objective and expected result:
+Equipment and who can authorize it:
+Permission source, permitted actions, dates and place:
+For RF: applicable RO-IR, frequency, power, bandwidth, duty cycle/access:
+Data I may collect and where I will keep it:
+Unintended effects and stop conditions:
+Recovery and cleanup plan:
+Unresolved questions (use simulation until resolved):</pre>
+      </section>
+      <section id="disclosure">
+        <h2>If you find a weakness</h2>
+        <p>
+          Stop at the agreed scope. Keep only the minimum evidence, redact
+          identifying data, and privately report through the owner’s or vendor’s
+          published security channel. A disclosure policy authorizes only what
+          it explicitly includes. Do not publish a working credential or expand
+          testing to prove impact.
+        </p>
+      </section>
+      <section id="stance">
+        <h2>A useful default</h2>
+        <p>
+          When permission or radio conditions are unclear, stay in the
+          simulator. Ask ANCOM about spectrum conditions and an appropriately
+          qualified Romanian lawyer about the legal scope of a proposed
+          real-world test. You can keep learning while those questions are
+          resolved.
+        </p>
+        <a class="btn primary" href="roadmap.html">Start the learning path →</a>
+      </section>
+    </main>
+    <footer class="site-footer">
+      <div class="wrap">
+        <p>
+          Practise on authorized lab equipment. In Romania, check ANCOM radio
+          conditions and privacy rules. When scope or legality is unclear, use
+          the simulators.
+        </p>
+        <p>
+          <a href="legal.html">Romania &amp; permission</a> ·
+          <a href="sources.html">Sources &amp; corrections</a>
+        </p>
+      </div>
+    </footer>
+    <script src="assets/js/data/course.js"></script>
+    <script src="assets/js/site.js"></script>
+  <script src="assets/js/presentation.js"></script>
+</body>
+</html>

@@ -1,0 +1,32 @@
+---
+/** Buy Signal Path Complete. Signed in (html[data-signed-in="true"], set by Base on on-demand pages): a form that
+    POSTs to /api/checkout. Signed out: a link to /login?next=/pricing#buy. Pure CSS switch, no JavaScript.
+    The refund line is part of the component so no section can drop it (docs/v2/copy/pricing.md). */
+import { buttonClass } from './button';
+
+interface Props {
+  label?: string;
+  productId?: string;
+  /** show the sign-in explanation under the signed-out button */
+  explain?: boolean;
+  class?: string;
+}
+const { label = 'Get Signal Path Complete', productId = 'course-complete', explain = false, class: className } = Astro.props;
+const btn = `${buttonClass('primary', 'lg')} w-full`;
+---
+<div class:list={['buy grid gap-2', className]}>
+  <form method="post" action="/api/checkout" class="buy-in m-0">
+    <input type="hidden" name="product_id" value={productId} />
+    <button type="submit" class={btn}>{label}</button>
+  </form>
+  <a href="/login?next=%2Fpricing%23buy" class:list={['buy-out', btn]}>{label}</a>
+  <p class="text-center text-sm font-medium">30-day refund, no reason needed.</p>
+  {explain && <p class="buy-out text-center text-xs leading-relaxed text-muted-foreground">You'll sign in with your email first so the course is tied to your account.</p>}
+</div>
+
+<style>
+  :global(html:not([data-signed-in='true'])) .buy-in,
+  :global(html[data-signed-in='true']) .buy-out {
+    display: none;
+  }
+</style>

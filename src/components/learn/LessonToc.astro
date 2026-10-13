@@ -1,0 +1,66 @@
+---
+import type { MarkdownHeading } from 'astro';
+import type { LessonSummary } from '@/lib/lessons';
+
+interface Props {
+  headings: MarkdownHeading[];
+  next?: LessonSummary;
+}
+const { headings, next } = Astro.props;
+const items = headings.filter((h) => h.depth === 2 || h.depth === 3);
+---
+<nav aria-label="On this page" class="lesson-toc text-sm">
+  <p class="mb-2 text-xs font-semibold tracking-wide text-muted-foreground uppercase">On this page</p>
+  <ol class="space-y-1 border-l border-border">
+    {
+      items.map((h) => (
+        <li>
+          <a
+            href={`#${h.slug}`}
+            class:list={['-ml-px block border-l-2 border-transparent py-1 text-muted-foreground hover:text-foreground', h.depth === 3 ? 'pl-6' : 'pl-3']}
+          >
+            {h.text}
+          </a>
+        </li>
+      ))
+    }
+  </ol>
+  {
+    next && (
+      <div class="mt-6 border-t border-border pt-4">
+        <p class="text-xs font-semibold tracking-wide text-muted-foreground uppercase">Up next</p>
+        <a href={next.href} class="mt-1 block font-medium hover:text-primary">{next.n} · {next.title}</a>
+      </div>
+    )
+  }
+</nav>
+<style>
+  .lesson-toc :global(a.active) {
+    border-color: var(--primary);
+    color: var(--foreground);
+    font-weight: 500;
+  }
+</style>
+<script>
+  // scroll spy (legacy tocSpy): the active heading is the last one whose top has passed a quarter of the viewport,
+  // recomputed on every scroll frame, so scrolling back up never leaves a stale highlight. Defaults to the first.
+  const links = [...document.querySelectorAll<HTMLAnchorElement>('.lesson-toc a[href^="#"]')];
+  const targets = links.map((a) => document.getElementById(decodeURIComponent(a.hash.slice(1))));
+  let queued = false;
+  function update() {
+    queued = false;
+    const band = innerHeight * 0.25;
+    let active = 0;
+    targets.forEach((t, i) => {
+      if (t && t.getBoundingClientRect().top < band) active = i;
+    });
+    links.forEach((a, i) => a.classList.toggle('active', i === active));
+  }
+  if (links.length) {
+    addEventListener('scroll', () => {
+      if (!queued) (queued = true), requestAnimationFrame(update);
+    }, { passive: true });
+    addEventListener('resize', update);
+    update();
+  }
+</script>

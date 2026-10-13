@@ -1,0 +1,22 @@
+---
+/** Mount point for a vanilla widget in src/widgets/<name>.ts. Mounts lazily near the viewport.
+    The placeholder reserves room and names the tool, so the page does not jump or show a blank box before it loads. */
+import { toolById } from '@/data/tools';
+
+interface Props {
+  name: string;
+  opts?: Record<string, unknown>;
+}
+const { name, opts = {} } = Astro.props;
+const label = toolById(name)?.name ?? 'the tool';
+---
+<div class="sp-widget-host" data-widget={name} data-opts={JSON.stringify(opts)}>
+  <div class="sp-widget flex min-h-72 items-center justify-center rounded-card border border-dashed border-border bg-muted/40 font-mono text-xs text-muted-foreground">
+    <span aria-hidden="true">Loading {label}…</span>
+    <noscript>This interactive tool needs JavaScript.</noscript>
+  </div>
+</div>
+<script>
+  import { mountAll } from '@/widgets/registry';
+  mountAll();
+</script>

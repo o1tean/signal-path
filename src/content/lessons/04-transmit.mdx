@@ -1,0 +1,368 @@
+---
+id: m04
+number: 4
+slug: 04-transmit
+title: Your first legal replay
+description: Replay your own fixed-code capture to the device it came from, learn exactly what Send puts on the air, and diagnose a silent replay before blaming the signal.
+stage: signals
+week: Week 2
+access: paid
+minutes: 75
+gear:
+  - Flipper Zero on official firmware 1.4.3 or later, with a microSD card inserted and updated once so its region is set
+  - the fixed-code .sub file you saved in Module 3
+  - the device the file came from, a device you own with no security or safety role (a plug-in or battery doorbell is ideal); without one, do Lab 4.1 only
+  - a browser for the Rolling Code Sim
+transmits: own-device
+outcome: Replay your own saved fixed-code signal to the device it came from, and explain why a captured rolling code works at most once and never after the receiver has moved past it.
+prerequisites:
+  - m03
+tools:
+  - rolling-sim
+scenes: []
+evidence: A notebook entry with your scope note, your own frame-time sum, the replay result at three distances with a baseline and a real-remote control at every spot where the replay failed, and the simulator's counter values before and after a rejected replay.
+sources:
+  - title: 'Flipper Docs: Reading signals (sending a saved signal)'
+    url: https://docs.flipper.net/zero/sub-ghz/read
+  - title: 'Flipper Docs: Reading RAW signals'
+    url: https://docs.flipper.net/zero/sub-ghz/read-raw
+  - title: 'Flipper Docs: Sub-GHz frequencies by region'
+    url: https://docs.flipper.net/zero/sub-ghz/frequencies
+  - title: 'Flipper Docs: Sub-GHz overview'
+    url: https://docs.flipper.net/zero/sub-ghz
+  - title: 'Flipper Docs: Tech specs'
+    url: https://docs.flipper.net/zero/development/hardware/tech-specs
+  - title: 'Flipper Developer Docs: Sub-GHz file format'
+    url: https://developer.flipper.net/flipperzero/doxygen/subghz_file_format.html
+  - title: 'Flipper Zero firmware 1.4.3: Princeton encoder (princeton.c)'
+    url: https://github.com/flipperdevices/flipperzero-firmware/blob/1.4.3/lib/subghz/protocols/princeton.c
+  - title: 'Flipper Zero firmware 1.4.3: Emulate TX start (subghz_txrx.c)'
+    url: https://github.com/flipperdevices/flipperzero-firmware/blob/1.4.3/applications/main/subghz/helpers/subghz_txrx.c
+  - title: 'Flipper Zero firmware 1.4.3: transmitter view (transmitter.c)'
+    url: https://github.com/flipperdevices/flipperzero-firmware/blob/1.4.3/applications/main/subghz/views/transmitter.c
+  - title: 'Flipper Zero firmware 1.4.3: Sub-GHz dialogs (subghz_i.c)'
+    url: https://github.com/flipperdevices/flipperzero-firmware/blob/1.4.3/applications/main/subghz/subghz_i.c
+  - title: 'Flipper Zero firmware 1.4.3: KeeLoq protocol flags (keeloq.c)'
+    url: https://github.com/flipperdevices/flipperzero-firmware/blob/1.4.3/lib/subghz/protocols/keeloq.c
+  - title: 'Flipper Zero firmware 1.4.3: CC1101 preset registers (cc1101_configs.c)'
+    url: https://github.com/flipperdevices/flipperzero-firmware/blob/1.4.3/lib/subghz/devices/cc1101_configs.c
+  - title: 'Texas Instruments CC1101 datasheet (SWRS061I)'
+    url: https://www.ti.com/lit/ds/symlink/cc1101.pdf
+  - title: 'ANCOM: Romanian radio interface regulations'
+    url: https://www.ancom.ro/category/reglementare-ro/echipamente-ro-10006/echipamente-radio/reglementari-cu-privire-la-interfete/
+  - title: 'ANCOM RO-IR SRD-01, edition 5/2025 (PDF)'
+    url: https://www.ancom.ro/wp-content/uploads/2026/01/RO_IR_SRD_01_Dispozitive_radio_de_proximitate_cu_raza_mica_de_actiune_nespecifice_ro_2025.pdf
+  - title: 'Microchip HCS301 KeeLoq code hopping encoder datasheet (DS21143C)'
+    url: https://ww1.microchip.com/downloads/aemDocuments/documents/MCU08/ProductDocuments/DataSheets/21143C.pdf
+  - title: 'Momentum firmware README'
+    url: https://github.com/Next-Flip/Momentum-Firmware
+reviewed: '2026-10-13'
+badge: clean-transmitter
+---
+
+## Outcome
+
+You can make your own fixed-code device respond to a replay from your Flipper, and say exactly why a captured rolling code works at most once.
+
+By the end you can:
+
+- work out how long one frame and one held press stay on the air from the `Bit` and `TE` lines of a saved file;
+- check a transmission against your region's firmware list and the Romanian radio interface before you press anything;
+- predict from counter values whether a rolling-code replay is accepted or rejected;
+- walk a silent replay through region, firmware, range, dead spot, capture quality, RAW and code type, in that order.
+
+## Before you start
+
+- **Prerequisite:** [Module 3](/learn/03-protocols). You need the fixed-code file you saved there, for example a Princeton doorbell at 433.92 MHz with a constant `Key` line.
+- **Gear:** your Flipper Zero, updated at least once through qFlipper or the mobile app with a microSD card inserted. That update sets the region and enables sending. You also need the device the file came from and a browser.
+- **Firmware:** official 1.4.3 or later; the menu paths and numbers here come from its source.
+- **Time:** about 75 minutes: 25 to read, 10 in the simulator, 30 at the bench, 10 for the quiz and notebook entry.
+- **Transmits:** yes, for the first time in the course. A few short bursts at the frequency in your saved file, to your own device only.
+- **Scope:** your own device, in your own space. Stay in the simulator for anything else.
+
+<Callout variant="legal" title="Read this before you press Send">
+Radio does not stop at your wall. From here the rule is absolute: you transmit only to devices **you own**, in a space **you control**. Never to cars, gates, garages, barriers, alarms or shared access systems, and never to jam or flood a band. The transmission must also fit the radio conditions where you are. Complete the three checks in the [Romania lab guide](/romania-lab-guide) first: who can authorise the test, which radio conditions apply, and what the test could affect. If any check stays open, do Lab 4.1 only.
+</Callout>
+
+## Understand
+
+### The transmit line
+
+Modules 0 to 3 only received. A receiver collects what is already in the air, which has rules of its own, but it never makes someone else's device act. A transmitter does. Every receiver in range hears your press, including ones you did not intend, so the same press is an experiment on your doorbell and an offence on a stranger's gate.
+
+<div class="grid2">
+<div class="card">
+
+#### Fine, on your own gear
+
+- Replaying your saved doorbell to your own doorbell.
+- Triggering your own LED strip or fan receiver.
+- Measuring how far your replay reaches in your own home.
+
+</div>
+<div class="card">
+
+#### Never
+
+- Transmitting to any car, gate or garage that is not yours.
+- Replaying a signal captured from someone else's device.
+- Jamming, flooding or "testing" a shared band.
+
+</div>
+</div>
+
+### What Send actually does
+
+Open <Flip>Sub-GHz → Saved</Flip>, choose your file and select <Flip>Emulate</Flip>. The screen shows the key, frequency and preset with a **Send** button. In firmware 1.4.3, transmission starts when you press OK and stops when you release it.
+
+For a decoded key file, the Flipper does not play back a recording. It rebuilds the signal from the text in the <Term id="sub-file">.sub file</Term>:
+
+<Figure label="A left-to-right chain: the .sub file's Protocol, Bit, Key and TE lines feed the protocol encoder, which builds a pulse train; the CC1101 radio takes that pulse train with the file's Frequency and Preset and switches the carrier on and off; the antenna radiates it." caption="One press of Send, decoded file. The encoder turns four text fields into timings. The radio needs the other two fields to know where and how to transmit them.">
+<svg viewBox="0 0 640 170" width="100%" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+  <rect x="4" y="34" width="136" height="96" rx="8" fill="none" class="stroke-border" stroke-width="1.5" />
+  <text x="72" y="58" text-anchor="middle" class="fill-foreground font-sans" font-size="14" font-weight="700">.sub file</text>
+  <text x="72" y="82" text-anchor="middle" class="fill-muted-foreground font-mono" font-size="11">Protocol · Bit</text>
+  <text x="72" y="98" text-anchor="middle" class="fill-muted-foreground font-mono" font-size="11">Key · TE</text>
+  <text x="72" y="118" text-anchor="middle" class="fill-info font-mono" font-size="11">Frequency · Preset</text>
+  <line x1="140" y1="82" x2="176" y2="82" class="stroke-muted-foreground" stroke-width="1.5" />
+  <path d="M176 77 L184 82 L176 87 Z" class="fill-muted-foreground" />
+  <rect x="186" y="34" width="136" height="96" rx="8" fill="none" class="stroke-primary" stroke-width="1.5" />
+  <text x="254" y="58" text-anchor="middle" class="fill-foreground font-sans" font-size="14" font-weight="700">Encoder</text>
+  <text x="254" y="82" text-anchor="middle" class="fill-muted-foreground font-mono" font-size="11">bits × TE</text>
+  <text x="254" y="98" text-anchor="middle" class="fill-muted-foreground font-mono" font-size="11">→ on/off timings</text>
+  <path d="M206 118 h10 v-10 h20 v10 h8 v-10 h8 v10 h22 v-10 h8 v10 h18" fill="none" class="stroke-primary" stroke-width="1.5" />
+  <line x1="322" y1="82" x2="358" y2="82" class="stroke-muted-foreground" stroke-width="1.5" />
+  <path d="M358 77 L366 82 L358 87 Z" class="fill-muted-foreground" />
+  <rect x="368" y="34" width="136" height="96" rx="8" fill="none" class="stroke-info" stroke-width="1.5" />
+  <text x="436" y="58" text-anchor="middle" class="fill-foreground font-sans" font-size="14" font-weight="700">CC1101</text>
+  <text x="436" y="82" text-anchor="middle" class="fill-info font-mono" font-size="11">433.92 MHz</text>
+  <text x="436" y="98" text-anchor="middle" class="fill-info font-mono" font-size="11">OOK, AM650</text>
+  <text x="436" y="118" text-anchor="middle" class="fill-muted-foreground font-mono" font-size="11">region check</text>
+  <line x1="504" y1="82" x2="540" y2="82" class="stroke-muted-foreground" stroke-width="1.5" />
+  <path d="M540 77 L548 82 L540 87 Z" class="fill-muted-foreground" />
+  <line x1="580" y1="130" x2="580" y2="60" class="stroke-foreground" stroke-width="2" />
+  <path d="M566 46 L580 60 L594 46" fill="none" class="stroke-foreground" stroke-width="2" />
+  <path d="M604 52 q8 12 0 24 M614 44 q14 20 0 40" fill="none" class="stroke-primary" stroke-width="1.5" />
+  <text x="580" y="152" text-anchor="middle" class="fill-muted-foreground font-sans" font-size="12">antenna</text>
+</svg>
+</Figure>
+
+Before it keys the transmitter, the firmware checks the frequency against your region's list. Outside it, the screen shows "Transmission is Blocked!" and nothing goes out. A Flipper that has never been updated shows "Firmware update needed" instead, because it has no region yet.
+
+#### Worked example: one press of a Princeton file
+
+Take the example key file from Flipper's file-format documentation: `Protocol: Princeton`, `Bit: 24`, `Key: 00 00 00 00 00 95 D5 D4`, `TE: 400`. <Term id="te-timing-element">TE</Term> is the timing unit in microseconds. The Princeton encoder in firmware 1.4.3 builds each frame like this:
+
+- a **1** is the carrier on for 3 TE, then off for 1 TE;
+- a **0** is on for 1 TE, then off for 3 TE;
+- after the 24 bits come a 1 TE stop pulse and a silent guard time, 30 TE by default;
+- the frame repeats while you hold OK. The encoder defaults to 10 repeats, but Emulate sets 200 before it starts.
+
+<Figure label="Timing diagram of the first four bits of key 95 D5 D4, which are 1 0 0 1, at TE 400 microseconds. A 1 is a long high of 1200 microseconds followed by a short low of 400; a 0 is a short high of 400 followed by a long low of 1200. Each bit lasts 1600 microseconds." caption="The first four bits of 0x95, drawn to scale (1 TE = 36 px). Each bit lasts 4 TE = 1.6 ms. The receiver tells 1 from 0 by comparing the high and low pulse widths inside the bit.">
+<svg viewBox="0 0 640 170" width="100%" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+  <g class="stroke-border" stroke-width="1" stroke-dasharray="3 4">
+    <line x1="32" y1="20" x2="32" y2="118" />
+    <line x1="176" y1="20" x2="176" y2="118" />
+    <line x1="320" y1="20" x2="320" y2="118" />
+    <line x1="464" y1="20" x2="464" y2="118" />
+    <line x1="608" y1="20" x2="608" y2="118" />
+  </g>
+  <text x="104" y="30" text-anchor="middle" class="fill-foreground font-mono" font-size="15" font-weight="700">1</text>
+  <text x="248" y="30" text-anchor="middle" class="fill-foreground font-mono" font-size="15" font-weight="700">0</text>
+  <text x="392" y="30" text-anchor="middle" class="fill-foreground font-mono" font-size="15" font-weight="700">0</text>
+  <text x="536" y="30" text-anchor="middle" class="fill-foreground font-mono" font-size="15" font-weight="700">1</text>
+  <path d="M8 100 H32 V44 H140 V100 H176 V44 H212 V100 H320 V44 H356 V100 H464 V44 H572 V100 H632" fill="none" class="stroke-primary" stroke-width="2.5" />
+  <text x="0" y="48" class="fill-muted-foreground font-mono" font-size="10">on</text>
+  <text x="0" y="96" class="fill-muted-foreground font-mono" font-size="10">off</text>
+  <text x="86" y="136" text-anchor="middle" class="fill-muted-foreground font-mono" font-size="11">1200 µs on</text>
+  <text x="158" y="136" text-anchor="middle" class="fill-muted-foreground font-mono" font-size="11">400</text>
+  <text x="194" y="136" text-anchor="middle" class="fill-muted-foreground font-mono" font-size="11">400</text>
+  <text x="266" y="136" text-anchor="middle" class="fill-muted-foreground font-mono" font-size="11">1200 µs off</text>
+  <line x1="32" y1="156" x2="68" y2="156" class="stroke-info" stroke-width="2" />
+  <text x="76" y="160" class="fill-info font-mono" font-size="11">1 TE = 400 µs</text>
+</svg>
+</Figure>
+
+Now the sums. One frame is 24 × 4 + 1 + 30 = 127 TE, and 127 × 400 µs = **50.8 ms**. The key `95 D5 D4` has 13 ones and 11 zeros, so the carrier is on for 13 × 3 + 11 × 1 + 1 = 51 TE, about **20.4 ms**, or 40 percent of each frame.
+
+A tap of about a second sends roughly 20 frames. Holding OK until the repeats run out sends 200 frames: about **10.2 s** on the air, with the carrier on for about 4.1 s, so tap rather than hold.
+
+<Callout variant="story" title="Fifty milliseconds">
+The first time the chime rings while the original remote lies on the bench, a 50.8 ms frame did it, repeated about twenty times in a second. You computed that frame yourself from three lines of a text file.
+</Callout>
+
+### Why a fixed code always works
+
+For a <Term id="fixed-code">fixed code</Term>, the rebuilt signal matches the original remote on everything the receiver checks: frequency, modulation, bits and timing. The message never changes from press to press, so a faithful copy stays valid until someone re-codes the receiver. That is convenient for a cheap doorbell and weak for anything that guards a door.
+
+### Why a rolling code does not
+
+A <Term id="rolling-code">rolling-code</Term> remote sends a different message on every press. Inside it is a <Term id="counter-cnt">counter</Term> that steps up each time, encrypted together with the button state and sent next to a plain serial number. The receiver remembers the last counter value it accepted.
+
+Microchip's HCS301 datasheet describes a typical decoder. A counter up to 16 ahead of the stored value is accepted on one press and becomes the new stored value. Further ahead, up to 32K, the decoder waits for a second, consecutive press, which is how it resynchronises a remote pressed out of range. Anything at or behind the stored value is blocked.
+
+<Figure label="A number line of counter values around a stored value of 7. Values 7 and below are blocked; 8 to 23 is the single-operation window of 16 codes; beyond that, up to 32K ahead, is the resynchronisation window that needs two consecutive presses. A captured code with counter 7 sits in the blocked zone." caption="An HCS301-style receiver with stored counter 7. A capture of press 7 is worthless once the receiver has accepted press 7. The window sizes are Microchip's typical decoder; other vendors differ.">
+<svg viewBox="0 0 640 160" width="100%" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+  <rect x="20" y="50" width="190" height="40" class="fill-danger" fill-opacity="0.12" />
+  <rect x="210" y="50" width="220" height="40" class="fill-primary" fill-opacity="0.14" />
+  <rect x="430" y="50" width="190" height="40" class="fill-warning" fill-opacity="0.12" />
+  <line x1="20" y1="90" x2="620" y2="90" class="stroke-foreground" stroke-width="1.5" />
+  <text x="115" y="74" text-anchor="middle" class="fill-danger font-sans" font-size="13" font-weight="700">blocked</text>
+  <text x="320" y="68" text-anchor="middle" class="fill-primary font-sans" font-size="13" font-weight="700">accept on one press</text>
+  <text x="320" y="84" text-anchor="middle" class="fill-primary font-mono" font-size="11">8 to 23 (16 codes)</text>
+  <text x="525" y="68" text-anchor="middle" class="fill-warning font-sans" font-size="13" font-weight="700">resync</text>
+  <text x="525" y="84" text-anchor="middle" class="fill-warning font-mono" font-size="11">two presses, to 32K</text>
+  <line x1="200" y1="90" x2="200" y2="102" class="stroke-foreground" stroke-width="1.5" />
+  <text x="200" y="116" text-anchor="middle" class="fill-foreground font-mono" font-size="11">7 stored</text>
+  <line x1="222" y1="90" x2="222" y2="102" class="stroke-foreground" stroke-width="1.5" />
+  <text x="236" y="134" text-anchor="middle" class="fill-muted-foreground font-mono" font-size="11">8 = next real press</text>
+  <path d="M200 30 V46" class="stroke-danger" stroke-width="1.5" />
+  <path d="M195 40 L200 48 L205 40" fill="none" class="stroke-danger" stroke-width="1.5" />
+  <text x="200" y="24" text-anchor="middle" class="fill-danger font-mono" font-size="11">your capture: Cnt 7</text>
+</svg>
+</Figure>
+
+Replaying an old capture never moves the stored counter back. A press the receiver has not heard is different: it stays live until a later real press moves the counter past it, which is why a capture taken out of the receiver's range is the case defenders worry about. Two cautions for your own gear. Flipper's documentation warns against Read RAW with a car key fob, because replaying a rolling code can desynchronise the original key. And in official 1.4.3, protocols such as KeeLoq decode but are not marked as saveable, so Read will not save them. Rolling codes stay in the simulator in this course.
+
+### Range and antenna reality
+
+Your first replay may work from across the room, or only from a step away. Flipper's Sub-GHz page gives a maximum range of 50 metres, a best case in open space. Its tech specs list a Sub-1 GHz "TX power" of −20 dBm max without saying what is measured, while the firmware presets write the CC1101 power register `0xC0`, which the chip's datasheet rates at +10 dBm for TI's reference design. Those figures describe different things, Flipper does not publish the radiated power of its internal antenna, and this course makes no claim that a Flipper stays under 1 mW. What you can say about reach is physical. A quarter wave at 433.92 MHz is about 17 cm and the Flipper's antenna fits a pocket-sized case, so three things decide the result:
+
+- **Distance.** Received power falls quickly with range; a few metres can separate a solid result from silence.
+- **Obstacles.** Walls, metal doors and appliances absorb and reflect the signal.
+- **Orientation.** A small antenna does not radiate equally in every direction, and the receiver favours one polarisation. A quarter turn can change the result.
+
+<Callout variant="tip" title="Range first, theories later">
+If a replay is weak, get closer, clear the line of sight and try two orientations before you suspect the file. Change one thing at a time.
+</Callout>
+
+### Region lists, radio rules and forks
+
+Official firmware transmits only on its regional list. The EU list, which covers Romania, allows **433.05–434.79 MHz and 868.15–868.55 MHz**. Hold Down on the desktop to see your region code (Flipper's [frequencies page](https://docs.flipper.net/zero/sub-ghz/frequencies) covers region setup).
+
+That list is a guard rail against mistakes. The legal conditions come from the regulator. In Romania, a generic short-range device at 433 MHz falls under ANCOM's RO-IR SRD-01, edition 5/2025:
+
+<div class="table-scroll">
+
+| Interface | Band | Power limit | Channel access |
+| --- | --- | --- | --- |
+| SRD-01-17a | 433.05–434.79 MHz | 1 mW e.r.p. | no duty-cycle line |
+| SRD-01-17b | 433.05–434.79 MHz | 10 mW e.r.p. | <Term id="duty-cycle">duty cycle</Term> ≤ 10% |
+| SRD-01-18 | 434.04–434.79 MHz | 10 mW e.r.p. | ≤ 100% if bandwidth ≤ 25 kHz |
+
+</div>
+
+A 433.92 MHz doorbell falls in the first two rows. Because the Flipper's radiated power is not published, plan as if 17b applies. ANCOM defines duty cycle as total on-time divided by the observation period, by default one uninterrupted hour, so 10 percent is 360 s. This course counts all transmit time, not only carrier-on time, because that is the conservative reading. A one-second tap is about 20 frames, so about 1 s on the air, and ten taps come to about 10 s, under 0.3 percent of the hour. One held press of 10 s costs the same as those ten taps.
+
+<Callout variant="warn" title="Fork unlocks are not permission">
+Momentum's README says it can extend Sub-GHz frequencies to 281–361, 378–481 and 749–962 MHz. That changes what the device can do, not what the law where you are allows. This course keeps the official region list.
+</Callout>
+
+### What the screen is actually showing you
+
+The emulate screen repeats the key, frequency and preset from the file. None of it is a measurement. While the radio transmits, the LED blinks magenta and an antenna icon animates beside the button. Neither tells you that anything received the signal. The proof of a replay is the device: the chime, the light, the fan.
+
+### When a replay does nothing
+
+Walk the causes of a silent replay in this order.
+
+<div class="table-scroll">
+
+| What you see | Likely cause | What to do |
+| --- | --- | --- |
+| "Transmission is Blocked!" | The file's frequency is outside your region's list | Stop. This file is not for transmitting where you are. |
+| "Firmware update needed" | The region was never set | Update through qFlipper or the app with a microSD card in. |
+| Nothing, where the real remote works | Too far, blocked or badly oriented | Step closer, clear the line of sight, rotate the Flipper. |
+| Nothing, where the real remote also fails | A dead spot for the receiver | Test from a spot where the real remote works. |
+| Nothing, and Read struggled at capture | Wrong frequency or preset saved | Re-capture with Module 1's frequency and Module 2's preset confirmed. |
+| Nothing, and the file is RAW | A noisy or partial recording | Re-record close to the remote (Module 5). |
+| `Key` differs between captures | A rolling code | Expected. Stop sending to it and use the simulator. |
+
+</div>
+
+### Misconceptions
+
+- **"Send plays a recording."** For a decoded key file, the firmware rebuilds the pulses from `Key`, `Bit` and `TE`. RAW files replay recorded timings, and the BinRAW format replays captured bit patterns.
+- **"My region list means it is legal."** It is a firmware limit. The radio interface and your authority to test are separate checks.
+- **"The replay failed, so it must be rolling."** Most failures on your own fixed-code device are distance, orientation or a poor capture.
+- **"Replaying an old rolling code a few times resets the receiver."** The stored counter only moves forward.
+
+## Predict and practise
+
+Start in the simulator, where you can see the counters a real receiver hides. Then go to the bench with your own fixed-code device.
+
+<Lab kicker="Lab 4.1 · simulation" title="Predict a replay result" gear="A browser. Nothing transmits.">
+
+1. **Predict first.** Write down: if the Flipper captures a press the gate never heard, will replaying it work? Will a second replay of the same capture work?
+2. In the sim below, press **Reset** and leave the accept window at 16, so your numbers match the lesson. Press **Press real remote** once. Note the receiver's last accepted value before and after (5 then 6).
+3. Press **Capture next press**, then **Press real remote**. The Flipper now holds a code the receiver never heard.
+4. Press **Replay capture** and record the result and the new last accepted value.
+5. Press **Replay capture** again. Record the result and explain it with the counter values.
+6. **Control:** press **Reset**. Capture one press (Cnt 6, receiver at 5), press the real remote twice so the receiver moves to 8, then replay. Compare with step 4.
+
+</Lab>
+
+<Widget name="rolling-sim" />
+
+Expected observation: step 4 is accepted once, because the captured counter is still ahead of the receiver. Step 5 is rejected and the stored value does not change. In the control, the replay is rejected on its first try. The sim has no two-press resync, so it rejects anything past the window as too far ahead.
+
+<Win>you can explain, in one sentence using the word "rolling", why the simulated receiver rejected the used counter, and you predicted steps 4 and 5 before you pressed them. A rejected replay earns the **Out of Sync** badge.</Win>
+
+Now the bench. Write a short scope note first: the device, that it is yours, the file's frequency, your region code and the RO-IR row it falls under.
+
+<Lab kicker="Lab 4.2" title="Replay your fixed code to your own device" gear="Flipper, your saved fixed-code .sub from Module 3, and the device it came from. Transmits a few short bursts.">
+
+1. **Predict first.** Write down the distance you expect your replay to reach, and why.
+2. Put the device where you can hear or see it react. **Baseline:** wait 30 seconds without pressing anything and confirm it stays quiet.
+3. **Positive control:** press the real remote once from 1 metre and confirm the device responds. If it does not, fix the device before blaming the Flipper.
+4. Read the file's `Protocol`, `Bit` and `TE` lines. Compute one frame as in the worked example, and the airtime of a one-second tap.
+5. Open <Flip>Sub-GHz → Saved</Flip>, select your file, choose <Flip>Emulate</Flip> and check that the frequency and preset on screen match your notes.
+6. From 1 metre, tap OK on **Send** for about a second, three times, about 5 seconds apart. Record whether the device responds each time.
+7. Repeat once from 3 metres, then once from the next room. Where nothing happens, rotate the Flipper a quarter turn and try once more, changing no settings, then press the real remote from the same place. If the real remote also fails there, the spot is bad, not the file.
+8. Confirm only your own device reacted; if you are unsure what else is in range, stop. Twelve taps in total at most.
+
+</Lab>
+
+Expected observation: the device responds at 1 metre every time and may stop at a distance or wall where the real remote still works. The message is identical. The antennas differ, and a wall costs the Flipper's small antenna more than the remote's.
+
+<Win>3 of 3 taps work at 1 metre, you recorded where the replay stops with the real remote confirmed working at that spot, you compared your distance prediction with what you saw, and you changed no settings.</Win>
+
+## Check yourself
+
+<Quiz id="m04" />
+
+Answer each in a sentence, without notes:
+
+1. Your replay works at 1 metre and fails from the next room, while the real remote works from both. What does that tell you about the file?
+2. Why does a capture of a rolling-code press the receiver never heard work once at most, and what does that mean for a defender?
+
+## Keep evidence
+
+Open your [notebook](/learn/notebook?module=m04) and save an entry for this module:
+
+- **Setup:** firmware version, region code, file name, frequency and preset, your frame-time sum, and your scope note with the RO-IR row.
+- **Prediction:** what you expected at steps 4 and 5 of Lab 4.1, and the distance you expected your replay to reach.
+- **Observation:** the simulator's counter values before and after each replay; the baseline, the real-remote control and the replay result at each distance and orientation.
+- **Explanation:** why the fixed code worked, why the used counter failed, and what limited your range.
+
+Adequate evidence has the baseline, a real-remote check at every failing spot, three distances and the counter values. An example entry:
+
+> Official 1.4.3, region EU. doorbell_princeton.sub, 433.92 MHz, AM650, RO-IR SRD-01-17b. Frame: Bit 24, TE 400, 127 TE = 50.8 ms. Sim: last 5, replay Cnt 6 accepted, last 6; replay again rejected, last stays 6. Bench: baseline 30 s quiet; real remote chimes at 1 m. Replay 1 m: 3 of 3. 3 m: chime. Next room: silent, rotated: 1 of 2; real remote chimes from there, so range is the limit. 6 taps total.
+
+Set a review date one week from today. When you can explain the counter rule and your range result without notes, mark it retrieved.
+
+## Continue
+
+Next is [Module 5: Raw signals and rolling codes](/learn/05-raw-and-rolling). It picks up the two loose ends from here: what a RAW recording contains, and how rolling-code receivers keep a captured code from working twice.
+
+**Retrieval question for next week:** a receiver last accepted Cnt 12 and uses a 16-code window. Which of Cnt 9, 12, 13 and 40 does it accept on a single press with no resync, and what does it store afterwards? Then name the three checks you make before you transmit.
+
+Primary sources, checked 13 October 2026:
+
+- Flipper Docs: [Reading signals](https://docs.flipper.net/zero/sub-ghz/read) (Saved, Emulate, Send), [Reading RAW](https://docs.flipper.net/zero/sub-ghz/read-raw) (RAW plays once, key fob warning), [Frequencies by region](https://docs.flipper.net/zero/sub-ghz/frequencies), [Sub-GHz overview](https://docs.flipper.net/zero/sub-ghz) (50 m, external modules) and [Tech specs](https://docs.flipper.net/zero/development/hardware/tech-specs) (−20 dBm).
+- [Sub-GHz file format](https://developer.flipper.net/flipperzero/doxygen/subghz_file_format.html) for the example key file.
+- Firmware 1.4.3: [princeton.c](https://github.com/flipperdevices/flipperzero-firmware/blob/1.4.3/lib/subghz/protocols/princeton.c) (bit timings, default 30 TE guard, 10 repeats), [subghz_txrx.c](https://github.com/flipperdevices/flipperzero-firmware/blob/1.4.3/applications/main/subghz/helpers/subghz_txrx.c) (Emulate sets 200 repeats; save needs the protocol's Save flag), [transmitter.c](https://github.com/flipperdevices/flipperzero-firmware/blob/1.4.3/applications/main/subghz/views/transmitter.c) (send on press, stop on release), [subghz_i.c](https://github.com/flipperdevices/flipperzero-firmware/blob/1.4.3/applications/main/subghz/subghz_i.c) (blocked and update-needed messages), [keeloq.c](https://github.com/flipperdevices/flipperzero-firmware/blob/1.4.3/lib/subghz/protocols/keeloq.c) (no Save flag), [cc1101_configs.c](https://github.com/flipperdevices/flipperzero-firmware/blob/1.4.3/lib/subghz/devices/cc1101_configs.c) (`0xC0`).
+- [TI CC1101 datasheet, SWRS061I](https://www.ti.com/lit/ds/symlink/cc1101.pdf), Table 39.
+- [ANCOM RO-IR SRD-01, edition 5/2025](https://www.ancom.ro/wp-content/uploads/2026/01/RO_IR_SRD_01_Dispozitive_radio_de_proximitate_cu_raza_mica_de_actiune_nespecifice_ro_2025.pdf), interfaces 17a, 17b and 18 and the duty-cycle definition, via the [ANCOM interface index](https://www.ancom.ro/category/reglementare-ro/echipamente-ro-10006/echipamente-radio/reglementari-cu-privire-la-interfete/).
+- [Microchip HCS301 datasheet, DS21143C](https://ww1.microchip.com/downloads/aemDocuments/documents/MCU08/ProductDocuments/DataSheets/21143C.pdf), section 7.3.
+- [Momentum firmware README](https://github.com/Next-Flip/Momentum-Firmware) for its extended ranges.

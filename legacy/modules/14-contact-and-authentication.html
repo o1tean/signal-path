@@ -1,0 +1,174 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>
+      Module 14 · iButton and U2F: identity is not authentication · Signal Path
+    </title>
+    <meta
+      name="description"
+      content="Compare a contact key that presents an identifier with a security key that participates in authentication."
+    />
+    <link rel="stylesheet" href="../assets/css/site.css" />
+    <script>
+      (function () {
+        try {
+          var t = localStorage.getItem("signalpath.theme");
+          if (t === "light" || t === "dark")
+            document.documentElement.setAttribute("data-theme", t);
+        } catch (e) {}
+      })();
+    </script>
+  <link rel="stylesheet" href="../assets/css/presentation.css">
+<link rel="icon" type="image/png" href="../assets/images/signal-path-logo.png">
+</head>
+  <body data-root="../" data-page="m14">
+    <header class="topbar"></header>
+    <main id="main-content" class="page wrap">
+      <article class="content">
+        <div class="mod-header">
+          <div class="mod-index">14</div>
+          <div class="mod-titles">
+            <div class="mod-week">Week 9 · Beyond the RF foundation</div>
+            <h1>iButton and U2F: identity is not authentication</h1>
+            <p class="lede">
+              Compare a contact key that presents an identifier with a security
+              key that participates in authentication.
+            </p>
+            <div class="chips">
+              <span class="chip">45–60 min</span
+              ><span class="chip">Training iButton; optional test account</span>
+            </div>
+          </div>
+        </div>
+        <section id="concepts">
+          <h2>Understand it</h2>
+          <p>
+            An iButton uses physical contact rather than an RF link. Supported
+            types differ: a Dallas DS1990 exposes a UID, while some other Dallas
+            devices also contain memory. “iButton” is a form factor and protocol
+            family, not a promise that every key has the same capabilities.
+          </p>
+          <p>
+            An identifier names a device. Authentication supplies evidence that
+            a party is entitled to act as that identity. A reader that accepts a
+            copied static number has a different security model from one that
+            verifies a cryptographic response.
+          </p>
+          <p>
+            The Flipper’s U2F app can serve as a second factor for compatible
+            accounts. U2F support is not a promise of every FIDO2 or
+            passwordless feature. Treat a learning device differently from a
+            dedicated everyday security key: use a disposable test account, keep
+            independent recovery methods, and understand what happens when
+            device data is reset.
+          </p>
+        </section>
+        <section id="lab">
+          <h2>Lab: build the evidence</h2>
+          <ol class="steps">
+            <li>
+              <div>
+                Use a practice iButton that is not enrolled in a building or
+                workplace. Read its documented model before trying it.
+              </div>
+            </li>
+            <li>
+              <div>
+                Open <span class="flip">iButton → Read</span> and make
+                data/ground contact as shown in the manufacturer’s diagram. Save
+                a lab alias and record which fields were actually read. Do not
+                publish real credentials.
+              </div>
+            </li>
+            <li>
+              <div>
+                If your bench includes a compatible standalone training reader,
+                compare the original key with emulation. Otherwise record the
+                reading and explicitly mark emulation as untested.
+              </div>
+            </li>
+            <li>
+              <div>
+                Optional U2F lab: on a disposable account that supports U2F,
+                establish and verify another recovery method first. Close
+                qFlipper, connect USB, open U2F, and follow the service’s
+                security-key registration flow.
+              </div>
+            </li>
+            <li>
+              <div>
+                Sign out and verify a test sign-in, including physical
+                confirmation on the Flipper. Confirm the independent recovery
+                method still exists; remove the test registration when finished.
+              </div>
+            </li>
+            <li>
+              <div>
+                Write a comparison: data read, proof presented, reliance on a
+                reader/service, and what a lost device would mean.
+              </div>
+            </li>
+          </ol>
+        </section>
+        <section id="evidence">
+          <h2>Show that you can do it</h2>
+          <ul>
+            <li>
+              A supported training-key reading, or a documented unsupported
+              result.
+            </li>
+            <li>
+              A comparison of a static identifier and cryptographic
+              authentication.
+            </li>
+            <li>
+              A recovery plan; optional tests clearly distinguished from
+              completed ones.
+            </li>
+          </ul>
+          <p>
+            Record the result in your
+            <a href="../notebook.html">learning notebook</a>. Repeat the
+            explanation tomorrow without looking at this page.
+          </p>
+        </section>
+        <section id="quiz">
+          <h2>Check yourself</h2>
+          <div data-quiz="m14"></div>
+        </section>
+        <section id="sources">
+          <h2>Sources</h2>
+          <p class="source-note">
+            Read the primary sources:
+            <a href="https://docs.flipper.net/zero/ibutton/read"
+              >Flipper: reading iButton keys</a
+            >
+            ·
+            <a href="https://docs.flipper.net/zero/u2f"
+              >Flipper: U2F authentication</a
+            >. Course review: 10 September 2026.
+          </p>
+        </section>
+      </article>
+    </main>
+    <footer class="site-footer">
+      <div class="wrap">
+        <p>
+          Practise on authorized lab equipment. In Romania, check ANCOM radio
+          conditions and privacy rules. When scope or legality is unclear, use
+          the simulators.
+        </p>
+        <p>
+          <a href="../legal.html">Romania &amp; permission</a> ·
+          <a href="../sources.html">Sources &amp; corrections</a>
+        </p>
+      </div>
+    </footer>
+    <script src="../assets/js/data/course.js"></script>
+    <script src="../assets/js/site.js"></script>
+    <script src="../assets/js/data/quiz-bank.js"></script>
+  <script src="../assets/js/presentation.js"></script>
+</body>
+</html>

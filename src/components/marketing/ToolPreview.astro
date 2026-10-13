@@ -1,0 +1,133 @@
+---
+/** Still preview of a browser tool, drawn as an instrument screen (decorative; the card carries the text). */
+interface Props {
+  id: string;
+  class?: string;
+}
+const { id, class: className } = Astro.props;
+
+// a noise floor with one peak, deterministic so builds are stable
+const noise = Array.from({ length: 61 }, (_, i) => {
+  const x = i * 8;
+  const n = ((Math.sin(i * 12.9898) * 43758.5453) % 1 + 1) % 1;
+  const peak = Math.exp(-((i - 34) ** 2) / 6) * 70;
+  return `${i ? 'L' : 'M'}${x} ${100 - n * 9 - peak}`;
+}).join('');
+const sine = (y: number, amp: number, period: number, from = 0, to = 480) => {
+  let d = `M${from} ${y}`;
+  for (let x = from; x < to; x += period / 2) d += `Q${x + period / 4} ${y - amp} ${x + period / 2} ${y}T${x + period} ${y}`;
+  return d;
+};
+const pulses = [1, 3, 1, 1, 3, 1, 3, 3, 1, 1, 3, 1];
+let pulseD = 'M0 90';
+let px = 8;
+for (const p of pulses) {
+  pulseD += `H${px}V40H${px + p * 9}V90`;
+  px += p * 9 + 12;
+}
+const label: Record<string, string> = {
+  'tune-in': 'TUNE IN · NAME THE PEAK',
+  'wave-lab': 'WAVE LAB · FSK',
+  'spectrum-scope': 'SPECTRUM · 433.92 MHZ',
+  'rf-calc': 'RF CALC · 433.92 MHZ',
+  'pulse-decoder': 'PULSES → BITS',
+  'rolling-sim': 'ROLLING CODE · COUNTER',
+  'flipper-sim': 'SUB-GHZ MENU',
+  'signal-atlas': 'SIGNAL ATLAS',
+  flashcards: 'FLASHCARDS',
+  'tool-picker': 'TOOL PICKER',
+};
+---
+<div class:list={['rounded-xl bg-scope-bg p-4', className]} aria-hidden="true">
+  <p class="m-0 font-mono text-[0.625rem] tracking-[0.08em] text-scope-text">{label[id] ?? id.toUpperCase()}</p>
+  <svg viewBox="0 0 480 110" class="mt-2 block h-auto w-full" fill="none" stroke-linecap="round" stroke-linejoin="round">
+    <g stroke="var(--scope-grid)" stroke-width="1">
+      <path d="M0 27.5H480M0 55H480M0 82.5H480M96 0V110M192 0V110M288 0V110M384 0V110" opacity="0.6" />
+    </g>
+    {
+      (id === 'tune-in' || id === 'spectrum-scope') && (
+        <>
+          <path d={noise} stroke="var(--scope-trace)" stroke-width="2" />
+          <path d="M272 0V110" stroke="var(--scope-peak)" stroke-dasharray="4 4" />
+          <text x="280" y="16" class="fill-scope-peak font-mono text-[12px]">{id === 'tune-in' ? '? MHz' : '433.92'}</text>
+        </>
+      )
+    }
+    {
+      id === 'wave-lab' && (
+        <>
+          <path d={sine(55, 32, 40, 0, 240)} stroke="var(--scope-trace)" stroke-width="2" />
+          <path d={sine(55, 32, 20, 240, 480)} stroke="var(--scope-peak)" stroke-width="2" />
+        </>
+      )
+    }
+    {
+      id === 'rf-calc' && (
+        <>
+          <path d={sine(55, 34, 160)} stroke="var(--scope-trace)" stroke-width="2" />
+          <path d="M0 100H40M40 94V106M40 100H200M200 94V106" stroke="var(--scope-peak)" stroke-width="2" />
+          <text x="210" y="104" class="fill-scope-peak font-mono text-[12px]">λ/4 ≈ 17 cm</text>
+        </>
+      )
+    }
+    {id === 'pulse-decoder' && <path d={pulseD} stroke="var(--scope-trace)" stroke-width="2" />}
+    {
+      id === 'rolling-sim' && (
+        <g class="font-mono text-[14px]">
+          {[40, 41, 42, 43, 44].map((n, i) => (
+            <>
+              <rect x={12 + i * 94} y="34" width="80" height="42" rx="6" stroke={i === 2 ? 'var(--scope-peak)' : 'var(--scope-grid)'} />
+              <text x={52 + i * 94} y="61" text-anchor="middle" class={i < 2 ? 'fill-scope-grid' : 'fill-scope-trace'}>{String(n).padStart(4, '0')}</text>
+            </>
+          ))}
+        </g>
+      )
+    }
+    {
+      id === 'flipper-sim' && (
+        <g>
+          <rect x="140" y="6" width="200" height="98" rx="6" fill="var(--lcd-bg)" />
+          {['Read', 'Read RAW', 'Saved', 'Frequency Analyzer'].map((t, i) => (
+            <>
+              {i === 1 && <rect x="150" y={18 + i * 21} width="180" height="18" rx="3" fill="var(--lcd-ink)" />}
+              <text x="160" y={31 + i * 21} class="font-mono text-[12px]" fill={i === 1 ? 'var(--lcd-bg)' : 'var(--lcd-ink)'}>{t}</text>
+            </>
+          ))}
+        </g>
+      )
+    }
+    {
+      id === 'signal-atlas' && (
+        <g class="font-mono text-[11px]">
+          {[['433.92', 'AM650', 'Princeton', 'fixed'], ['868.35', 'FM238', 'KeeLoq', 'rolling'], ['315.00', 'AM270', 'CAME', 'fixed']].map((r, i) => (
+            <>
+              {r.map((c, j) => (
+                <text x={10 + j * 118} y={30 + i * 30} class={j === 3 && c === 'rolling' ? 'fill-scope-peak' : 'fill-scope-trace'}>{c}</text>
+              ))}
+            </>
+          ))}
+        </g>
+      )
+    }
+    {
+      id === 'flashcards' && (
+        <g>
+          <rect x="150" y="18" width="190" height="84" rx="8" stroke="var(--scope-grid)" transform="rotate(-4 245 60)" />
+          <rect x="140" y="12" width="190" height="84" rx="8" fill="var(--scope-bg)" stroke="var(--scope-trace)" />
+          <text x="235" y="60" text-anchor="middle" class="fill-scope-trace font-mono text-[18px]">OOK</text>
+        </g>
+      )
+    }
+    {
+      id === 'tool-picker' && (
+        <g stroke="var(--scope-trace)" stroke-width="2">
+          <path d="M240 14V40M240 40H110V70M240 40H370V70M240 40V70" />
+          <circle cx="240" cy="12" r="5" fill="var(--scope-peak)" stroke="none" />
+          {[110, 240, 370].map((x) => (
+            <rect x={x - 40} y="72" width="80" height="26" rx="5" fill="var(--scope-bg)" />
+          ))}
+        </g>
+      )
+    }
+  </svg>
+</div>

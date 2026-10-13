@@ -1,0 +1,14 @@
+---
+import Base from '@/layouts/Base.astro';
+import Widget from '@/components/mdx/Widget.astro';
+
+if (!import.meta.env.DEV) return new Response(null, { status: 404 });
+export const prerender = false;
+---
+<Base title="Dev: spectrum-scope" description="Development page for the spectrum-scope widget." index={false}>
+  <main class="mx-auto max-w-xl space-y-8 px-4 py-8">
+    <h1 class="text-2xl font-semibold">spectrum-scope</h1>
+    <section id="full"><Widget name="spectrum-scope" /></section>
+    <section id="compact"><Widget name="spectrum-scope" opts={{ mode: 'compact' }} /></section>
+  </main>
+</Base>

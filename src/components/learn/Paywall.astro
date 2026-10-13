@@ -1,0 +1,113 @@
+---
+/** Shown instead of a paid lesson body. Frontmatter only, so no lesson text reaches the page.
+    Copy: docs/v2/copy/paywall.md (signed-out, signed-in, suspended, teaser). */
+import type { LessonFrontmatter } from '@/content.config';
+import BuyButton from '@/components/marketing/BuyButton.astro';
+import LinkButton from '@/components/marketing/LinkButton.astro';
+import { facts, need, owner, price } from '@/components/marketing/site';
+import { getLessons } from '@/lib/lessons';
+import { tools } from '@/data/tools';
+import ToolPreview from '@/components/marketing/ToolPreview.astro';
+
+interface Props {
+  lesson: LessonFrontmatter;
+  state: 'signed-out' | 'signed-in' | 'suspended';
+}
+const { lesson, state } = Astro.props;
+const transmits = {
+  none: 'Nothing transmits',
+  'own-device': 'Transmits to your own device only',
+  'lab-only': 'Transmits in a controlled lab setup only',
+}[lesson.transmits];
+const lessons = await getLessons();
+const prereqs = lesson.prerequisites.map((id) => lessons.find((l) => l.id === id)).filter((m) => !!m).map((m) => `Module ${m.n}: ${m.title}`);
+const lessonTools = lesson.tools.map((id) => ({ id, name: tools.find((t) => t.id === id)?.name ?? id }));
+const buyLabel = `Open all ${facts.lessons} lessons for ${price}`;
+const link = 'inline-flex min-h-11 items-center text-sm text-muted-foreground hover:text-foreground';
+---
+<section aria-labelledby="paywall-title" class="mt-10 overflow-hidden rounded-card border border-border bg-card" data-paywall={state}>
+  <div class="space-y-6 p-6 sm:p-8">
+    <div>
+      <p class="eyebrow">{state === 'suspended' ? 'Access paused' : `Signal Path Complete · ${lesson.minutes} minutes`}</p>
+      {/* the lesson header above already shows the title, so the paywall heading is for screen readers only */}
+      <h2 id="paywall-title" class="sr-only">{lesson.title}{state === 'suspended' ? ': access paused' : ' is part of Signal Path Complete'}</h2>
+      {
+        state === 'suspended' ? (
+          <p class="mt-3 text-muted-foreground">We've paused your access to the paid lessons while a payment dispute is open.</p>
+        ) : (
+          <dl class="mt-3 grid gap-4">
+            <div>
+              <dt class="text-sm font-semibold">Lesson outcome</dt>
+              <dd class="m-0 mt-1 text-muted-foreground">{lesson.outcome}</dd>
+            </div>
+            <div>
+              <dt class="text-sm font-semibold">You finish with</dt>
+              <dd class="m-0 mt-1 text-muted-foreground">{lesson.evidence}</dd>
+            </div>
+          </dl>
+        )
+      }
+    </div>
+    {state !== 'suspended' && (
+      <div>
+        <h3 class="text-base">What this lesson covers</h3>
+        <dl class="mt-3 grid gap-4 text-sm sm:grid-cols-2">
+          <div><dt class="font-semibold">Transmits</dt><dd class="mt-1 text-muted-foreground">{transmits}</dd></div>
+          {prereqs.length > 0 && <div><dt class="font-semibold">Builds on</dt><dd class="mt-1 text-muted-foreground">{prereqs.join(', ')}</dd></div>}
+        </dl>
+        {
+          lessonTools.length > 0 && (
+            <div class="mt-5">
+              <p class="m-0 text-sm font-semibold">Tools in this lesson</p>
+              <ul class="mt-2 grid gap-3 sm:grid-cols-2">
+                {lessonTools.map((t) => (
+                  <li class="text-sm">
+                    <ToolPreview id={t.id} class="p-3" />
+                    <span class="mt-1.5 block text-muted-foreground">{t.name}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )
+        }
+      </div>
+    )}
+  </div>
+  <div class="flex flex-col gap-5 border-t border-border bg-muted/50 p-6 sm:flex-row sm:items-start sm:p-8">
+    {
+      state === 'suspended' ? (
+        <>
+          <p class="m-0 flex-1 text-sm text-muted-foreground">
+            This happens when a bank reports a dispute on the payment for Signal Path Complete. Access comes back automatically if the dispute closes in our favour. If you didn't mean to open a dispute, or you want a refund instead, email {need(owner.supportEmail, 'support email')}. We reply within [NEED: response time, e.g. 2 working days].
+          </p>
+          <LinkButton href="/account" size="md">Go to your account</LinkButton>
+        </>
+      ) : state === 'signed-in' ? (
+        <>
+          <div class="flex-1 text-sm text-muted-foreground">
+            <p class="m-0 text-2xl font-semibold text-foreground tabular-nums">{price} <span class="text-base font-normal text-muted-foreground">paid once</span></p>
+            <p class="m-0 mt-2">Signal Path Complete opens this lesson and every other one. Your progress and notes carry over. Refunds are open for 30 days after you buy.</p>
+            <p class="m-0 mt-2">Or split the payment into instalments at checkout where available.</p>
+          </div>
+          <div class="flex flex-col gap-1 sm:w-72">
+            <BuyButton label={buyLabel} />
+            <a href="/pricing" class:list={[link, 'justify-center']}>See what's included</a>
+          </div>
+        </>
+      ) : (
+        <>
+          <div class="flex-1 text-sm text-muted-foreground">
+            <p class="m-0 text-2xl font-semibold text-foreground tabular-nums">{price} <span class="text-base font-normal text-muted-foreground">paid once</span></p>
+            <p class="m-0 mt-2">This lesson is part of Signal Path Complete: all {facts.lessons} lessons, {facts.tools} browser tools and {facts.questions} quiz questions. If it isn't for you, ask for a refund within 30 days.</p>
+          </div>
+          <div class="flex flex-col gap-1 sm:w-72">
+            <BuyButton label={buyLabel} />
+            <p class="m-0 mt-2 text-center text-sm text-muted-foreground">Already bought it?</p>
+            <LinkButton href={`/login?next=${encodeURIComponent(`/learn/${lesson.slug}`)}`} variant="secondary" size="md">Sign in</LinkButton>
+            <a href="/learn" class:list={[link, 'justify-center']}>Back to the free lessons</a>
+          </div>
+        </>
+      )
+    }
+  </div>
+</section>

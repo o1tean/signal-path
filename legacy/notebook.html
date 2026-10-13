@@ -1,0 +1,143 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Learning notebook · Signal Path</title>
+    <meta
+      name="description"
+      content="A local notebook for predictions, findings, retrieval practice and course progress backups."
+    />
+    <link rel="stylesheet" href="assets/css/site.css" />
+    <script>
+      (function () {
+        try {
+          var t = localStorage.getItem("signalpath.theme");
+          if (t === "light" || t === "dark")
+            document.documentElement.setAttribute("data-theme", t);
+        } catch (e) {}
+      })();
+    </script>
+  <link rel="stylesheet" href="assets/css/presentation.css">
+<link rel="icon" type="image/png" href="assets/images/signal-path-logo.png">
+</head>
+  <body data-root="" data-page="notebook">
+    <header class="topbar"></header>
+    <main id="main-content" class="wrap-narrow learning-page">
+      <p class="eyebrow">Your private learning record</p>
+      <h1>Keep the evidence.</h1>
+      <p class="lede">
+        Predict, observe, explain, and revisit. Record lab aliases and findings
+        here; keep credentials, keys and personal data out.
+      </p>
+      <p>
+        Saved in this browser only. Export a backup before clearing browser data
+        or changing devices. This notebook does not upload your entries.
+      </p>
+      <form id="notebook-form" class="card notebook-form">
+        <label for="note-module">Module</label
+        ><select id="note-module" name="module"></select>
+        <p>
+          <a id="note-lesson" href="modules/00-setup.html"
+            >Open this lesson →</a
+          >
+        </p>
+        <label for="note-setup">Equipment, firmware, scope and recovery</label
+        ><textarea
+          id="note-setup"
+          name="setup"
+          rows="3"
+          maxlength="6000"
+          placeholder="Training target alias, version, permission and relevant radio conditions…"
+        ></textarea
+        ><label for="note-prediction">My prediction and why</label
+        ><textarea
+          id="note-prediction"
+          name="prediction"
+          rows="3"
+          maxlength="6000"
+        ></textarea
+        ><label for="note-observation"
+          >What I observed (including failures)</label
+        ><textarea
+          id="note-observation"
+          name="observation"
+          rows="4"
+          maxlength="6000"
+        ></textarea
+        ><label for="note-explanation"
+          >My explanation, limits, and next experiment</label
+        ><textarea
+          id="note-explanation"
+          name="explanation"
+          rows="4"
+          maxlength="6000"
+        ></textarea
+        ><label for="note-review">Review date</label
+        ><input id="note-review" name="review" type="date" />
+        <p>
+          Choose tomorrow for your first retrieval check, then move the date
+          after reviewing. Leaving it blank means no scheduled review.
+        </p>
+        <div class="btn-row">
+          <button class="btn primary" type="submit">Save entry</button
+          ><button class="btn" id="note-retrieved" type="button">
+            I explained it without notes
+          </button>
+        </div>
+        <p id="note-status" role="status" aria-live="polite"></p>
+      </form>
+      <noscript
+        ><p>
+          The notebook needs JavaScript. You can use the
+          <a href="downloads/lab-notebook.md">plain-text lab template</a>
+          instead.
+        </p></noscript
+      >
+      <section id="review">
+        <h2>Your review queue</h2>
+        <div id="review-queue" class="card"><p>No saved entries yet.</p></div>
+      </section>
+      <section id="backup">
+        <h2>Back up or move your progress</h2>
+        <p>
+          The backup includes completion marks, quiz best scores, badges, atlas
+          entries and notebook notes. Treat it as private. Restoring replaces
+          this browser’s course data after confirmation.
+        </p>
+        <div class="card">
+          <button class="btn" type="button" id="export-backup">
+            Download backup
+          </button>
+          <div class="import-control">
+            <label for="import-backup"
+              >Restore a Signal Path JSON backup (up to 1 MB)</label
+            ><input
+              id="import-backup"
+              type="file"
+              accept="application/json,.json"
+            />
+          </div>
+          <p id="backup-status" role="status" aria-live="polite"></p>
+        </div>
+      </section>
+    </main>
+    <footer class="site-footer">
+      <div class="wrap">
+        <p>
+          Practise on authorized lab equipment. In Romania, check ANCOM radio
+          conditions and privacy rules. When scope or legality is unclear, use
+          the simulators.
+        </p>
+        <p>
+          <a href="legal.html">Romania &amp; permission</a> ·
+          <a href="sources.html">Sources &amp; corrections</a>
+        </p>
+      </div>
+    </footer>
+    <script src="assets/js/data/course.js"></script>
+    <script src="assets/js/site.js"></script>
+    <script src="assets/js/learning.js"></script>
+  <script src="assets/js/presentation.js"></script>
+</body>
+</html>

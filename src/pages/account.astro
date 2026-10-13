@@ -1,0 +1,141 @@
+---
+/* /account: email, purchases, access status, refund request, data export, sign out. Copy: docs/v2/copy/auth.md. */
+import Marketing from '@/layouts/Marketing.astro';
+import LinkButton from '@/components/marketing/LinkButton.astro';
+import { buttonClass } from '@/components/marketing/button';
+import { facts, need, owner } from '@/components/marketing/site';
+import { formatPrice, tierByProduct, type ProductId } from '@/data/offer';
+
+const { locals } = Astro;
+Astro.response.headers.set('Cache-Control', 'private, no-store');
+if (!locals.user || !locals.supabase) return Astro.redirect('/login?next=%2Faccount', 303);
+
+const SUPPORT_EMAIL = need(owner.supportEmail, 'support email');
+const { data: purchases } = await locals.supabase
+  .from('purchases')
+  .select('id, product_id, amount_cents, currency, status, created_at')
+  .order('created_at', { ascending: false });
+const rows = purchases ?? [];
+
+const fmt = (d: Date) => d.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
+const statusLabel: Record<string, string> = { paid: 'Paid', refunded: 'Refunded', disputed: 'Disputed, access paused', canceled: 'Cancelled' };
+const productName = (id: string | null) => (id && tierByProduct(id as ProductId)?.name) || 'Signal Path';
+const money = (cents: number | null, currency: string | null) =>
+  cents == null ? '' : formatPrice(cents / 100, (currency ?? 'eur').toUpperCase() as 'EUR');
+
+const owned = locals.entitlements.includes('course-complete');
+const access = owned ? `Open: all ${facts.lessons} lessons` : locals.suspended ? 'Paused while a payment dispute is open' : 'Free lessons (Modules 0 and 1)';
+const lastPaid = rows.find((r) => r.status === 'paid');
+const paidAt = lastPaid ? new Date(lastPaid.created_at) : null;
+const deadline = paidAt ? new Date(+paidAt + 30 * 864e5) : null;
+const refundOpen = deadline ? deadline > new Date() : false;
+const refundMail = `mailto:${SUPPORT_EMAIL}?subject=${encodeURIComponent('Refund request')}&body=${encodeURIComponent(
+  `Please refund my Signal Path Complete purchase.\nAccount email: ${locals.user.email}\nPurchase date: ${paidAt ? fmt(paidAt) : ''}`,
+)}`;
+const h2 = 'text-xl';
+const card = 'mt-10 border-t border-border pt-8';
+const primary = buttonClass('primary', 'md');
+const secondary = buttonClass('secondary', 'md');
+---
+<Marketing title="Your account" description="Your Signal Path account: purchases, refunds, your data and sign out." index={false}>
+  <div class="mx-auto max-w-2xl px-4 py-16 sm:py-20">
+    <p class="eyebrow">Account</p>
+    <h1 class="mt-3 text-3xl sm:text-4xl">Your account</h1>
+    <p class="lede mt-4">Signed in as <span data-account-email class="[overflow-wrap:anywhere]">{locals.user.email}</span>.</p>
+    <nav aria-label="Account sections" class="mt-6 flex flex-wrap gap-x-4 text-sm">
+      <a class="min-h-11 content-center text-primary hover:underline" href="#purchases">Purchases</a>
+      <a class="min-h-11 content-center text-primary hover:underline" href="#refunds">Refunds</a>
+      <a class="min-h-11 content-center text-primary hover:underline" href="#sync">Progress sync</a>
+      <a class="min-h-11 content-center text-primary hover:underline" href="#data">Your data</a>
+      <a class="min-h-11 content-center text-primary hover:underline" href="#signout">Sign out</a>
+    </nav>
+
+    <section id="purchases" aria-labelledby="purchases-title" class={card}>
+      <h2 id="purchases-title" class={h2}>Purchases</h2>
+      <p class="mt-2 text-sm text-muted-foreground">Course access: <b class="text-foreground" data-access-status>{access}</b></p>
+      {
+        rows.length ? (
+          <ul class="mt-4 divide-y divide-border rounded-card border border-border">
+            {rows.map((r) => (
+              <li class="px-4 py-3 text-sm">
+                {[productName(r.product_id), money(r.amount_cents, r.currency), fmt(new Date(r.created_at)), statusLabel[r.status] ?? r.status].filter(Boolean).join(' · ')}
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <>
+            <p class="mt-4">You haven't bought anything yet. Modules 0 and 1 are free on this account.</p>
+            <LinkButton href="/pricing" size="md" class="mt-4">See Signal Path Complete</LinkButton>
+          </>
+        )
+      }
+    </section>
+
+    <section id="refunds" aria-labelledby="refunds-title" class={card}>
+      <h2 id="refunds-title" class={h2}>Refunds</h2>
+      {
+        !lastPaid ? (
+          <p class="mt-2 text-muted-foreground">Signal Path Complete comes with a 30-day refund. It appears here after you buy.</p>
+        ) : refundOpen ? (
+          <>
+            <p class="mt-2">You bought Signal Path Complete on {fmt(paidAt!)}. You can get a full refund until {fmt(deadline!)}.</p>
+            <p class="mt-2 text-muted-foreground">The {money(lastPaid.amount_cents, lastPaid.currency)} goes back to the card or account you paid with. Your notes and progress stay in your account.</p>
+            <LinkButton href={refundMail} variant="secondary" size="md" class="mt-4">Request a refund</LinkButton>
+            <p class="mt-2 text-sm text-muted-foreground">This opens an email to {SUPPORT_EMAIL}.</p>
+          </>
+        ) : (
+          <>
+            <p class="mt-2">The 30-day refund window closed on {fmt(deadline!)}.</p>
+            <p class="mt-2 text-muted-foreground">If something in the course is wrong or not working, email {SUPPORT_EMAIL} and tell us what happened. If you finished the Stage 1 labs and still can't explain your first capture, the Stage 1 promise applies until [NEED: promise window end date].</p>
+            <LinkButton href="/legal/refunds#stage-1-promise" variant="secondary" size="md" class="mt-4">Read the Stage 1 promise</LinkButton>
+          </>
+        )
+      }
+    </section>
+
+    <section id="sync" aria-labelledby="sync-title" class={card}>
+      <h2 id="sync-title" class={h2}>Progress sync</h2>
+      <p class="mt-2 text-muted-foreground">Your progress, quiz scores, notebook and signal atlas follow you to every device you sign in on.</p>
+    </section>
+
+    <section id="data" aria-labelledby="data-title" class={card}>
+      <h2 id="data-title" class={h2}>Your data</h2>
+      <p class="mt-2">Download everything the course stores about your learning as one JSON file.</p>
+      <p class="mt-2 text-muted-foreground">The file holds your progress, quiz scores, badges, signal atlas and notebook entries. You can import it in another browser from the notebook page. To get a copy of your account and purchase records, or to delete your account, email {SUPPORT_EMAIL}. We reply within one month.</p>
+      <button type="button" data-export class:list={[secondary, 'mt-4']}>Download my data</button>
+    </section>
+
+    <section id="signout" aria-labelledby="signout-title" class={card}>
+      <h2 id="signout-title" class={h2}>Sign out</h2>
+      <p class="mt-2 [overflow-wrap:anywhere] text-muted-foreground">Signed in as {locals.user.email} on this device.</p>
+      <button type="button" data-signout-open class:list={[secondary, 'mt-4']}>Sign out</button>
+      <dialog data-signout-dialog aria-labelledby="signout-confirm-title" class="m-auto max-w-sm rounded-card border border-border bg-card p-6 text-foreground backdrop:bg-black/50">
+        <h2 id="signout-confirm-title" class="text-lg">Sign out on this device?</h2>
+        <p class="mt-2 text-sm text-muted-foreground">Your synced progress stays on your account and comes back when you sign in again.</p>
+        <div class="mt-6 flex flex-wrap justify-end gap-2">
+          <button type="button" data-signout-cancel class={secondary}>Stay signed in</button>
+          <form method="post" action="/auth/signout" class="m-0">
+            <button type="submit" class={primary}>Sign out</button>
+          </form>
+        </div>
+      </dialog>
+      <noscript>
+        <form method="post" action="/auth/signout" class="mt-2"><button type="submit" class={secondary}>Sign out now</button></form>
+      </noscript>
+    </section>
+  </div>
+</Marketing>
+
+<script>
+  import { backupFilename, createBackup } from '@/lib/learner';
+
+  document.querySelector('[data-export]')?.addEventListener('click', () => {
+    const blob = new Blob([JSON.stringify(createBackup(), null, 2)], { type: 'application/json' });
+    const a = Object.assign(document.createElement('a'), { href: URL.createObjectURL(blob), download: backupFilename() });
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+  });
+  const dialog = document.querySelector<HTMLDialogElement>('[data-signout-dialog]');
+  document.querySelector('[data-signout-open]')?.addEventListener('click', () => dialog?.showModal());
+  document.querySelector('[data-signout-cancel]')?.addEventListener('click', () => dialog?.close());
+</script>

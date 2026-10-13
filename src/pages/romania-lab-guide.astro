@@ -1,0 +1,15 @@
+---
+/* Copy: docs/v2/copy/resources.md#romania-lab-guide, meta.md#romania-lab-guide. */
+import ResourcePage from '@/components/content/ResourcePage.astro';
+import html from '@/content/pages/romania-lab-guide.html?raw';
+export const prerender = true;
+---
+<ResourcePage
+  title="Romanian lab guide: permission and radio rules"
+  description="Before a hardware lab in Romania, check who can authorise the test, which ANCOM radio conditions apply and what Criminal Code articles 360 to 365 say."
+  eyebrow="Romania · Read before your first hardware lab"
+  heading="What to check before you test anything on real hardware."
+  lede="Three checks: who can authorise the test, which radio conditions apply, and what the test could affect."
+  body="The guide points to ANCOM's current radio interface for non-specific short-range devices (RO-IR SRD-01, edition 5/2025) and to Criminal Code articles 360–365. It includes a scope note you can copy into your notebook and covers what to do if you find a weakness. It is a learning guide and is not individual legal advice."
+  html={html}
+/>

@@ -1,0 +1,58 @@
+<section id="nice-gate"><h2>The gate that appears to accept a replay</h2><p>This is a hypothetical diagnostic example, not a verified incident involving a particular gate. In a counter-based model, a previously unused valid message may be accepted if it falls within the receiver’s forward window. Once consumed, the same message is stale.</p><p><b>A forward window does not make an old counter fresh again.</b> If an identical capture seems to work intermittently, investigate the actual protocol, whether a file contains multiple frames, whether receiver state changed, and whether you are observing the same operation. Do not claim a diagnosis from “works once” alone.</p><p>Rejected stale messages do not normally advance the receiver counter. Real products have implementation-specific synchronization and recovery behaviour, and operational fob experiments can cause loss of access. Use the simulator to explore the model; use the manufacturer’s documented process for genuine remote provisioning or repair.</p><!--WIDGET:rolling-sim:{}--><p class="source-note">Read the primary sources: <a href="https://ww1.microchip.com/downloads/aemDocuments/documents/MCU08/ProductDocuments/DataSheets/21143C.pdf">Microchip HCS301: synchronization model (PDF)</a> · <a href="https://docs.flipper.net/zero/sub-ghz/read-raw">Flipper: demodulated RAW recordings</a> · <a href="https://docs.flipper.net/zero/sub-ghz/supported-vendors">Flipper: static and dynamic protocol support</a>. Course review: 10 September 2026.</p></section>
+<section id="car-fob">
+<h2>The car fob that won't clone</h2>
+<dl class="kv">
+<dt>Symptom</dt><dd>You try to copy your car key fob so you have a spare. The Flipper reads something, but the copy never unlocks the car.</dd>
+<dt>What's happening</dt><dd>Modern car fobs are rolling code too, so the same one-time-password logic applies. Provisioning and immobilizer behaviour depend on the specific vehicle and require its documented service procedure.</dd>
+<dt>What to do</dt><dd>Add a spare the way the carmaker intends: enrol a new fob with the documented programming procedure.</dd>
+</dl>
+<p> A spare remote is easy to picture as a photocopy. Cars work differently. The fob and the car share a secret that was paired at the factory or by a dealer, and, like the gate above, each press is a throwaway code, so a recording can't stand in for the real thing. Cloning the radio signal was never the mechanism for adding a car remote. </p>
+<p> The real path to a spare is <b>enrolling a new fob into the car</b>, which depends on the make and model. Some cars have an owner-accessible programming sequence in the manual; many require dealer or locksmith tooling that talks to the car's computer directly. Your owner's manual (or the dealer) is the authority. The Flipper is a superb tool for <i>understanding</i> what your fob transmits; it isn't a key-cutting machine. </p>
+</section>
+<section id="garage-fixed">
+<h2>The garage remote that copied perfectly and still works</h2>
+<dl class="kv">
+<dt>Symptom</dt><dd>You capture an older garage-door remote, replay it, and it opens the door every single time. Unlike the gate, it never stops.</dd>
+<dt>What's happening</dt><dd>This remote is <b>fixed code</b>
+<span class="pill fixed">same every press</span>. There's no counter to move past.</dd>
+<dt>What to do</dt><dd>Nothing is wrong. Enjoy it, and understand what it means.</dd>
+</dl>
+<p> Plenty of older openers (and cheap gate remotes) send the identical message on every press, often a simple protocol like <span class="pill grey">Princeton</span> with a 24-bit key. Because the message never changes, a recording of it is just as valid tomorrow as today. That's exactly why fixed-code devices are the perfect first capture in <a href="/learn/03-protocols">Module 3</a>: they behave predictably and teach the whole capture-save-replay loop on your own hardware. </p>
+<div class="callout tip">
+<span class="ic">&#10003;</span>
+<div><span class="callout-title">The flip side of "it always works"</span> Fixed code is convenient and also the weaker design: anything that can hear it can repeat it. If a device you own protects something that matters, its fixed-code behaviour is a nudge to consider a rolling-code upgrade. That's you improving <i>your own</i> security, which is always fair game.</div>
+</div>
+</section>
+<section id="analyzer-no-read">
+<h2>Frequency Analyzer says 433.92, but Read shows nothing</h2>
+<dl class="kv">
+<dt>Symptom</dt><dd>The Frequency Analyzer clearly locks onto your remote at 433.92 MHz. But when you switch to Read and press the button, nothing decodes.</dd>
+<dt>What's happening</dt><dd>You have the <b>right frequency</b> but the wrong <b>modulation</b>, or a protocol the decoder doesn't recognise.</dd>
+<dt>What to do</dt><dd>Change the preset; if that fails, capture with Read RAW.</dd>
+</dl>
+<p> Finding the frequency is only half the job. Read has to <i>decode</i> the signal, and that needs the right modulation preset <b>and</b> a protocol grammar it knows. If your remote speaks FSK and you're listening on an AM preset (or vice versa), the energy is there but the message is gibberish, like tuning to the correct station in the wrong language. Work through it in order: </p>
+<div class="table-scroll">
+<table>
+<thead><tr><th>Try</th><th>Why</th></tr></thead>
+<tbody>
+<tr><td>Confirm the frequency, then set <span class="mono">AM650</span></td><td>The most common preset; fits most fixed-code remotes.</td></tr>
+<tr><td>Try <span class="mono">AM270</span>, then <span class="mono">FM238</span> / <span class="mono">FM476</span></td><td>You may be on the wrong modulation family entirely.</td></tr>
+<tr><td>Switch to <b>Read RAW</b></td><td>Captures the pulses even when no decoder recognises the protocol.</td></tr>
+</tbody>
+</table>
+</div>
+<p> A successful RAW capture that never decodes into a named protocol is a normal outcome. It means the Flipper doesn't have that grammar built in. It does not mean you failed. The <a href="/reference#presets">presets reference</a> lists what each one is for, and <a href="/learn/09-troubleshooting">Module 9</a> turns this into a full diagnostic flow. </p>
+</section>
+<section id="badge-clone">
+<h2>I read my office badge fine, but the clone won't open the door</h2>
+<dl class="kv">
+<dt>Symptom</dt><dd>The Flipper reads your work or hotel badge and shows an ID. You write it to a blank, but the copy doesn't open the door.</dd>
+<dt>What's happening</dt><dd>The door system checks <b>more than the number you can read</b>, and there is a policy layer on top of the technical one.</dd>
+<dt>What to do</dt><dd>Treat access credentials as off-limits unless you administer the system.</dd>
+</dl>
+<p> Reading an ID off a badge reproduces only part of what the reader validates. Many access systems layer on protections a simple clone can't satisfy: cryptographic challenge-response, rolling counters, anti-cloning checks, or a back-end that flags the same credential appearing in two places. So a copy that reads perfectly can still fail at the door. That is by design. </p>
+<div class="callout legal">
+<span class="ic">!</span>
+<div><span class="callout-title">Policy stops you before the technology does</span> Your work or building badge belongs to a system someone else administers. Copying it usually breaks the acceptable-use agreement you signed, even where it isn't a crime. Keep your RFID and NFC practice on tags you bought to experiment with. See the <a href="/romania-lab-guide#rfid-policy">ground rules on access badges</a>. Learn the tech on <a href="/learn/06-rfid">your own</a> fobs.</div>
+</div>
+</section> 

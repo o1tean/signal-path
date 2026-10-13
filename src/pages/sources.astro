@@ -1,0 +1,15 @@
+---
+/* Copy: docs/v2/copy/resources.md#sources, meta.md#sources. */
+import ResourcePage from '@/components/content/ResourcePage.astro';
+import html from '@/content/pages/sources.html?raw';
+export const prerender = true;
+---
+<ResourcePage
+  title="Sources and corrections"
+  description="The primary sources behind each Signal Path lesson: Flipper docs, chip datasheets and ANCOM rules. Each has a review date, and corrections are logged."
+  eyebrow="Sources and corrections"
+  heading="Where each claim in the course comes from."
+  lede="The primary documents behind every lesson, the date we last checked each one, and a log of corrections."
+  body="Flipper's user and developer documentation, chip datasheets such as Microchip's HCS301, ANCOM's radio interfaces and the Romanian Criminal Code. Before a hardware lab, recheck the sources it cites; firmware and rules change."
+  html={html}
+/>

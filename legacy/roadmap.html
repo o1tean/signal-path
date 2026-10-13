@@ -1,0 +1,194 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Learning path · Signal Path</title>
+    <meta
+      name="description"
+      content="A nineteen-module Flipper Zero course from first setup to independent security research."
+    />
+    <link rel="stylesheet" href="assets/css/site.css" />
+    <script>
+      (function () {
+        try {
+          var t = localStorage.getItem("signalpath.theme");
+          if (t === "light" || t === "dark")
+            document.documentElement.setAttribute("data-theme", t);
+        } catch (e) {}
+      })();
+    </script>
+    <link rel="stylesheet" href="assets/css/presentation.css" />
+    <link
+      rel="icon"
+      type="image/png"
+      href="assets/images/signal-path-logo.png"
+    />
+  </head>
+  <body data-root="" data-page="roadmap">
+    <header class="topbar"></header>
+    <main id="main-content" class="wrap-narrow learning-page">
+      <p class="eyebrow">Your learning path · Romania</p>
+      <h1>From first signal to independent work.</h1>
+      <p class="lede">
+        Start with two introductory modules, then follow four stages toward
+        an independent project. Nineteen modules across a suggested twelve-week
+        core route and an optional Wi-Fi hardware extension. Learn the mechanisms,
+        test your understanding, and build evidence you can explain.
+      </p>
+      <div class="card next-session">
+        <p class="eyebrow">Continue where you left off</p>
+        <a class="resume-link" data-resume href="modules/00-setup.html"
+          >0 · Meet your radio lab →</a
+        >
+        <p>
+          <span data-progress-text>0 / 19</span> modules marked complete. Your
+          completion marks are self-reported, not certification.
+        </p>
+      </div>
+      <section id="start">
+        <h2>Your first session</h2>
+        <ol class="steps">
+          <li>
+            <div>
+              Read the <a href="legal.html">Romanian lab guide</a>, then the
+              <a href="primer.html">plain-language primer</a>. Start with
+              official firmware; Momentum is optional.
+            </div>
+          </li>
+          <li>
+            <div>
+              Complete <a href="modules/00-setup.html">Module 0</a>. Record your
+              version, region, and a scope note in the
+              <a href="notebook.html?module=m00">notebook</a>.
+            </div>
+          </li>
+          <li>
+            <div>
+              Use the <a href="playground.html">browser simulators</a> while
+              gathering a suitable lab target. They generate synthetic data and
+              do not connect to a radio.
+            </div>
+          </li>
+        </ol>
+      </section>
+      <section id="kit">
+        <h2>Build the lab in stages</h2>
+        <div class="grid2">
+          <div class="card">
+            <h3>Start with what you have</h3>
+            <p>
+              A browser; then your Flipper, microSD card, USB cable, and your
+              own IR remote/TV. For RF practice, use a locally compliant
+              fixed-code training chime whose radio conditions you can verify.
+            </p>
+          </div>
+          <div class="card">
+            <h3>Add when the lesson needs it</h3>
+            <p>
+              Unenrolled EM4100/T5577 and NFC practice tags; a standalone
+              training reader; a breadboard, LED, 1 kΩ resistor and jumpers.
+              iButton is optional. For Module 18, add the official Wi-Fi
+              Devboard and your own 2.4 GHz test AP. The core course needs no
+              external radio.
+            </p>
+          </div>
+        </div>
+      </section>
+      <section id="route">
+        <h2>The route</h2>
+        <p>
+          Budget roughly 2–4 hours per week, including practice and review. The
+          weeks are a suggested order, not a deadline. Infrared (Module 11) also
+          works as an early first hardware exercise after setup.
+        </p>
+        <div class="route-grid" data-course-stages></div>
+        <noscript
+          ><p>
+            The <a href="index.html#course">course map</a> lists all module
+            links without JavaScript.
+          </p></noscript
+        >
+      </section>
+      <section id="routine">
+        <h2>A session that makes knowledge stick</h2>
+        <ol class="steps">
+          <li>
+            <div>
+              <b>Retrieve (5 minutes):</b> explain yesterday’s mechanism without
+              notes. Notice the gaps.
+            </div>
+          </li>
+          <li>
+            <div>
+              <b>Predict:</b> write down what the lab should do and why. Keep
+              scope and equipment explicit.
+            </div>
+          </li>
+          <li>
+            <div>
+              <b>Practise (20–40 minutes):</b> perform a short controlled
+              experiment. Change one factor at a time.
+            </div>
+          </li>
+          <li>
+            <div>
+              <b>Explain:</b> answer the quiz, read its reasoning, and log one
+              observation and one uncertainty.
+            </div>
+          </li>
+          <li>
+            <div>
+              <b>Revisit:</b> review after a day, then again several days later.
+              Repeat the practical skill on another authorized training target.
+            </div>
+          </li>
+        </ol>
+      </section>
+      <section id="milestones">
+        <h2>What proficiency looks like</h2>
+        <ul>
+          <li>
+            <b>Foundation:</b> distinguish frequency, modulation, encoding and
+            protocol; describe a capture’s limits.
+          </li>
+          <li>
+            <b>Practitioner:</b> read a pinout, make a controlled experiment,
+            classify a training tag, and recover a known setup.
+          </li>
+          <li>
+            <b>Independent work:</b> compile a small app, test a bounded
+            security claim, and explain a failure with evidence.
+          </li>
+          <li>
+            <b>Mastery practice:</b> reproduce results, challenge your own
+            conclusions, teach someone else, and keep learning.
+          </li>
+        </ul>
+        <p>
+          The course teaches dual-use mechanisms and defenses. Legal boundaries
+          are stated separately from technical capabilities. Your
+          <a href="modules/17-mastery.html">final portfolio</a> matters more
+          than a row of badges.
+        </p>
+      </section>
+    </main>
+    <footer class="site-footer">
+      <div class="wrap">
+        <p>
+          Practise on authorized lab equipment. In Romania, check ANCOM radio
+          conditions and privacy rules. When scope or legality is unclear, use
+          the simulators.
+        </p>
+        <p>
+          <a href="legal.html">Romania &amp; permission</a> ·
+          <a href="sources.html">Sources &amp; corrections</a>
+        </p>
+      </div>
+    </footer>
+    <script src="assets/js/data/course.js"></script>
+    <script src="assets/js/site.js"></script>
+    <script src="assets/js/learning.js"></script>
+    <script src="assets/js/presentation.js"></script>
+  </body>
+</html>

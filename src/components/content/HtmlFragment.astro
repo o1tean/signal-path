@@ -1,0 +1,37 @@
+---
+/* Renders a ported legacy HTML fragment from src/content/pages/. Marker comments become live components:
+   <!--WIDGET:name:{json opts}-->  and  <!--QUIZ:id-->  (free quiz ids only; these pages are public). */
+import Widget from '@/components/mdx/Widget.astro';
+import QuizIsland from '@/components/learn/QuizIsland';
+import { freeQuiz } from '@/data/quiz/free';
+
+interface Props {
+  html: string;
+}
+const { html } = Astro.props;
+type Part = { kind: 'html'; html: string } | { kind: 'widget'; name: string; opts: Record<string, unknown> } | { kind: 'quiz'; id: string };
+const parts: Part[] = [];
+const re = /<!--(WIDGET|QUIZ):([a-z0-9-]+)(?::(\{.*?\}))?-->/g;
+let last = 0;
+for (const m of html.matchAll(re)) {
+  parts.push({ kind: 'html', html: html.slice(last, m.index) });
+  if (m[1] === 'WIDGET') parts.push({ kind: 'widget', name: m[2], opts: JSON.parse(m[3] ?? '{}') });
+  else {
+    if (!freeQuiz[m[2]]) throw new Error(`HtmlFragment: quiz "${m[2]}" is not in the free bank`);
+    parts.push({ kind: 'quiz', id: m[2] });
+  }
+  last = (m.index ?? 0) + m[0].length;
+}
+parts.push({ kind: 'html', html: html.slice(last) });
+---
+{
+  parts.map((p) =>
+    p.kind === 'html' ? (
+      <Fragment set:html={p.html} />
+    ) : p.kind === 'widget' ? (
+      <Widget name={p.name} opts={p.opts} />
+    ) : (
+      <QuizIsland client:only="react" id={p.id} questions={freeQuiz[p.id]} title="Quiz" />
+    ),
+  )
+}

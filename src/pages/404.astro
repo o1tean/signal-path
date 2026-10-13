@@ -1,0 +1,35 @@
+---
+/* Copy: docs/v2/copy/chrome.md#not-found and meta.md#not-found. */
+import Marketing from '@/layouts/Marketing.astro';
+import LinkButton from '@/components/marketing/LinkButton.astro';
+import { need, owner } from '@/components/marketing/site';
+import { ascii } from '@/lib/pixel';
+export const prerender = true;
+const links = [
+  { href: '/tools', label: 'Tools' },
+  { href: '/glossary', label: 'Glossary' },
+  { href: '/', label: 'Home' },
+];
+---
+<Marketing title="Page not found" description="This page isn't here. Old lesson links redirect automatically; the course, tools and glossary are one click away." index={false}>
+  <section id="not-found" data-section="not-found" aria-labelledby="nf-title" class="mx-auto w-full max-w-[75rem] px-4 py-16 sm:px-6 md:py-24">
+    <div class="grid items-center gap-12 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
+      <div>
+        <p class="eyebrow">404</p>
+        <h1 id="nf-title" class="mt-4 max-w-[14ch]">This frequency is dead air.</h1>
+        <p class="mt-6 max-w-xl text-lg leading-relaxed text-muted-foreground">The page you asked for isn't here. It may have moved when we rebuilt the course.</p>
+        <p class="mt-4 max-w-xl leading-relaxed text-muted-foreground">Old links to lessons such as <code class="rounded bg-muted px-1.5 py-0.5 font-mono text-[0.88em]">/modules/02-modulation.html</code> redirect automatically. If you followed a link from inside Signal Path, tell us at {need(owner.supportEmail, 'support email')} and we'll fix it.</p>
+        <div class="mt-8 flex flex-col gap-4 sm:flex-row sm:items-center">
+          <LinkButton href="/course">Go to the course</LinkButton>
+          <ul class="flex flex-wrap gap-x-1">
+            {links.map((l) => <li><a href={l.href} class="inline-flex min-h-11 items-center px-2 font-medium underline decoration-border underline-offset-4 hover:decoration-primary">{l.label}</a></li>)}
+          </ul>
+        </div>
+      </div>
+      <div class="overflow-x-auto rounded-[1.5rem] bg-scope-bg p-6 sm:p-10" aria-hidden="true">
+        <pre class="mx-auto w-max font-mono text-[9px] leading-[1.05] text-scope-peak sm:text-[11px]">{ascii('flipper')}</pre>
+        <p class="mt-6 text-center font-mono text-xs tracking-[0.12em] text-scope-text">NO CARRIER · 404.00 MHZ</p>
+      </div>
+    </div>
+  </section>
+</Marketing>

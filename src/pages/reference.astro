@@ -1,0 +1,15 @@
+---
+/* Copy: docs/v2/copy/resources.md#reference, meta.md#reference. */
+import ResourcePage from '@/components/content/ResourcePage.astro';
+import html from '@/content/pages/reference.html?raw';
+export const prerender = true;
+---
+<ResourcePage
+  title="Flipper Zero Sub-GHz reference tables"
+  description="Common frequencies by region, the AM270, AM650, FM238 and FM476 presets, protocol families, .sub and RAW file fields, RFID and NFC facts, and unit conversions."
+  eyebrow="Reference"
+  heading="Frequencies, presets and .sub fields on one page."
+  lede="Regional frequency bands, the four stock presets, protocol families, .sub and RAW fields, RFID and NFC facts, and unit conversions."
+  body="Keep it open in a second tab while you run a lab."
+  html={html}
+/>

@@ -1,0 +1,188 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Module 15 · Build your first Flipper app · Signal Path</title>
+    <meta
+      name="description"
+      content="Build a small on-screen lab companion, inspect its source, and learn the difference between an app and firmware."
+    />
+    <link rel="stylesheet" href="../assets/css/site.css" />
+    <script>
+      (function () {
+        try {
+          var t = localStorage.getItem("signalpath.theme");
+          if (t === "light" || t === "dark")
+            document.documentElement.setAttribute("data-theme", t);
+        } catch (e) {}
+      })();
+    </script>
+  <link rel="stylesheet" href="../assets/css/presentation.css">
+<link rel="icon" type="image/png" href="../assets/images/signal-path-logo.png">
+</head>
+  <body data-root="../" data-page="m15">
+    <header class="topbar"></header>
+    <main id="main-content" class="page wrap">
+      <article class="content">
+        <div class="mod-header">
+          <div class="mod-index">15</div>
+          <div class="mod-titles">
+            <div class="mod-week">Week 10 · Beyond the RF foundation</div>
+            <h1>Build your first Flipper app</h1>
+            <p class="lede">
+              Build a small on-screen lab companion, inspect its source, and
+              learn the difference between an app and firmware.
+            </p>
+            <div class="chips">
+              <span class="chip">2–3 sessions</span
+              ><span class="chip">Computer, USB cable; basic C helps</span>
+            </div>
+          </div>
+        </div>
+        <section id="concepts">
+          <h2>Understand it</h2>
+          <p>
+            A <code>.fap</code> is an external Flipper application. Its manifest
+            describes the entry point and metadata; its C code implements
+            behaviour using the SDK. uFBT downloads a toolchain and SDK,
+            compiles the application, and can launch it over USB. The SDK must
+            be compatible with the firmware you actually run.
+          </p>
+          <p>
+            The included
+            <a href="../examples/lab-companion/lab_companion.c"
+              >lab companion source</a
+            >
+            draws a title and exits with Back. It accesses no radio,
+            credentials, or external network. Inspect both the source and
+            <a href="../examples/lab-companion/application.fam">manifest</a>
+            before building.
+          </p>
+          <h3>Build in an isolated Python environment</h3>
+          <pre><code>python3 -m venv .venv
+source .venv/bin/activate
+python -m pip install ufbt
+cd examples/lab-companion
+ufbt
+# With your compatible Flipper connected and qFlipper closed:
+ufbt launch</code></pre>
+          <p>
+            On Windows, create the environment with
+            <code>py -m venv .venv</code>, activate it using
+            <code>.venv\Scripts\Activate.ps1</code> in PowerShell, and then use
+            the remaining commands. Clone or download this course repository
+            first; run the commands from its root.
+          </p>
+          <p>
+            Record <code>python -m pip show ufbt</code>, the SDK release
+            reported during the build, and your device firmware. The official
+            uFBT defaults to the release SDK. A Momentum app may need that
+            project’s documented SDK configuration. Do not flash firmware just
+            to make an incompatible app launch.
+          </p>
+        </section>
+        <section id="lab">
+          <h2>Lab: build the evidence</h2>
+          <ol class="steps">
+            <li>
+              <div>
+                Read the included source and manifest. Identify the drawing
+                callback, input callback, queue, and cleanup path. Explain what
+                pressing Back should do.
+              </div>
+            </li>
+            <li>
+              <div>
+                Create the virtual environment, install uFBT, and build the app
+                with <code>ufbt</code>. On the first build, the tool downloads
+                SDK components; later builds reuse them.
+              </div>
+            </li>
+            <li>
+              <div>
+                Inspect the output in <code>dist/</code>. Save the build result
+                and SDK/firmware versions in your notebook. A successful compile
+                does not yet prove on-device behaviour.
+              </div>
+            </li>
+            <li>
+              <div>
+                With a compatible device connected, close qFlipper and run
+                <code>ufbt launch</code>. Verify the title appears and Back
+                returns to the launcher. If no device is available, mark this
+                part untested.
+              </div>
+            </li>
+            <li>
+              <div>
+                Change the title to your lab’s name. Rebuild and verify that the
+                changed text fits the screen.
+              </div>
+            </li>
+            <li>
+              <div>
+                Extension: add a button-controlled counter. Define its expected
+                behaviour before changing code, handle input through the queue,
+                and verify repeated open/close cycles without leaving resources
+                allocated.
+              </div>
+            </li>
+          </ol>
+        </section>
+        <p>Have the official Wi-Fi Devboard? <a href="18-wifi-devboard.html#restore">Module 18 adds UART logs and SWD debugging</a>, then explains how a Flipper app can communicate with custom board firmware.</p>
+        <section id="evidence">
+          <h2>Show that you can do it</h2>
+          <ul>
+            <li>
+              A successful build with recorded toolchain and firmware versions.
+            </li>
+            <li>A small intentional change you can explain line by line.</li>
+            <li>
+              An on-device test record, or an explicit hardware-test limitation.
+            </li>
+          </ul>
+          <p>
+            Record the result in your
+            <a href="../notebook.html">learning notebook</a>. Repeat the
+            explanation tomorrow without looking at this page.
+          </p>
+        </section>
+        <section id="quiz">
+          <h2>Check yourself</h2>
+          <div data-quiz="m15"></div>
+        </section>
+        <section id="sources">
+          <h2>Sources</h2>
+          <p class="source-note">
+            Read the primary sources:
+            <a href="https://github.com/flipperdevices/flipperzero-ufbt"
+              >Flipper: uFBT build tool</a
+            >
+            ·
+            <a href="https://docs.flipper.net/zero/development"
+              >Flipper: development documentation</a
+            >. Course review: 10 September 2026.
+          </p>
+        </section>
+      </article>
+    </main>
+    <footer class="site-footer">
+      <div class="wrap">
+        <p>
+          Practise on authorized lab equipment. In Romania, check ANCOM radio
+          conditions and privacy rules. When scope or legality is unclear, use
+          the simulators.
+        </p>
+        <p>
+          <a href="../legal.html">Romania &amp; permission</a> ·
+          <a href="../sources.html">Sources &amp; corrections</a>
+        </p>
+      </div>
+    </footer>
+    <script src="../assets/js/data/course.js"></script>
+    <script src="../assets/js/site.js"></script>
+    <script src="../assets/js/data/quiz-bank.js"></script>
+  <script src="../assets/js/presentation.js"></script>
+</body>
+</html>

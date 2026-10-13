@@ -1,0 +1,318 @@
+---
+id: m11
+number: 11
+slug: 11-infrared
+title: 'Infrared: build your own remote'
+description: Learn one button from your own TV remote, read the .ir file the Flipper saves, and explain why a 38 kHz infrared carrier is light and not Sub-GHz radio.
+stage: build
+week: Week 7
+access: paid
+minutes: 60
+gear:
+  - Flipper Zero on official firmware 1.4.3 or later
+  - a TV you own, with its original infrared remote (not a Bluetooth-only remote)
+  - a piece of card to cover the Flipper's IR port for the control
+  - pen and paper, or your notebook, for decoding timings by hand
+transmits: own-device
+outcome: Learn one harmless button from your own TV remote, send it back once with a control that rules out coincidence, and explain what the 38 kHz carrier, the protocol and the saved timings each mean.
+prerequisites:
+  - m02
+  - m03
+tools: []
+scenes:
+  - infrared
+evidence: A two-button remote saved under meaningful names, the .ir file lines for one button, an angle or distance test with a covered-port control, and one decoded byte worked out by hand.
+sources:
+  - title: 'Flipper Docs: Infrared'
+    url: https://docs.flipper.net/zero/infrared
+  - title: 'Flipper Docs: Reading infrared signals'
+    url: https://docs.flipper.net/zero/infrared/read
+  - title: 'Flipper Docs: Tech specs'
+    url: https://docs.flipper.net/zero/development/hardware/tech-specs
+  - title: 'Flipper Developer Docs: Infrared file format'
+    url: https://developer.flipper.net/flipperzero/doxygen/infrared_file_format.html
+  - title: 'Flipper Zero firmware 1.4.3: NEC timings (infrared_protocol_nec_i.h)'
+    url: https://github.com/flipperdevices/flipperzero-firmware/blob/1.4.3/lib/infrared/encoder_decoder/nec/infrared_protocol_nec_i.h
+  - title: 'Flipper Zero firmware 1.4.3: common carrier and duty cycle (infrared_common_i.h)'
+    url: https://github.com/flipperdevices/flipperzero-firmware/blob/1.4.3/lib/infrared/encoder_decoder/common/infrared_common_i.h
+  - title: 'Flipper Zero firmware 1.4.3: Infrared app (infrared_app.c)'
+    url: https://github.com/flipperdevices/flipperzero-firmware/blob/1.4.3/applications/main/infrared/infrared_app.c
+  - title: 'Vishay TSOP382, TSOP384 IR receiver modules datasheet (document 82491, rev. 2.1)'
+    url: https://www.vishay.com/docs/82491/tsop382.pdf
+  - title: 'ITU Radio Regulations, Article 1.5 (definition of radio waves)'
+    url: https://www.itu.int/pub/R-REG-RR
+reviewed: '2026-10-13'
+badge: infrared
+---
+
+## Outcome
+
+You can learn one button from your own TV remote, send it back once, and prove with a control that the Flipper caused the change.
+
+By the end you can:
+
+- explain why a 38 kHz infrared carrier is light switched on and off, and has nothing to do with Sub-GHz radio;
+- read the Flipper's learn screen and the saved `.ir` file, and say what "decoded" and "RAW" each promise;
+- decode one byte of an NEC signal by hand from its mark and space timings.
+
+## Before you start
+
+- **Prerequisites:** [Module 2](/learn/02-modulation) for on-off keying and [Module 3](/learn/03-protocols) for the idea of a protocol with fields.
+- **Gear:** your Flipper, a TV you own with its infrared remote, a piece of card, and pen and paper. A Bluetooth-only remote sends no infrared; use another infrared remote you own instead.
+- **Firmware:** official firmware 1.4.3 (December 2025). Menu names and numbers here come from that release.
+- **Time:** about 60 minutes: 25 to read, 15 for the paper lab, 20 at the TV.
+- **Transmits:** infrared light from the Flipper, at your own TV.
+- **Scope:** your TV, your space. Read the permission rules in the [Romania lab guide](/romania-lab-guide) first. Infrared is light, so radio licensing is not the question. Other people's screens are.
+
+<Callout variant="warn" title="One command, one device, one room">
+Use volume-down or mute, never power, away from other infrared appliances. If another device reacts, stop. In shared spaces do not use <Flip>Infrared → Universal Remotes</Flip>: it sends the same command for every model in its library, so any compatible screen in range can respond.
+</Callout>
+
+## Understand
+
+### Light, blinked in a rhythm
+
+A remote switches an invisible LED on and off in a timed pattern. A receiver behind the TV's dark window turns the pattern back into a number that means "volume down".
+
+The Flipper has both halves: three infrared LEDs transmitting at 940 nm and one receiver centred on 950 nm (±100 nm), according to Flipper's documentation and tech specs.
+
+<Scene3D name="infrared" label="3D animation: an infrared LED sends 38 kHz bursts across a beam to a receiver that outputs marks and spaces." />
+
+### Three frequencies in one press
+
+Three different rates are stacked inside one button press.
+
+1. **The light itself.** 940 nm light oscillates at about 319 THz, fixed by the LED.
+2. **The <Term id="carrier">carrier</Term>.** Inside each burst the LED blinks at a fixed rate, usually 38 kHz.
+3. **The code.** Bursts and gaps lasting hundreds of microseconds to milliseconds. Their lengths carry the bits.
+
+A burst is a **mark** and a gap is a **space**. This is the <Term id="ook-on-off-keying">on-off keying</Term> of Module 2, applied to a 38 kHz blink of light instead of a 433.92 MHz radio wave.
+
+#### Worked example: the numbers behind the layers
+
+- Light: `f = c ÷ λ = 299,792,458 m/s ÷ 940 nm ≈ 3.19 × 10¹⁴ Hz`, about **319 THz**.
+- Carrier: one cycle at 38 kHz lasts `1 ÷ 38,000 ≈ 26.3 µs`. Flipper's firmware drives the LED at a <Term id="duty-cycle">duty cycle</Term> of 0.33, so the LED is lit for about **8.7 µs** of each cycle.
+- Code: an NEC mark in the firmware is 560 µs, which is `560 ÷ 26.3 ≈` **21 carrier cycles**. The NEC start mark of 9,000 µs holds about **342 cycles**.
+
+The light is roughly eight billion times faster than the carrier. 38 kHz is a blink rate on a beam of light.
+
+<Figure label="Three stacked traces over the same 4 milliseconds. Top: the LED output, dense 38 kHz flashes during each mark and darkness during each space. Middle: the envelope, high during marks and low during spaces. Bottom: the receiver output, the same pattern inverted and shifted slightly later." caption="One NEC 0 followed by one NEC 1, drawn to scale (firmware 1.4.3 timings). Each flash in the top trace is one 26.3 µs carrier cycle. The receiver module removes the carrier, inverts the result (its output is active low) and adds a delay of roughly 7 to 13 carrier cycles, per the Vishay datasheet.">
+<svg viewBox="0 0 640 330" width="100%" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+  <text x="0" y="18" class="fill-foreground font-sans" font-size="14" font-weight="700">1. LED light: 38 kHz carrier inside each mark</text>
+  <line x1="80" y1="62" x2="153" y2="62" class="stroke-warning" stroke-width="36" stroke-dasharray="1.13 2.29" />
+  <line x1="226" y1="62" x2="299" y2="62" class="stroke-warning" stroke-width="36" stroke-dasharray="1.13 2.29" />
+  <line x1="519" y1="62" x2="592" y2="62" class="stroke-warning" stroke-width="36" stroke-dasharray="1.13 2.29" />
+  <line x1="40" y1="80" x2="620" y2="80" class="stroke-border" stroke-width="1" />
+  <text x="116" y="96" text-anchor="middle" class="fill-muted-foreground font-mono" font-size="11">mark 560 µs</text>
+  <text x="190" y="96" text-anchor="middle" class="fill-muted-foreground font-mono" font-size="11">space 560</text>
+  <text x="262" y="96" text-anchor="middle" class="fill-muted-foreground font-mono" font-size="11">mark 560</text>
+  <text x="409" y="96" text-anchor="middle" class="fill-muted-foreground font-mono" font-size="11">space 1,690 µs</text>
+  <text x="0" y="130" class="fill-foreground font-sans" font-size="14" font-weight="700">2. Envelope: what the code is made of</text>
+  <path d="M40 190 H80 V150 H153 V190 H226 V150 H299 V190 H519 V150 H592 V190 H620" fill="none" class="stroke-primary" stroke-width="2" />
+  <text x="190" y="210" text-anchor="middle" class="fill-primary font-mono" font-size="12">bit 0</text>
+  <text x="409" y="210" text-anchor="middle" class="fill-primary font-mono" font-size="12">bit 1</text>
+  <text x="0" y="240" class="fill-foreground font-sans" font-size="14" font-weight="700">3. Receiver output: carrier removed, active low, delayed</text>
+  <path d="M40 260 H110 V300 H183 V260 H256 V300 H329 V260 H549 V300 H620" fill="none" class="stroke-info" stroke-width="2" />
+  <line x1="80" y1="252" x2="80" y2="310" class="stroke-muted-foreground" stroke-width="1" stroke-dasharray="2 3" />
+  <text x="114" y="322" class="fill-info font-mono" font-size="11">delay ≈ 10 cycles</text>
+</svg>
+</Figure>
+
+### What the receiver does before the Flipper sees anything
+
+Flipper's tech specs give the receiver carrier as 38 kHz ±5% (36.1 to 39.9 kHz), the signature of an integrated remote-control receiver. Parts of this kind, such as Vishay's TSOP38238, contain a photodiode, an amplifier with automatic gain control, a band-pass filter tuned to the carrier and a demodulator. The output is low during a burst and high in a gap. Three consequences follow.
+
+- **The Flipper never sees the carrier.** It receives only the envelope, so a RAW capture is always saved with `frequency: 38000` and `duty_cycle: 0.330000`, whatever the remote used (`infrared_app.c`, firmware 1.4.3).
+- **Timings are never round numbers.** The Vishay datasheet lets each output pulse differ from the burst by up to 5 carrier cycles, ±132 µs at 38 kHz. Flipper's NEC decoder allows ±120 µs per bit timing. A RAW mark of 505 or 610 µs is a 560 µs mark seen through a real receiver.
+- **Bright light costs range.** Gain control lowers sensitivity under sunlight or flickering lamps, and Flipper's reading guide warns that the receiver can pick up infrared from the Sun or a bulb.
+
+### Decoded or RAW
+
+Learning tries every decoder on the timings. A match gives a <Term id="protocol">protocol</Term> name and two numbers; no match gives the timings themselves. Firmware 1.4.3 decodes 14 variants. The developer documentation lists 13; the source also has Pioneer.
+
+<div class="table-scroll">
+
+| Protocol family | Variants saved in `.ir` files | Carrier the Flipper uses to send it |
+| --- | --- | --- |
+| NEC | `NEC`, `NECext`, `NEC42`, `NEC42ext` | 38 kHz |
+| Samsung | `Samsung32` | 38 kHz |
+| Philips RC5 and RC6 | `RC5`, `RC5X`, `RC6` | 36 kHz |
+| Sony SIRC | `SIRC`, `SIRC15`, `SIRC20` | 40 kHz |
+| Kaseikyo (Panasonic and others) | `Kaseikyo` | 38 kHz |
+| RCA | `RCA` | 38 kHz |
+| Pioneer | `Pioneer` | 40 kHz |
+
+</div>
+
+A decoded Sony, Pioneer or Philips button goes back at its protocol's own carrier. A RAW capture of the same remote goes back at 38 kHz, because that is all the file knows, which may cost range. Neither label promises a response.
+
+### Inside an NEC frame
+
+NEC is the easiest protocol to read by hand. In firmware 1.4.3 it is a 9,000 µs start mark, a 4,500 µs space, then 32 bits, least significant first. Every bit starts with a 560 µs mark; a 560 µs space means 0 and a 1,690 µs space means 1.
+
+The four bytes are address, inverted address, command, inverted command. If both inverted copies check out, the firmware reports `NEC` with an 8-bit address and command. If not, it reports `NECext` with a 16-bit address and a 16-bit command.
+
+<Figure label="A timeline of one NEC frame lasting about 68 milliseconds: a 9 millisecond start mark, a 4.5 millisecond space, then four byte blocks labelled address 0x04, inverted address 0xFB, command 0x08 and inverted command 0xF7, then a short stop mark. Below, the repeat code a held button sends instead." caption="Drawn to scale at about 8 px per millisecond. The address and command values are an illustration. A held button does not resend the frame; NEC sends a short repeat code (9 ms mark, 2.25 ms space, one 560 µs mark), and the firmware's repeat period is 110 ms.">
+<svg viewBox="0 0 640 200" width="100%" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+  <text x="0" y="18" class="fill-foreground font-sans" font-size="14" font-weight="700">One NEC frame: 32 bits, least significant bit first</text>
+  <rect x="40" y="40" width="74" height="40" class="fill-warning stroke-warning" fill-opacity="0.35" stroke-width="1.5" />
+  <rect x="151" y="40" width="83" height="40" class="fill-primary stroke-primary" fill-opacity="0.12" stroke-width="1.5" />
+  <rect x="234" y="40" width="138" height="40" class="fill-primary stroke-primary" fill-opacity="0.05" stroke-width="1.5" />
+  <rect x="372" y="40" width="83" height="40" class="fill-info stroke-info" fill-opacity="0.12" stroke-width="1.5" />
+  <rect x="455" y="40" width="138" height="40" class="fill-info stroke-info" fill-opacity="0.05" stroke-width="1.5" />
+  <rect x="593" y="40" width="5" height="40" class="fill-warning stroke-warning" fill-opacity="0.35" stroke-width="1" />
+  <line x1="40" y1="80" x2="620" y2="80" class="stroke-border" stroke-width="1" />
+  <text x="77" y="64" text-anchor="middle" class="fill-foreground font-mono" font-size="11">9 ms</text>
+  <text x="132" y="64" text-anchor="middle" class="fill-muted-foreground font-mono" font-size="11">4.5</text>
+  <text x="192" y="64" text-anchor="middle" class="fill-foreground font-mono" font-size="11">0x04</text>
+  <text x="303" y="64" text-anchor="middle" class="fill-foreground font-mono" font-size="11">0xFB</text>
+  <text x="413" y="64" text-anchor="middle" class="fill-foreground font-mono" font-size="11">0x08</text>
+  <text x="524" y="64" text-anchor="middle" class="fill-foreground font-mono" font-size="11">0xF7</text>
+  <text x="77" y="98" text-anchor="middle" class="fill-muted-foreground font-sans" font-size="11">start mark</text>
+  <text x="192" y="98" text-anchor="middle" class="fill-muted-foreground font-sans" font-size="11">address</text>
+  <text x="303" y="98" text-anchor="middle" class="fill-muted-foreground font-sans" font-size="11">inverted address</text>
+  <text x="413" y="98" text-anchor="middle" class="fill-muted-foreground font-sans" font-size="11">command</text>
+  <text x="524" y="98" text-anchor="middle" class="fill-muted-foreground font-sans" font-size="11">inverted command</text>
+  <text x="40" y="122" class="fill-muted-foreground font-mono" font-size="11">0 ms</text>
+  <text x="598" y="122" text-anchor="end" class="fill-muted-foreground font-mono" font-size="11">68 ms</text>
+  <text x="0" y="156" class="fill-foreground font-sans" font-size="14" font-weight="700">Held button: repeat code</text>
+  <rect x="40" y="168" width="74" height="24" class="fill-warning stroke-warning" fill-opacity="0.35" stroke-width="1.5" />
+  <rect x="132" y="168" width="5" height="24" class="fill-warning stroke-warning" fill-opacity="0.35" stroke-width="1" />
+  <line x1="40" y1="192" x2="620" y2="192" class="stroke-border" stroke-width="1" />
+  <text x="150" y="185" class="fill-muted-foreground font-mono" font-size="11">9 ms mark, 2.25 ms space, 0.56 ms mark</text>
+</svg>
+</Figure>
+
+#### Worked example: how long is one frame?
+
+A 0 bit lasts `560 + 560 = 1,120 µs` and a 1 bit `560 + 1,690 = 2,250 µs`. Each inverted byte has a 1 wherever the original has a 0, so a standard NEC frame always holds 16 ones and 16 zeros: `16 × 1,120 + 16 × 2,250 = 53,920 µs`. Add the 13,500 µs start and the 560 µs stop mark: **67,980 µs**, about 68 ms, for every button.
+
+### What the screen is actually showing you
+
+<Flip>Infrared → Learn New Remote</Flip> shows "Point the remote at IR port and push the button". A capture gives one of two screens:
+
+- **Decoded:** the protocol name, then `A: 0x…` for the address and `C: 0x…` for the command.
+- **RAW:** the word "Unknown" and a count such as "67 samples". Each sample is one mark or space duration.
+
+Both offer <Flip>Retry</Flip>, <Flip>Send</Flip> and <Flip>Save</Flip>. Save asks for a button name (up to 23 characters) and creates `Remote.ir` in `/ext/infrared` on the SD card, or `Remote2.ir` if that is taken. <Flip>Edit → Rename Remote</Flip> renames it and <Flip>+</Flip> adds buttons to the same file:
+
+```text
+Filetype: IR signals file
+Version: 1
+#
+name: Volume_down
+type: parsed
+protocol: NEC
+address: 04 00 00 00
+command: 08 00 00 00
+#
+name: Mute
+type: raw
+frequency: 38000
+duty_cycle: 0.330000
+data: 9012 4473 571 551 584 1662 ...
+```
+
+`address` and `command` are always 4 bytes, so `04 00 00 00` is address 0x04. RAW `data` lists durations in microseconds, starting with a mark and alternating; the firmware keeps up to 1,024 and ends a capture after 150 ms of silence. The values are illustrative.
+
+### Infrared and Sub-GHz side by side
+
+<div class="table-scroll">
+
+| | Infrared remote | Sub-GHz remote |
+| --- | --- | --- |
+| Medium | light at 940 nm, about 319 THz | radio, for example 433.92 MHz |
+| The headline number | LED blink rate inside a burst (38 kHz) | frequency of the radio wave |
+| Modulation | 38 kHz bursts keyed on and off | OOK or 2-FSK of the radio carrier |
+| Flipper hardware | three IR LEDs and a 38 kHz receiver module | CC1101 radio chip |
+| Radio rules | not radio: the ITU defines radio waves as below 3,000 GHz | radio, regulated by band |
+
+</div>
+
+### Misconceptions
+
+- **"38 kHz is the frequency of the infrared."** The light is about 319 THz; 38 kHz is the blink rate.
+- **"Learning copies the remote's carrier."** The receiver strips it. A learned RAW button always says 38000.
+- **"RAW means the capture failed."** It means no decoder matched.
+- **"Decoded means the TV will obey."** Aim and range still decide.
+- **"RAW timings should be round numbers."** The receiver adds up to about ±130 µs.
+- **"Line of sight is the only path."** Flipper's guide asks for line of sight when learning, which is good practice. Light also reflects off walls; Lab 11.2 lets you test whether a bounce reaches your TV.
+
+## Predict and practise
+
+There is no browser tool for infrared timings yet, so the first lab is on paper. It trains what a decoder does: sort spaces, then turn bits into a byte.
+
+{/* TODO: tool. An IR timing decoder widget (paste RAW data, see marks, spaces, bits and bytes for NEC) would let Lab 11.1 run in the browser. */}
+
+<Lab kicker="Lab 11.1" title="Decode one NEC byte by hand" gear="Pen and paper. Nothing transmits.">
+
+1. **Predict first.** Below are the command byte and its inverted copy from an NEC capture, as mark and space pairs in microseconds. Write down how many long spaces you expect across both bytes, and why.
+2. Command byte (pairs of mark, space): `572 545 · 581 560 · 566 551 · 590 1672 · 575 548 · 563 556 · 584 541 · 570 553`.
+3. Sort each **space** into short (near 560) or long (near 1,690), dividing at 1,120 µs. Ignore the marks: in NEC they carry no information.
+4. Write the bits in arrival order, least significant first, then reverse them and convert to hex.
+5. Inverted command (pairs): `588 1660 · 569 1681 · 575 1675 · 580 552 · 566 1690 · 591 1668 · 573 1677 · 562 1683`. Decode it the same way and check that the two bytes add up to 0xFF.
+6. **Negative case:** change the fourth space of the command byte to 900 µs, more than 120 µs from both 560 and 1,690. Decide what the learn screen would show.
+
+</Lab>
+
+Expected observation: eight long spaces in total, command 0x08, inverted 0xF7, and 0x08 + 0xF7 = 0xFF, so the firmware would report `NEC` with `C: 0x08`. With the 900 µs space the NEC decoder rejects the frame, and unless another decoder matches, the screen shows "Unknown".
+
+<Win>you can decode both bytes unaided, explain why only spaces matter in NEC, and say why one damaged timing gives "Unknown".</Win>
+
+Now the TV. Write two predictions first: will your remote decode or come back RAW, and which protocol family do you expect? The brand is a guide; SIRC, for example, is Sony's protocol.
+
+<Lab kicker="Lab 11.2" title="Learn, send and prove one button" gear="Flipper, your own TV and its infrared remote, a piece of card. The Flipper transmits infrared at your TV only.">
+
+1. Turn the TV on at a comfortable volume and note its model. **Predict first:** write whether you expect volume-down to decode as a named protocol or as RAW, and the furthest distance at which you expect one send to work.
+2. Open <Flip>Infrared → Learn New Remote</Flip>. Hold the remote 10 to 30 cm away, pointed at the Flipper's IR port, and press volume-down once, briefly.
+3. Record the protocol with `A:` and `C:`, or "Unknown" with the sample count. Press <Flip>Retry</Flip> and capture again; a decoded button should repeat the same `A:` and `C:`.
+4. <Flip>Save</Flip> the button as `Volume_down`. Then open <Flip>Infrared → Saved Remotes</Flip>, select the new `Remote`, and use <Flip>Edit → Rename Remote</Flip> to name it after your TV, for example `Lounge_TV`.
+5. **Control:** open your remote from <Flip>Saved Remotes</Flip>, cover the Flipper's IR port with the card, aim at the TV from 1 m and send `Volume_down` once. Expect no change.
+6. Uncover the port and send again. Expect one volume step down.
+7. Change one variable: angle (straight on, 45°, facing a side wall) or distance (1, 3, 5 m). Send once at each and record the result.
+8. Press <Flip>+</Flip> and learn one more harmless button, such as mute. Restore the original volume.
+
+</Lab>
+
+Expected observation: nothing with the port covered, one step uncovered, and a limit somewhere in your series. A RAW button may need to be closer.
+
+<Win>the covered send did nothing, the uncovered send changed the volume once, and you can say whether each of your two named buttons is decoded or RAW and what that means.</Win>
+
+## Check yourself
+
+<Quiz id="m11" />
+
+Answer in a sentence each, without notes:
+
+1. A friend says their Flipper "receives 38 kHz, so it is a radio". What would you tell them, with one number?
+2. A RAW button works at 1 m but not 4 m, while a decoded button from the same remote works at 4 m. Give one reason based on what was saved.
+
+## Keep evidence
+
+Open your [notebook](/learn/notebook?module=m11) and save an entry:
+
+- **Setup:** TV model, firmware version, room lighting, buttons chosen.
+- **Prediction:** Lab 11.1 step 1 and your decoded-or-RAW guess.
+- **Observation:** each learn screen, the covered and uncovered sends, your angle or distance series.
+- **Explanation:** the three frequencies, and why each button came out decoded or RAW.
+
+Adequate evidence names the device, quotes the file lines for one button, includes the control, and explains any failure with a measurement. An example entry:
+
+> Lounge TV, official 1.4.3, daylight. Predicted NEC (decoded). Volume_down: NEC, A: 0x04, C: 0x08, same on retry. Mute: Unknown, 67 samples. Covered port: no change. Uncovered at 1 m: one step down. Angle: straight OK, 45° OK, side-wall bounce OK. Distance: Mute RAW failed at 5 m, worked at 3 m. RAW is sent at 38 kHz because the receiver never saw the real carrier.
+
+Set a review date for tomorrow, then a week later. Mark it retrieved when you can explain the three frequencies without notes.
+
+## Continue
+
+Next is [Module 12: GPIO, signals you can touch](/learn/12-gpio), where marks and spaces become voltages on a pin you can measure.
+
+**Retrieval question for next week:** without looking, how long is an NEC 1 bit, how long is a 0 bit, and why does every standard NEC frame last the same 68 ms?
+
+Primary sources, checked 13 October 2026:
+
+- [Flipper Docs: Infrared](https://docs.flipper.net/zero/infrared) and [Reading infrared signals](https://docs.flipper.net/zero/infrared/read): hardware, menus, decoded and RAW, 38 kHz, ambient light.
+- [Flipper Docs: Tech specs](https://docs.flipper.net/zero/development/hardware/tech-specs): wavelengths and the 38 kHz ±5% receiver.
+- [Flipper Developer Docs: Infrared file format](https://developer.flipper.net/flipperzero/doxygen/infrared_file_format.html): `.ir` fields and protocols.
+- Firmware 1.4.3: [NEC timings](https://github.com/flipperdevices/flipperzero-firmware/blob/1.4.3/lib/infrared/encoder_decoder/nec/infrared_protocol_nec_i.h), [common carrier](https://github.com/flipperdevices/flipperzero-firmware/blob/1.4.3/lib/infrared/encoder_decoder/common/infrared_common_i.h), [Infrared app](https://github.com/flipperdevices/flipperzero-firmware/blob/1.4.3/applications/main/infrared/infrared_app.c); the RC5, RC6, SIRC and Pioneer headers beside them give 36 and 40 kHz.
+- [Vishay TSOP382, TSOP384 datasheet, 82491 rev. 2.1](https://www.vishay.com/docs/82491/tsop382.pdf): receiver blocks, active-low output, ±5-cycle pulse width.
+- [ITU Radio Regulations](https://www.itu.int/pub/R-REG-RR), Article 1.5: radio waves end at 3,000 GHz.

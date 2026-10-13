@@ -1,0 +1,23 @@
+---
+/* On-demand. Paid bodies are rendered only after hasAccess(); otherwise the paywall gets frontmatter only. */
+import { getCollection, render } from 'astro:content';
+import Lesson from '@/layouts/Lesson.astro';
+import Paywall from '@/components/learn/Paywall.astro';
+import { mdxComponents } from '@/components/mdx';
+import { hasAccess } from '@/lib/access';
+
+const { slug = '' } = Astro.params;
+const entry = (await getCollection('lessons', (e) => e.data.slug === slug))[0];
+if (!entry) return new Response(null, { status: 404, statusText: 'Not found' });
+
+const allowed = hasAccess(Astro.locals, entry.data.access);
+const rendered = allowed ? await render(entry) : null;
+const Content = rendered?.Content;
+// Paid lessons depend on the visitor, so neither the body nor the paywall may be cached by a shared cache.
+if (entry.data.access === 'paid') Astro.response.headers.set('Cache-Control', 'private, no-store');
+const paywallState = Astro.locals.suspended ? 'suspended' : Astro.locals.user ? 'signed-in' : 'signed-out';
+---
+<Lesson lesson={entry.data} headings={rendered?.headings ?? []} locked={!allowed}>
+  {Content && <Content components={mdxComponents} />}
+  <Paywall slot="paywall" lesson={entry.data} state={paywallState} />
+</Lesson>

@@ -1,0 +1,122 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Playground · Signal Path</title>
+  <meta name="description" content="Interactive RF simulators: modulation, spectrum, rolling codes, pulse decoding, and a Flipper screen you can drive.">
+  <link rel="stylesheet" href="assets/css/site.css">
+  <script>(function(){try{var t=localStorage.getItem("signalpath.theme");if(t==="light"||t==="dark")document.documentElement.setAttribute("data-theme",t);}catch(e){}})();</script>
+<link rel="stylesheet" href="assets/css/presentation.css">
+<link rel="icon" type="image/png" href="assets/images/signal-path-logo.png">
+</head>
+<body data-root="" data-page="playground">
+  <header class="topbar"></header>
+
+  <main class="page">
+    <aside class="toc" aria-label="On this page">
+      <span class="eyebrow">Simulators</span>
+      <ol>
+        <li><a href="#flipper-sim">Flipper Screen</a></li>
+        <li><a href="#spectrum-scope">Spectrum Scope</a></li>
+        <li><a href="#tune-in">Tune In game</a></li>
+        <li><a href="#wave-lab">Wave Lab</a></li>
+        <li><a href="#rf-calc">RF Calculator</a></li>
+        <li><a href="#pulse-decoder">Pulse Decoder</a></li>
+        <li><a href="#rolling-sim">Rolling Code Sim</a></li>
+        <li><a href="#tool-picker">Tool Picker</a></li>
+        <li><a href="#flashcards">Flashcards</a></li>
+        <li><a href="#signal-atlas">Signal Atlas</a></li>
+      </ol>
+    </aside>
+
+    <article class="content">
+      <p class="eyebrow">Playground</p>
+      <h1>Poke at the physics</h1>
+      <p class="lede">Every simulator here is also embedded in the module that teaches it. This page collects them so you can come back and play without re-reading.</p>
+
+      <section id="flipper-sim">
+        <h2>Flipper Screen</h2>
+        <p class="muted">Drive the Sub-GHz menus with a D-pad. Learn the menu tree before you touch the real device.</p>
+        <div data-widget="flipper-sim"></div>
+      </section>
+
+      <section id="spectrum-scope">
+        <h2>Spectrum Scope</h2>
+        <p class="muted">A simulated spectrum analyzer with a live noise floor. Press a "remote" and watch its peak appear.</p>
+        <div data-widget="spectrum-scope"></div>
+      </section>
+
+      <section id="tune-in">
+        <h2>Tune In</h2>
+        <p class="muted">A mystery device transmits. Read the peak and name the frequency. Five in a row earns the Tuned In badge.</p>
+        <div data-widget="tune-in"></div>
+      </section>
+
+      <section id="wave-lab">
+        <h2>Wave Lab</h2>
+        <p class="muted">Type bits, choose OOK or FSK, and watch the data ride the carrier.</p>
+        <div data-widget="wave-lab"></div>
+      </section>
+
+      <section id="rf-calc">
+        <h2>RF Calculator</h2>
+        <p class="muted">Wavelength and antenna length from frequency; dBm to milliwatts and back.</p>
+        <div data-widget="rf-calc"></div>
+      </section>
+
+      <section id="pulse-decoder">
+        <h2>Pulse Decoder</h2>
+        <p class="muted">Turn a pulse train into bits the way the Flipper's Read mode does.</p>
+        <div data-widget="pulse-decoder"></div>
+      </section>
+
+      <section id="rolling-sim">
+        <h2>Rolling Code Sim</h2>
+        <p class="muted">A remote, a receiver with an acceptance window, and a Flipper that captures and replays. See exactly why a copy works once, then stops.</p>
+        <div data-widget="rolling-sim"></div>
+      </section>
+
+      <section id="tool-picker">
+        <h2>Tool Picker</h2>
+        <p class="muted">Given a scenario, pick the right Flipper tool: Read, Read RAW, Frequency Analyzer, or "stop — that's rolling code."</p>
+        <div data-widget="tool-picker"></div>
+      </section>
+
+      <section id="flashcards">
+        <h2>Flashcards</h2>
+        <p class="muted">The glossary as flip cards. Space to flip, arrows to move.</p>
+        <div data-widget="flashcards"></div>
+      </section>
+
+      <section id="signal-atlas">
+        <h2>Signal Atlas</h2>
+        <p class="muted">Log the RF devices you own: frequency, modulation, protocol, fixed or rolling. Saved in this browser; export as JSON or CSV.</p>
+        <div data-widget="signal-atlas"></div>
+      </section>
+    </article>
+  </main>
+
+  <footer class="site-footer">
+    <div class="wrap">
+      <p>Signal Path teaches RF with devices you own, for learning and legitimate testing. Radio transmission is regulated where you live; interfering with other people's devices is illegal and harmful. When scope or legality is unclear, use the simulators.</p>
+      <p>Signal Path · a self-guided RF course for the Flipper Zero</p>
+    </div>
+  </footer>
+
+  <script src="assets/js/data/course.js"></script>
+  <script src="assets/js/site.js"></script>
+  <script src="assets/js/data/glossary.js"></script>
+  <script src="assets/js/widgets/flipper-sim.js"></script>
+  <script src="assets/js/widgets/spectrum-scope.js"></script>
+  <script src="assets/js/widgets/tune-in.js"></script>
+  <script src="assets/js/widgets/wave-lab.js"></script>
+  <script src="assets/js/widgets/rf-calc.js"></script>
+  <script src="assets/js/widgets/pulse-decoder.js"></script>
+  <script src="assets/js/widgets/rolling-sim.js"></script>
+  <script src="assets/js/widgets/tool-picker.js"></script>
+  <script src="assets/js/widgets/flashcards.js"></script>
+  <script src="assets/js/widgets/signal-atlas.js"></script>
+<script src="assets/js/presentation.js"></script>
+</body>
+</html>

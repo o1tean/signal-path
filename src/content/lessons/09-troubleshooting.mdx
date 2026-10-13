@@ -1,0 +1,406 @@
+---
+id: m09
+number: 9
+slug: 09-troubleshooting
+title: Troubleshooting field guide
+description: Diagnose the Sub-GHz failures that stall beginners, from a silent Read and a blank analyzer to a .sub that will not load, a weak replay and a rolling code.
+stage: atlas
+week: Week 5
+access: paid
+minutes: 50
+gear:
+  - Flipper Zero on official firmware 1.4.3 or later, with its microSD card
+  - one remote or sensor you own that has refused to cooperate
+  - one fixed-code .sub file you saved yourself in Module 3 or 4
+  - qFlipper on a computer, to copy and edit files on the SD card
+  - a browser for the tool picker
+transmits: none
+outcome: Name the cause of a failed Sub-GHz capture or file in a few minutes by changing one variable at a time, and tell a fixable mistake from a rolling code working as designed.
+prerequisites:
+  - m02
+  - m04
+  - m05
+tools:
+  - tool-picker
+scenes: []
+evidence: A diagnosis log for one stubborn device of your own, listing each change you made, what the screen showed, and the one-line cause, plus the error each broken file copy produced.
+sources:
+  - title: 'Flipper Docs: Reading signals and the Frequency Analyzer'
+    url: https://docs.flipper.net/zero/sub-ghz/read
+  - title: 'Flipper Docs: Reading RAW signals'
+    url: https://docs.flipper.net/zero/sub-ghz/read-raw
+  - title: 'Flipper Docs: Supported vendors'
+    url: https://docs.flipper.net/zero/sub-ghz/supported-vendors
+  - title: 'Flipper Docs: Sub-GHz overview'
+    url: https://docs.flipper.net/zero/sub-ghz
+  - title: 'Flipper Docs: Sub-GHz frequencies by region'
+    url: https://docs.flipper.net/zero/sub-ghz/frequencies
+  - title: 'Flipper Docs: microSD card setup'
+    url: https://docs.flipper.net/zero/basics/sd-card
+  - title: 'Flipper Developer Docs: Sub-GHz file format'
+    url: https://developer.flipper.net/flipperzero/doxygen/subghz_file_format.html
+  - title: 'Flipper Zero firmware 1.4.3: frequency and hopper lists (subghz_setting.c)'
+    url: https://github.com/flipperdevices/flipperzero-firmware/blob/1.4.3/lib/subghz/subghz_setting.c
+  - title: 'Flipper Zero firmware 1.4.3: Frequency Analyzer worker'
+    url: https://github.com/flipperdevices/flipperzero-firmware/blob/1.4.3/applications/main/subghz/helpers/subghz_frequency_analyzer_worker.c
+  - title: 'Flipper Zero firmware 1.4.3: Sub-GHz file loading (subghz_i.c)'
+    url: https://github.com/flipperdevices/flipperzero-firmware/blob/1.4.3/applications/main/subghz/subghz_i.c
+  - title: 'Flipper Zero firmware 1.4.3: setting_user.example'
+    url: https://github.com/flipperdevices/flipperzero-firmware/blob/1.4.3/applications/main/subghz/resources/subghz/assets/setting_user.example
+  - title: 'Microchip HCS301 KeeLoq code hopping encoder datasheet (DS21143C)'
+    url: https://ww1.microchip.com/downloads/aemDocuments/documents/MCU08/ProductDocuments/DataSheets/21143C.pdf
+reviewed: '2026-10-13'
+badge: field-medic
+---
+
+## Outcome
+
+You can take a Sub-GHz problem on your own gear from "it doesn't work" to a named cause in a few minutes, and you know when the answer is that nothing is broken.
+
+By the end you can:
+
+- run the decode tree (signal, frequency, preset, protocol, rolling) and change one variable per step;
+- say what the Frequency Analyzer can and cannot see, from how the firmware actually scans;
+- read a `.sub` load error and point to the line in the file that caused it.
+
+## Before you start
+
+- **Prerequisites:** [Module 2](/learn/02-modulation) for presets, [Module 4](/learn/04-transmit) for replay and range, and [Module 5](/learn/05-raw-and-rolling) for Read RAW and rolling codes. This lesson uses all three as a diagnostic kit.
+- **Gear:** your Flipper Zero and its microSD card, one remote or sensor you own that has misbehaved, one fixed-code `.sub` file you saved yourself, and qFlipper on a computer.
+- **Firmware:** official 1.4.3 or later. The frequency lists, thresholds and error messages below come from its source code. Forks change some of them.
+- **Time:** about 50 minutes: 20 to read, 5 with the tool picker, 25 at the bench.
+- **Transmits:** nothing. Both labs only listen or load files. If you re-test a replay afterwards, Module 4's checks apply.
+- **Scope:** your own devices, in your own space. A stranger's gate that "won't decode" is not a troubleshooting exercise.
+
+## Understand
+
+### Change one thing, then look
+
+Most "it doesn't work" moments come from a short list of causes, and several look identical on screen. A silent Read can mean no signal reached the radio, the wrong frequency, the wrong preset, or a protocol with no decoder. Change three settings at once and you will never know which one mattered.
+
+The method is boring on purpose:
+
+1. **Prove a signal exists** before you argue about decoding. The <Term id="frequency-analyzer">Frequency Analyzer</Term> answers that.
+2. **Change one variable, then re-test.** Frequency, then preset, then distance, then the remote's battery. Write each change down.
+3. **Separate "can't hear it" from "can't name it".** Read RAW records pulses whether or not a decoder exists, so it tells you which side of that line you are on.
+4. **Write down what fixed it.** "Garage remote: 310 MHz, not 315" saves the same hunt next month.
+
+Three Sub-GHz tools do the work, and picking the right one is half the job.
+
+<div class="table-scroll">
+
+| Tool | What it does | Reach for it when |
+| --- | --- | --- |
+| **Frequency Analyzer** | Measures signal strength on a fixed list of frequencies and shows the strongest | You need proof the remote transmits, or its frequency |
+| **Read** | Listens on one frequency and <Term id="preset">preset</Term>, and names any protocol it can decode | You know the frequency and want a protocol name and key |
+| **Read RAW** | Records the demodulated pulse timings with no decoding | The analyzer sees a signal but Read names nothing |
+
+</div>
+
+### The decode tree
+
+When Read stays blank, walk this tree from the top. Each box is one change.
+
+<Figure label="Decision tree for a signal that will not decode. Start: open Read and press the remote close to the left side of the Flipper. Question one: does the Frequency Analyzer show a reading only while the button is held? If no, the problem is upstream of decoding: move closer, fit a fresh battery in the remote, and remember the analyzer only scans its listed frequencies. If yes, set Read to that frequency with hopping off and step the preset through AM650, AM270, FM476 and FM238. If still blank, record with Read RAW; clean bursts mean the protocol has no decoder. If Read names the protocol but Cnt rises on every press and there is no Save option, it is a rolling code working as designed." caption="The decode tree. Work top to bottom and change one thing per box. The orange box is the one outcome where you stop because nothing is wrong.">
+<svg viewBox="0 0 640 470" width="100%" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+  <g class="font-mono" font-size="12.5">
+    <rect x="40" y="14" width="320" height="52" rx="8" fill="none" class="stroke-foreground" stroke-width="1.5" />
+    <text x="200" y="35" text-anchor="middle" class="fill-foreground">Open Read. Press the remote close</text>
+    <text x="200" y="53" text-anchor="middle" class="fill-foreground">to the left side of the Flipper.</text>
+    <line x1="200" y1="66" x2="200" y2="94" class="stroke-foreground" stroke-width="1.5" />
+    <polygon points="200,100 195,90 205,90" class="fill-foreground" />
+    <rect x="40" y="100" width="320" height="44" rx="8" fill="none" class="stroke-info" stroke-width="1.75" />
+    <text x="200" y="127" text-anchor="middle" class="fill-info">Analyzer reading only while held?</text>
+    <line x1="360" y1="122" x2="398" y2="122" class="stroke-muted-foreground" stroke-width="1.5" />
+    <polygon points="404,122 394,117 394,127" class="fill-muted-foreground" />
+    <text x="378" y="114" text-anchor="middle" class="fill-muted-foreground" font-size="11">No</text>
+    <rect x="404" y="92" width="220" height="78" rx="8" fill="none" class="stroke-muted-foreground" stroke-width="1.25" />
+    <text x="414" y="112" class="fill-muted-foreground" font-size="11.5">Upstream of decoding.</text>
+    <text x="414" y="128" class="fill-muted-foreground" font-size="11.5">Closer, fresh remote battery,</text>
+    <text x="414" y="144" class="fill-muted-foreground" font-size="11.5">and check the frequency is</text>
+    <text x="414" y="160" class="fill-muted-foreground" font-size="11.5">near the analyzer's list.</text>
+    <line x1="200" y1="144" x2="200" y2="180" class="stroke-foreground" stroke-width="1.5" />
+    <polygon points="200,186 195,176 205,176" class="fill-foreground" />
+    <text x="212" y="167" class="fill-muted-foreground" font-size="11">Yes</text>
+    <rect x="40" y="186" width="320" height="52" rx="8" fill="none" class="stroke-foreground" stroke-width="1.5" />
+    <text x="200" y="207" text-anchor="middle" class="fill-foreground">Fix that frequency, hopping off.</text>
+    <text x="200" y="225" text-anchor="middle" class="fill-foreground">Step: AM650, AM270, FM476, FM238.</text>
+    <line x1="200" y1="238" x2="200" y2="270" class="stroke-foreground" stroke-width="1.5" />
+    <polygon points="200,276 195,266 205,266" class="fill-foreground" />
+    <rect x="40" y="276" width="320" height="52" rx="8" fill="none" class="stroke-foreground" stroke-width="1.5" />
+    <text x="200" y="297" text-anchor="middle" class="fill-foreground">Still blank? Record with Read RAW.</text>
+    <text x="200" y="315" text-anchor="middle" class="fill-foreground">Clean bursts = no decoder for it.</text>
+    <line x1="200" y1="328" x2="200" y2="360" class="stroke-foreground" stroke-width="1.5" />
+    <polygon points="200,366 195,356 205,356" class="fill-foreground" />
+    <rect x="40" y="366" width="320" height="60" rx="8" fill="none" class="stroke-primary" stroke-width="1.75" />
+    <text x="200" y="390" text-anchor="middle" class="fill-primary">Named, but Cnt rises, no Save?</text>
+    <text x="200" y="408" text-anchor="middle" class="fill-primary">Rolling code. Working as designed.</text>
+  </g>
+</svg>
+</Figure>
+
+The causes behind each box, in the same order:
+
+- **Too far or too weak.** Flipper's documentation says to hold the remote "very close to the left" of the Flipper. A tired coin cell weakens it too.
+- **Wrong frequency.** Read listens on one frequency. A Chamberlain remote can sit at 310, 315 or 390 MHz according to Flipper's supported-vendors table, so "it's a 315 remote" is a guess until the analyzer confirms it.
+- **Hopping missed it.** With Hopping on, Read steps through six frequencies (310, 315, 318, 390, 433.92 and 868.35 MHz in firmware 1.4.3) and only stops when a signal crosses the threshold. Flipper's guide warns that a burst sent mid-switch can be missed. For diagnosis, turn hopping off.
+- **Wrong preset.** The right frequency with the wrong modulation family shows nothing (Module 2).
+- **No decoder.** Read names only protocols in the firmware. A clean RAW burst on every press proves the radio side is fine.
+- **Rolling code.** Covered below. It decodes, and that is the end of it.
+
+<Callout variant="tip" title="Crowded bands">
+433.92 MHz sits in the shared 433.05–434.79 MHz band with weather sensors, doorbells and other remotes. If Read lists things you did not press, move away from other electronics and press deliberately.
+</Callout>
+
+### How the Frequency Analyzer actually searches
+
+The analyzer is not a spectrum display. In firmware 1.4.3 it runs a two-stage search, over and over:
+
+1. **Coarse.** It tunes to each frequency in its list, with a wide 650 kHz receive filter, and measures signal strength (<Term id="rssi">RSSI</Term>). The default list has 17 frequencies.
+2. **Fine.** If the strongest coarse reading is above −93 dBm, it scans about ±300 kHz around that frequency in 20 kHz steps with a narrow filter of about 58 kHz, and reports the strongest step.
+
+Flipper's guide rounds the threshold to −90 dBm and says results "can be approximate". The 20 kHz step is why your remote's label and the analyzer can disagree by a few tens of kHz.
+
+<Figure label="Two-stage search. Top: three radio bands, 300 to 348, 387 to 464 and 779 to 928 megahertz, drawn side by side and not to scale, with tick marks at the 17 listed frequencies: six in the low band, eight clustered in the middle band around 433 megahertz, three in the high band. A hypothetical remote at 330 megahertz sits in a gap with no listed frequency near it. Bottom: a zoom of 600 kilohertz around 433.92 megahertz with tick marks every 20 kilohertz, and a signal peak found at 433.86 megahertz." caption="Top: the coarse pass only looks where the list has entries (bands not to scale). Bottom: the fine pass, drawn to scale, steps 20 kHz at a time around the strongest hit. The 330 MHz remote and the 433.86 MHz peak are hypothetical examples.">
+<svg viewBox="0 0 640 250" width="100%" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+  <text x="0" y="16" class="fill-foreground font-sans" font-size="14" font-weight="700">Stage 1: coarse, 17 listed frequencies, 650 kHz filter</text>
+  <line x1="20" y1="80" x2="200" y2="80" class="stroke-foreground" stroke-width="1.5" />
+  <line x1="230" y1="80" x2="430" y2="80" class="stroke-foreground" stroke-width="1.5" />
+  <line x1="460" y1="80" x2="620" y2="80" class="stroke-foreground" stroke-width="1.5" />
+  <g class="stroke-primary" stroke-width="2">
+    <line x1="20" y1="66" x2="20" y2="80" /><line x1="34.5" y1="66" x2="34.5" y2="80" /><line x1="35.9" y1="66" x2="35.9" y2="80" />
+    <line x1="57.5" y1="66" x2="57.5" y2="80" /><line x1="76.3" y1="66" x2="76.3" y2="80" /><line x1="87.5" y1="66" x2="87.5" y2="80" />
+    <line x1="237.8" y1="66" x2="237.8" y2="80" /><line x1="310.5" y1="66" x2="310.5" y2="80" />
+    <line x1="349.7" y1="66" x2="349.7" y2="80" /><line x1="350.6" y1="66" x2="350.6" y2="80" /><line x1="351.9" y1="56" x2="351.9" y2="80" />
+    <line x1="353.2" y1="66" x2="353.2" y2="80" /><line x1="354.1" y1="66" x2="354.1" y2="80" /><line x1="364.8" y1="66" x2="364.8" y2="80" />
+    <line x1="555.9" y1="66" x2="555.9" y2="80" /><line x1="606" y1="66" x2="606" y2="80" /><line x1="616.8" y1="66" x2="616.8" y2="80" />
+  </g>
+  <text x="110" y="98" text-anchor="middle" class="fill-muted-foreground font-mono" font-size="11">300–348 MHz</text>
+  <text x="330" y="98" text-anchor="middle" class="fill-muted-foreground font-mono" font-size="11">387–464 MHz</text>
+  <text x="540" y="98" text-anchor="middle" class="fill-muted-foreground font-mono" font-size="11">779–928 MHz</text>
+  <text x="351.9" y="48" text-anchor="middle" class="fill-primary font-mono" font-size="11">433.92 strongest</text>
+  <path d="M132.5 42 V76" class="stroke-warning" stroke-width="1.5" stroke-dasharray="3 3" />
+  <text x="132.5" y="36" text-anchor="middle" class="fill-warning font-mono" font-size="11">remote at 330: nothing listed near</text>
+  <text x="0" y="140" class="fill-foreground font-sans" font-size="14" font-weight="700">Stage 2: fine, ±300 kHz in 20 kHz steps, 58 kHz filter</text>
+  <line x1="40" y1="205" x2="600" y2="205" class="stroke-border" stroke-width="10" stroke-dasharray="1.5 17.17" />
+  <line x1="40" y1="210" x2="600" y2="210" class="stroke-foreground" stroke-width="1.5" />
+  <path d="M252 210 L264 160 L276 210" class="fill-info stroke-info" fill-opacity="0.3" stroke-width="1.5" />
+  <text x="264" y="154" text-anchor="middle" class="fill-info font-mono" font-size="11">reported: 433.86</text>
+  <line x1="320" y1="170" x2="320" y2="214" class="stroke-muted-foreground" stroke-width="1" stroke-dasharray="2 3" />
+  <text x="40" y="230" text-anchor="middle" class="fill-muted-foreground font-mono" font-size="11">433.62</text>
+  <text x="320" y="230" text-anchor="middle" class="fill-muted-foreground font-mono" font-size="11">433.92</text>
+  <text x="600" y="230" text-anchor="middle" class="fill-muted-foreground font-mono" font-size="11">434.22 MHz</text>
+</svg>
+</Figure>
+
+Three consequences for troubleshooting:
+
+- **A frequency far from every list entry can be missed or misreported**, even inside the radio's 300–348, 387–464 and 779–928 MHz bands. Official firmware lets you add `Frequency:` lines to `subghz/assets/setting_user` on the SD card: copy `setting_user.example` to that name and keep `Add_standard_frequencies: true`. The example file says these frequencies feed Read, Read RAW and the analyzer.
+- **Quick taps can slip between passes.** Press and hold.
+- **The analyzer shows the loudest thing above −93 dBm**, which may not be your remote. Another transmitter nearby can win.
+
+#### What the screen is actually showing you
+
+The large number is the frequency of the latest strongest hit, and it is highlighted while a signal is above the threshold. The bar along the bottom labelled RSSI shows how far above the threshold it is. On the right, the last three frequencies found are kept as a short history, so a reading that vanished is still there to copy down. Pressing Left or Right switches the bottom half to a log of every frequency seen, with a hit count and the strongest RSSI for each, and OK changes the sort order. The log holds up to 60 frequencies.
+
+<Callout variant="note" title="The press-and-release test">
+A reading that appears only while you hold your remote's button, and stops when you release it, is your remote. A reading that comes and goes on its own is someone else's. Test before you trust any number.
+</Callout>
+
+### Rolling codes: decoded, and that is the answer
+
+If Read names a protocol such as **Nice FloR-S** and a field called <Term id="counter-cnt">Cnt</Term> changes on every press, you are looking at a <Term id="rolling-code">rolling code</Term>. Flipper's supported-vendors table lists these as dynamic: "Flipper Zero can decode signals from these radio remotes", and "for security reasons, the save function is disabled." On official firmware there is no Save option for them, which is itself the diagnosis.
+
+The firmware prints the counter in hexadecimal, so three presses of one button might read like this (values illustrative):
+
+<div class="table-scroll">
+
+| Press | `Sn` (serial) | `Btn` | `Cnt` | What changed |
+| --- | --- | --- | --- | --- |
+| 1 | 1A2B3 | 02 | 0A3F | |
+| 2 | 1A2B3 | 02 | 0A40 | counter +1 (0x3F to 0x40) |
+| 3 | 1A2B3 | 02 | 0A41 | counter +1 |
+
+</div>
+
+Serial and button stay put; the counter steps. In Microchip's typical HCS301 decoder the receiver keeps the last counter it accepted and takes only values ahead of it, so an old code is refused. Module 4 draws that window. A RAW recording of a rolling remote can desynchronise the real remote, which is why Flipper's documentation says not to use Read RAW on a car key fob. And a replay that "worked once, then never" is this mechanism, not bad range.
+
+<Callout variant="legal" title="Diagnosis stops here">
+Recognising a rolling code is the skill. Signal Path gives no steps for defeating one, and capture-and-hold or jamming tools are illegal to use against other people's devices. Rolling-code experiments stay in the simulator in [Module 5](/learn/05-raw-and-rolling). Before any transmission, use the checks in the [Romania lab guide](/romania-lab-guide).
+</Callout>
+
+### When a .sub will not load
+
+<Flip>Sub-GHz → Saved</Flip> only lists files ending in `.sub` inside the `subghz` folder of the SD card. A file saved by a computer as `remote.sub.txt`, or dropped in the card's root, never appears. When a listed file fails to open, the firmware checks it in a fixed order and stops at the first failure:
+
+<Figure label="Five checks in a row when Saved opens a file: first the Filetype and Version 1 header, then a Frequency line within a CC1101 band, then a Preset line with a known name, then a Protocol line with a known decoder, then the protocol's own fields such as Bit, Key and TE. A failure in any of the first four shows Cannot parse file. A failure in the last shows Error in protocol parameters description." caption="The load order in firmware 1.4.3 (subghz_i.c). The error tells you which half of the file to look at. A RAW file passes the same checks with Protocol: RAW.">
+<svg viewBox="0 0 640 170" width="100%" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+  <g class="font-mono" font-size="11">
+    <rect x="0" y="20" width="116" height="56" rx="6" fill="none" class="stroke-foreground" stroke-width="1.5" />
+    <text x="58" y="43" text-anchor="middle" class="fill-foreground">Filetype +</text>
+    <text x="58" y="60" text-anchor="middle" class="fill-foreground">Version: 1</text>
+    <rect x="131" y="20" width="116" height="56" rx="6" fill="none" class="stroke-foreground" stroke-width="1.5" />
+    <text x="189" y="43" text-anchor="middle" class="fill-foreground">Frequency:</text>
+    <text x="189" y="60" text-anchor="middle" class="fill-foreground">in a CC1101 band</text>
+    <rect x="262" y="20" width="116" height="56" rx="6" fill="none" class="stroke-foreground" stroke-width="1.5" />
+    <text x="320" y="43" text-anchor="middle" class="fill-foreground">Preset:</text>
+    <text x="320" y="60" text-anchor="middle" class="fill-foreground">a known name</text>
+    <rect x="393" y="20" width="116" height="56" rx="6" fill="none" class="stroke-foreground" stroke-width="1.5" />
+    <text x="451" y="43" text-anchor="middle" class="fill-foreground">Protocol:</text>
+    <text x="451" y="60" text-anchor="middle" class="fill-foreground">a known decoder</text>
+    <rect x="524" y="20" width="116" height="56" rx="6" fill="none" class="stroke-info" stroke-width="1.5" />
+    <text x="582" y="43" text-anchor="middle" class="fill-info">Bit, Key, TE</text>
+    <text x="582" y="60" text-anchor="middle" class="fill-info">valid for it</text>
+    <line x1="116" y1="48" x2="131" y2="48" class="stroke-foreground" stroke-width="1.5" />
+    <line x1="247" y1="48" x2="262" y2="48" class="stroke-foreground" stroke-width="1.5" />
+    <line x1="378" y1="48" x2="393" y2="48" class="stroke-foreground" stroke-width="1.5" />
+    <line x1="509" y1="48" x2="524" y2="48" class="stroke-foreground" stroke-width="1.5" />
+    <path d="M4 92 V100 H505 V92" fill="none" class="stroke-danger" stroke-width="1.5" />
+    <text x="254" y="122" text-anchor="middle" class="fill-danger">any fail: "Cannot parse file"</text>
+    <path d="M528 92 V100 H636 V92" fill="none" class="stroke-danger" stroke-width="1.5" />
+    <text x="582" y="122" text-anchor="middle" class="fill-danger">"Error in protocol</text>
+    <text x="582" y="138" text-anchor="middle" class="fill-danger">parameters</text>
+    <text x="582" y="154" text-anchor="middle" class="fill-danger">description"</text>
+  </g>
+</svg>
+</Figure>
+
+A healthy fixed-code file, from Flipper's file-format documentation, looks like this:
+
+```
+Filetype: Flipper SubGhz Key File
+Version: 1
+Frequency: 433920000
+Preset: FuriHalSubGhzPresetOok650Async
+Protocol: Princeton
+Bit: 24
+Key: 00 00 00 00 00 95 D5 D4
+TE: 400
+```
+
+A RAW file says `Filetype: Flipper SubGhz RAW File` and `Protocol: RAW`, then `RAW_Data:` lines of microsecond durations that start positive and alternate sign, up to 512 values per line. If a file opens in a text editor and matches its shape, the file is not your problem.
+
+### When the card itself acts up
+
+If nothing loads or saves at all, suspect the card before the files. Flipper's microSD page says:
+
+- **Formats:** FAT12, FAT16, FAT32 and exFAT all work, on cards up to 256 GB. A card formatted on the Flipper ends up FAT32.
+- **Not detected:** check the card clicked into place, clean the slot with compressed air, and format it if its file system is unsupported. If the card lacks SPI support or is damaged, try another.
+- **Formatting on the Flipper:** <Flip>Settings → Storage → Format SD Card</Flip>, then Right to confirm. It erases everything, and you must update the firmware afterwards to restore the databases that live on the card.
+
+<Callout variant="warn" title="Back up before you format">
+Copy the `subghz`, `nfc`, `lfrfid` and `infrared` folders to your computer with qFlipper first. A format cannot be undone.
+</Callout>
+
+### Replay and range, briefly
+
+Module 4 covers a silent replay in full. "Transmission is blocked" means the frequency is restricted in your region. "Firmware update needed" means the Flipper has not yet learned its region, which happens during an update. Anything else on your own fixed-code device is usually distance, obstacles or orientation before it is the file. Flipper's Sub-GHz page gives 50 metres as the maximum range, a best case in open space. The antenna is part of the reason: at 433.92 MHz the wavelength is 299,792,458 ÷ 433,920,000 ≈ 0.69 m, so a quarter-wave antenna would be about 17 cm, longer than the Flipper. External CC1101 modules, selected in <Flip>Sub-GHz → Radio Settings</Flip>, are the hardware route to a better antenna; Module 8 discusses them.
+
+### One-glance table
+
+Start at the symptom and read across.
+
+<div class="table-scroll">
+
+| Symptom | Most likely cause | First thing to try |
+| --- | --- | --- |
+| Read shows nothing | Wrong frequency or preset | Analyzer, then step the four presets |
+| Read blank, analyzer saw your press | No decoder | Read RAW |
+| Analyzer blank | Too far, weak battery, unlisted frequency | Hold close, press and hold, fresh battery |
+| Analyzer reads with nothing pressed | Another transmitter | Trust only readings that follow your button |
+| Replay works once, then never | Rolling code | Nothing; it is working as designed |
+| File missing from Saved | Wrong name or folder | `.sub` inside `subghz` |
+| "Cannot parse file" | Header, frequency, preset or protocol line | Compare with a healthy file |
+| Nothing loads or saves | The card | Check seating, slot, file system |
+
+</div>
+
+### Misconceptions
+
+- **"Silent Read means the remote is broken."** Usually it is distance, frequency or preset.
+- **"Read RAW works without the right preset."** RAW demodulates with the preset you set, so the wrong family records noise.
+- **"The analyzer scans every frequency."** It measures 17 listed frequencies, then ±300 kHz around the strongest.
+- **"The Flipper needs FAT32."** It reads FAT12, FAT16, FAT32 and exFAT.
+- **"A decoded rolling code just needs a better capture."** The decode is complete. Saving is disabled by design, and the receiver refuses old counters.
+
+## Predict and practise
+
+Start with the tool picker. It drills the decision behind most of this lesson: which Sub-GHz tool to open first.
+
+<Widget name="tool-picker" />
+
+<Lab kicker="Lab 9.1" title="Take a stubborn device down the tree" gear="Flipper and one remote or sensor you own that has refused to cooperate. Listening only.">
+
+1. **Predict first.** Write down which box of the decode tree you think your device will stop at, and why.
+2. **Baseline:** open <Flip>Sub-GHz → Frequency Analyzer</Flip> and watch for ten seconds without pressing anything. Note any reading. This is your negative control.
+3. Hold the remote against the left side of the Flipper, press and **hold**. Record the frequency, or "nothing". Release and confirm the reading stops.
+4. If nothing: fit a fresh battery in the remote and repeat once. Still nothing? Note that the frequency may be far from the analyzer's list, and stop here with that as your finding.
+5. If you got a frequency: open <Flip>Sub-GHz → Read</Flip>, press <Flip>Config</Flip>, set that frequency with Hopping off, and step `AM650`, `AM270`, `FM476`, `FM238`, pressing after each. Change only the preset.
+6. If Read names a protocol, press three more times and read the `Cnt` field. If it climbs and there is no Save, mark it rolling and stop.
+7. If Read stays blank, open <Flip>Sub-GHz → Read RAW</Flip> on the same frequency and the preset family that looked busiest, press <Flip>REC</Flip>, press the remote twice, then stop. Clean bursts that line up with your presses mean no decoder.
+8. Write the one line that closes the case.
+
+</Lab>
+
+Expected observation: one box ends the walk, and the change that ended it is the only setting you touched in that step. The step 2 baseline tells you whether a reading could have been someone else's.
+
+<Win>you can state in one sentence why your device did what it did (too weak, wrong frequency, wrong preset, no decoder, or a rolling code doing its job) and someone else could repeat your steps from your note.</Win>
+
+<Lab kicker="Lab 9.2" title="Break a file on purpose and read the error" gear="Flipper, qFlipper on a computer, and a fixed-code .sub file you saved yourself. Nothing transmits.">
+
+1. In qFlipper's file manager, download your file from `SD Card/subghz` and keep the original untouched.
+2. Make three copies on the computer, named `t-version.sub`, `t-preset.sub` and `t-bits.sub`.
+3. Edit one line in each: change `Version: 1` to `Version: 2`; delete the `Preset:` line; change the `Bit:` value by one (for a Princeton file, 24 to 25).
+4. **Predict:** for each copy, write which error you expect, using the load-order figure.
+5. Upload the three copies to `SD Card/subghz` and open each in <Flip>Sub-GHz → Saved</Flip>. Record the message.
+6. **Control:** open the untouched original. It should load as before.
+7. Delete the three test copies from the card.
+
+</Lab>
+
+Expected observation: the version and preset copies give "Cannot parse file"; the bit-count copy gets past the header and fails at the protocol fields with "Error in protocol parameters description". Other protocols check their own fields, so a non-Princeton file may fail on a different line.
+
+<Win>your three predictions matched the screen, and you can say which half of a file to inspect from the error message alone.</Win>
+
+{/* TODO: tool: a Frequency Analyzer simulator showing the coarse and fine passes, so learners can see a 330 MHz signal missed without hardware. */}
+
+## Check yourself
+
+<Quiz id="m09" />
+
+Two questions to answer in a sentence each, without notes:
+
+1. The analyzer shows 433.92 MHz whether or not you press anything. What does that tell you, and what do you do next?
+2. Why is "Cnt rises and there is no Save option" a finished diagnosis rather than a problem to fix?
+
+## Keep evidence
+
+Open your [notebook](/learn/notebook?module=m09) and save an entry for this module. Map each lab step to a field:
+
+- **Setup:** the device, firmware version, where you stood, and the baseline reading from Lab 9.1 step 2.
+- **Prediction:** the box you expected to stop at, and your three error predictions from Lab 9.2.
+- **Observation:** every change in order with what the screen showed, including "nothing"; the three error messages and the control load.
+- **Explanation:** the one-line cause, and which load check each broken file failed.
+
+Adequate evidence lists every change you made, one at a time, with a control on each lab. An example entry:
+
+> Garage remote, official 1.4.3. Baseline 10 s: nothing. Analyzer held: 310.00, gone on release. Had been reading at 315. Read 310.00, hopping off, AM650: Princeton 24-bit. Cause: wrong frequency; label said 315. Files: version and preset copies "Cannot parse file", Bit 25 "Error in protocol parameters description". Original loads.
+
+Set a review date one week from today. When you can walk the decode tree from memory, mark it retrieved.
+
+## Continue
+
+Next is [Module 10: Foundation project: your signal atlas](/learn/10-capstone). It asks you to catalogue several of your own devices, and this lesson's habits are what make that catalogue trustworthy: a control for every reading, one change at a time, and a note of what fixed each problem.
+
+**Retrieval question for next week:** without looking, what are the two stages of the Frequency Analyzer's search, and why can a remote at an unusual frequency be missed?
+
+Primary sources, checked 13 October 2026:
+
+- [Flipper Docs: Reading signals](https://docs.flipper.net/zero/sub-ghz/read): analyzer placement, −90 dBm, hopping, presets.
+- [Flipper Docs: Reading RAW signals](https://docs.flipper.net/zero/sub-ghz/read-raw): modulation setting, car key fob warning.
+- [Flipper Docs: Supported vendors](https://docs.flipper.net/zero/sub-ghz/supported-vendors): dynamic protocols, Chamberlain frequencies.
+- [Flipper Docs: Sub-GHz](https://docs.flipper.net/zero/sub-ghz) and [frequencies by region](https://docs.flipper.net/zero/sub-ghz/frequencies): bands, range, external modules, region messages.
+- [Flipper Docs: microSD card setup](https://docs.flipper.net/zero/basics/sd-card): file systems, capacity, formatting.
+- [Flipper Developer Docs: Sub-GHz file format](https://developer.flipper.net/flipperzero/doxygen/subghz_file_format.html): key and RAW layouts.
+- Firmware 1.4.3 source: [subghz_setting.c](https://github.com/flipperdevices/flipperzero-firmware/blob/1.4.3/lib/subghz/subghz_setting.c) (frequency lists), [analyzer worker](https://github.com/flipperdevices/flipperzero-firmware/blob/1.4.3/applications/main/subghz/helpers/subghz_frequency_analyzer_worker.c) (search), [subghz_i.c](https://github.com/flipperdevices/flipperzero-firmware/blob/1.4.3/applications/main/subghz/subghz_i.c) (load order), [setting_user.example](https://github.com/flipperdevices/flipperzero-firmware/blob/1.4.3/applications/main/subghz/resources/subghz/assets/setting_user.example) (extra frequencies).
+- [Microchip HCS301 datasheet, DS21143C](https://ww1.microchip.com/downloads/aemDocuments/documents/MCU08/ProductDocuments/DataSheets/21143C.pdf) : the typical rolling-code decoder.

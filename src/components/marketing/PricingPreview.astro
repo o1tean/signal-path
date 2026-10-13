@@ -1,0 +1,42 @@
+---
+/** Home "pricing-preview". Copy: docs/v2/copy/home.md#pricing-preview; prices from src/data/offer.ts. */
+import Section from './Section.astro';
+import LinkButton from './LinkButton.astro';
+import Guarantee from './Guarantee.astro';
+import { facts, founding, freeToolNames, price, priceZero } from './site';
+---
+<Section
+  id="pricing-preview"
+  eyebrow="Price"
+  title={`The first two lessons are free. The other ${facts.paidLessons} cost ${price}, once.`}
+  intro="Complete comes with a 30-day refund, and you don't need to give a reason."
+>
+  <div class="grid gap-4 md:grid-cols-2">
+    <article class="flex flex-col rounded-[1.25rem] border border-border bg-card p-6 sm:p-8" aria-labelledby="pp-starter">
+      <h3 id="pp-starter" class="text-lg">Signal Path Starter</h3>
+      <p class="mt-3 text-4xl font-semibold tracking-[-0.03em] tabular-nums">{priceZero}</p>
+      <p class="mt-5 flex-1 leading-relaxed text-muted-foreground">
+        Modules 0 and 1, the primer, the glossary and the starter quiz. {freeToolNames} run in your browser. Create a free account to save your progress and get the Preset & Frequency Cheat Sheet.
+      </p>
+      <LinkButton href="/learn/00-setup" variant="secondary" class="mt-8 w-full">Start the free starter</LinkButton>
+    </article>
+
+    <article class="relative flex flex-col rounded-[1.25rem] border border-primary/60 bg-card p-6 shadow-[0_24px_48px_-28px_color-mix(in_oklch,var(--primary)_45%,transparent)] sm:p-8" aria-labelledby="pp-complete">
+      <h3 id="pp-complete" class="text-lg">Signal Path Complete</h3>
+      <p class="mt-3 flex items-baseline gap-2">
+        <span class="text-4xl font-semibold tracking-[-0.03em] tabular-nums">{founding ? founding.price : price}</span>
+        <span class="text-muted-foreground">once</span>
+      </p>
+      {founding?.ends && <p class="mt-1 text-sm text-muted-foreground">{founding.price} until {founding.ends}, then {price}</p>}
+      <p class="mt-5 flex-1 leading-relaxed text-muted-foreground">
+        All {facts.lessons} lessons, all {facts.tools} tools and the {facts.questions}-question bank. It also includes the troubleshooting trees, the lab notebook system and the source of the app you build in week 10. Course updates are included.
+      </p>
+      <LinkButton href="/pricing#buy" class="mt-8 w-full">Get Signal Path Complete</LinkButton>
+      <p class="mt-3 text-center text-sm font-medium">30-day refund, no reason needed.</p>
+    </article>
+  </div>
+  <p class="mt-5 text-sm text-muted-foreground">Pay {price} today, or split it into instalments at checkout where available.</p>
+  <div class="mt-10">
+    <Guarantee compact />
+  </div>
+</Section>

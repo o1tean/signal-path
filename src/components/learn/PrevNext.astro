@@ -1,0 +1,21 @@
+---
+import type { LessonSummary } from '@/lib/lessons';
+
+interface Props {
+  prev?: LessonSummary;
+  next?: LessonSummary;
+}
+const { prev, next } = Astro.props;
+const back = prev ? { href: prev.href, k: `Module ${prev.n}`, t: prev.title } : { href: '/primer', k: 'Before you start', t: 'The radio primer' };
+const fwd = next ? { href: next.href, k: `Module ${next.n}`, t: next.title } : { href: '/tools', k: 'Keep practising', t: 'The browser tools' };
+---
+<nav aria-label="Lesson pager" class="mt-12 grid gap-3 sm:grid-cols-2">
+  <a href={back.href} rel="prev" class="group rounded-card border border-border bg-card p-4 hover:border-primary/50">
+    <span class="block text-xs text-muted-foreground">← {back.k}</span>
+    <span class="mt-1 block font-medium group-hover:text-primary">{back.t}</span>
+  </a>
+  <a href={fwd.href} rel="next" class="group rounded-card border border-border bg-card p-4 text-right hover:border-primary/50">
+    <span class="block text-xs text-muted-foreground">{fwd.k} →</span>
+    <span class="mt-1 block font-medium group-hover:text-primary">{fwd.t}</span>
+  </a>
+</nav>

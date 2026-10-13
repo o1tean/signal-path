@@ -1,0 +1,194 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Module 5 · Raw signals &amp; rolling codes · Signal Path</title>
+  <meta name="description" content="Capture signals the Flipper can't name with Read RAW, and understand rolling codes deeply — why a copied gate remote works once and then dies, and why that's the security working.">
+  <link rel="stylesheet" href="../assets/css/site.css">
+  <script>(function(){try{var t=localStorage.getItem("signalpath.theme");if(t==="light"||t==="dark")document.documentElement.setAttribute("data-theme",t);}catch(e){}})();</script>
+<link rel="stylesheet" href="../assets/css/presentation.css">
+<link rel="icon" type="image/png" href="../assets/images/signal-path-logo.png">
+</head>
+<body data-root="../" data-page="m05">
+  <header class="topbar"></header>
+
+  <main class="page">
+    <aside class="toc" aria-label="On this page">
+      <span class="eyebrow">On this page</span>
+      <ol>
+        <li><a href="#goal">Goal</a></li>
+        <li><a href="#raw">Read RAW</a></li>
+        <li><a href="#recap">Fixed vs rolling</a></li>
+        <li><a href="#how">How rolling codes work</a></li>
+        <li><a href="#case">Case: the Nice gate</a></li>
+        <li><a href="#lab">Lab</a></li>
+        <li><a href="#toolkit">Which tool for the job</a></li>
+        <li><a href="#quiz">Check yourself</a></li>
+      </ol>
+    </aside>
+
+    <article class="content">
+      <div class="mod-header">
+        <div class="mod-index">5</div>
+        <div class="mod-titles">
+          <div class="mod-week">Week 3 · The keystone</div>
+          <h1>Raw signals &amp; rolling codes</h1>
+          <p class="lede">This is the module that makes sense of everything you found strange so far. You'll capture signals the Flipper refuses to name, and you'll finally understand why a copied gate remote works exactly once and then dies — and why that failure is the system doing its job perfectly.</p>
+          <div class="mod-meta">
+            <span class="chip">⏱ <b>55 min</b></span>
+            <span class="chip">Gear: <b>your own remotes, one rolling</b></span>
+            <span class="chip">Firmware: <b>Momentum</b></span>
+          </div>
+        </div>
+      </div>
+
+      <section id="goal">
+        <h2>Goal</h2>
+        <p>Two things, and they're connected. First: use <span class="flip">Sub-GHz → Read RAW</span> to record a signal the Flipper can't decode into a tidy key — a waveform instead of a number — and replay it to your own device. Second: understand <b>rolling codes</b> deeply enough that "my replay does nothing" stops being a mystery and becomes a prediction you could have made in advance.</p>
+        <p>By the end you'll be able to look at any RF device you own and say, before you even capture it, whether a replay stands a chance — and if it doesn't, exactly why.</p>
+      </section>
+
+      <section id="raw">
+        <h2>Read RAW: capturing the un-nameable</h2>
+        <p>In Module 3, <span class="flip">Read</span> matched your remote to a known protocol and gave you a clean key. But sometimes Read comes up blank. The pulses arrive, the frequency is right, and still no protocol name appears. That doesn't mean there's no signal — it means the Flipper doesn't have a rule that fits it. Maybe it's an obscure encoding, maybe it's rolling, maybe it's just unusual.</p>
+        <p>That's what <span class="flip">Read RAW</span> is for. Instead of trying to <em>understand</em> the signal, it simply <b>records the raw on-off timings</b> — every pulse and gap, in microseconds — as a literal transcript of what came out of the radio. No interpretation, no key. Just the waveform.</p>
+        <p>A saved RAW capture is still a plain-text <code>.sub</code> file, but it looks very different from the decoded one you saved in Module 3:</p>
+        <pre><code>Filetype: Flipper SubGhz RAW File
+Version: 1
+Frequency: 433920000
+Preset: FuriHalSubGhzPresetOok650Async
+Protocol: RAW
+RAW_Data: 328 -456 320 -1348 980 -452 336 -444 972 -1360 340 -448</code></pre>
+        <p>The magic is all in the <code>RAW_Data</code> line. It's a long list of durations in microseconds, alternating sign:</p>
+        <dl class="kv">
+          <dt>+ value</dt><dd>The transmitter was <b>on</b> for that many microseconds (a pulse).</dd>
+          <dt>− value</dt><dd>The transmitter was <b>off</b> for that many microseconds (a gap).</dd>
+          <dt>Protocol: RAW</dt><dd>A flag that says "there is no decoded key here — replay by playing these timings back verbatim."</dd>
+        </dl>
+        <p>Real captures have hundreds or thousands of these numbers. Replaying a RAW file doesn't regenerate anything from a protocol — it just re-radiates the recorded pattern exactly. That's powerful (it copies things Read can't name) and fragile (it copies the noise and gaps too, so a messy capture plays back messy).</p>
+        <div class="callout note">
+          <span class="ic">i</span>
+          <div><span class="callout-title">Read vs. Read RAW — when to use which</span>
+          Reach for <b>Read</b> first: if the Flipper can name the protocol, you get a compact, robust, editable key. Fall back to <b>Read RAW</b> when Read stays blank but Frequency Analyzer (Module 1) confirms there's a real signal on that frequency. RAW captures anything; decoded captures understand something. Prefer understanding when you can get it.</div>
+        </div>
+      </section>
+
+      <section id="recap">
+        <h2>Fixed vs rolling, side by side</h2>
+        <p>You've met both by now. Here they are next to each other, because the entire module hinges on the difference:</p>
+        <div class="grid2">
+          <div class="card">
+            <h3><span class="pill fixed">fixed</span> Fixed code</h3>
+            <p class="muted">Sends the <b>same</b> message every press. Capture it once and a replay works forever, because the receiver can't tell a copy from the original — there's nothing to change.</p>
+            <p class="muted">Doorbells, LED remotes, fans, cheap outlets, older gates (CAME, Nice FLO, Princeton, Holtek).</p>
+          </div>
+          <div class="card">
+            <h3><span class="pill rolling">rolling</span> Rolling code</h3>
+            <p class="muted">Sends a <b>different</b> message every press. A captured code becomes stale the moment it's used, so a replay of an old code is rejected. Copying it once buys you nothing.</p>
+            <p class="muted">Car fobs, modern gates and garage doors (KeeLoq, Security+ 2.0, Nice FloR-S).</p>
+          </div>
+        </div>
+        <p>Fixed codes trade security for simplicity; rolling codes spend a little complexity to close the "capture once, replay forever" hole. The rest of this module is about <em>how</em> they close it — and it's more elegant than you might expect.</p>
+      </section>
+
+      <section id="how">
+        <h2>How a rolling code actually works</h2>
+        <p>A rolling-code remote adds two ingredients to the fixed-code recipe: a <b>counter</b> and <b>encryption</b>.</p>
+        <div class="scene3d" data-scene3d="rolling" data-label="3D animation: a remote sends fresh counters that a receiver accepts, and a replayed counter that it rejects."><span class="scene3d-caption">Concept animation · drag to rotate</span></div>
+
+        <p>The counter is just a number that goes up by one every time you press the button. Press one: counter 41. Press two: counter 42. Press three: counter 43. The remote and its paired receiver both keep track of this number, and crucially, they were <b>synchronised</b> when the remote was first enrolled.</p>
+        <p>If the remote simply broadcast "I'm remote #12345, counter 42" in the clear, an eavesdropper could read the pattern and forge the next value. So the remote <b>encrypts</b> the counter (together with its identity and the button) into a scrambled block that changes completely with every increment. This is what the classic ciphers do:</p>
+        <div class="table-scroll">
+          <table>
+            <thead><tr><th>Scheme</th><th>Who uses it</th><th>The idea</th></tr></thead>
+            <tbody>
+              <tr><td><b>KeeLoq</b> <span class="pill rolling">rolling</span></td><td>Microchip's classic; countless car fobs, gates, garages</td><td>The original mass-market rolling cipher. Encrypts a counter + serial into a hopping code.</td></tr>
+              <tr><td><b>Security+ 2.0</b> <span class="pill rolling">rolling</span></td><td>Chamberlain / LiftMaster garage systems</td><td>A newer rolling scheme; the reason many recent US garage doors won't replay.</td></tr>
+              <tr><td><b>Nice FloR-S</b> <span class="pill rolling">rolling</span></td><td>Nice gates and barriers (the rolling sibling of fixed <b>Nice FLO</b>)</td><td>The Flipper's Read screen shows a <b>Cnt</b> that climbs each press — the counter, in plain sight.</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p>When a press arrives, the receiver decrypts the block, checks the identity, and reads out the counter. Then it applies one simple, decisive rule.</p>
+
+        <h3>The acceptance window</h3>
+        <p>The receiver remembers the <b>highest counter it has already accepted</b>. Call it "last seen." A new press is accepted only if its counter is <b>ahead</b> of last-seen — and within a forward <b>window</b> of the next so-many values. Anything at or behind last-seen is treated as an old, already-used code and thrown away.</p>
+
+        <figure class="diagram">
+          <svg viewBox="0 0 640 170" width="100%" role="img" aria-label="A counter number line. Values at or below the last-seen marker are rejected. A forward window ahead of last-seen is accepted. Values far beyond the window are ignored until resync.">
+            <line x1="20" y1="90" x2="620" y2="90" stroke="currentColor" stroke-width="2"/>
+            <!-- last seen marker -->
+            <line x1="230" y1="60" x2="230" y2="120" stroke="var(--orange)" stroke-width="3"/>
+            <text x="230" y="50" fill="var(--orange)" font-family="var(--font-mono)" font-size="12" text-anchor="middle" font-weight="600">last seen</text>
+            <!-- rejected region -->
+            <rect x="20" y="82" width="210" height="16" fill="var(--red)" opacity="0.18"/>
+            <text x="120" y="140" fill="var(--red)" font-family="var(--font-mono)" font-size="12" text-anchor="middle">rejected (used)</text>
+            <!-- accept window -->
+            <rect x="230" y="82" width="200" height="16" fill="var(--green)" opacity="0.22"/>
+            <text x="330" y="140" fill="var(--green)" font-family="var(--font-mono)" font-size="12" text-anchor="middle">accepted (window)</text>
+            <!-- ignored region -->
+            <rect x="430" y="82" width="190" height="16" fill="var(--faint)" opacity="0.20"/>
+            <text x="525" y="140" fill="var(--faint)" font-family="var(--font-mono)" font-size="12" text-anchor="middle">too far → resync</text>
+            <g fill="currentColor" font-family="var(--font-mono)" font-size="11">
+              <text x="20" y="78">counter →</text>
+            </g>
+          </svg>
+          <figcaption>The receiver only accepts codes ahead of "last seen" and inside the forward window. Old codes fall in the red zone; codes far ahead need a resync.</figcaption>
+        </figure>
+
+        <p>Here's the consequence, and it's the whole game: the instant the receiver accepts a code with counter 42, it moves "last seen" up to 42. Now counter 42 is <b>behind</b> last-seen — permanently in the red zone. Replay that exact captured press and the receiver shrugs: "already used." A rolling code isn't rejected because it's fake. It's rejected because it's <b>old</b>.</p>
+        <p>Two more pieces make it survive real life:</p>
+        <ul>
+          <li><b>The window exists so you can miss.</b> Press your fob in your pocket, out of range, and its counter climbs while the receiver's doesn't. Next time you're in range, your counter is ahead but still inside the window, so it's accepted and the receiver catches up. Without a window, one accidental press would lock you out.</li>
+          <li><b>Resync handles a big gap.</b> If you press far out of range many times, your counter runs <em>past</em> the window and the receiver ignores you. Most systems then require a resync — often two valid presses in a row, or a re-enrolment — to safely realign the two counters.</li>
+        </ul>
+        <div class="callout tip">
+          <span class="ic">✓</span>
+          <div><span class="callout-title">The tell you can read on the screen</span>
+          For rolling families like Nice FloR-S, the Flipper's Read screen shows a <b>Cnt</b> value, and it <b>increments by one every time you press</b>. That climbing number is the single clearest sign you're looking at a rolling code — and a promise that replay won't work. A fixed code, by contrast, shows the same key on every press with no counter at all.</div>
+        </div>
+
+        <p>Now play with it. The simulator below is a remote, a receiver, and a counter window. Capture a code, replay it, and watch the receiver reject it as used — then see how a resync realigns them.</p>
+
+        <div data-widget="rolling-sim"></div>
+      </section>
+
+      <section id="case"><h2>Case: a replay appears to work once</h2><p>This is a hypothetical diagnostic example, not a verified incident involving a particular gate. In a counter-based model, a previously unused valid message may be accepted if it falls within the receiver’s forward window. Once consumed, the same message is stale.</p><p><b>A forward window does not make an old counter fresh again.</b> If an identical capture seems to work intermittently, investigate the actual protocol, whether a file contains multiple frames, whether receiver state changed, and whether you are observing the same operation. Do not claim a diagnosis from “works once” alone.</p><p>Rejected stale messages do not normally advance the receiver counter. Real products have implementation-specific synchronization and recovery behaviour, and operational fob experiments can cause loss of access. Use the simulator to explore the model; use the manufacturer’s documented process for genuine remote provisioning or repair.</p><p class="source-note">Read the primary sources: <a href="https://ww1.microchip.com/downloads/aemDocuments/documents/MCU08/ProductDocuments/DataSheets/21143C.pdf">Microchip HCS301: synchronization model (PDF)</a> · <a href="https://docs.flipper.net/zero/sub-ghz/read-raw">Flipper: demodulated RAW recordings</a> · <a href="https://docs.flipper.net/zero/sub-ghz/supported-vendors">Flipper: static and dynamic protocol support</a>. Course review: 10 September 2026.</p></section>
+
+      <section id="lab"><h2>Lab: RAW is a representation</h2><ol class="steps"><li><div>Use your documented fixed-code training remote from Module 3, or inspect its saved file if you cannot perform a radio lab.</div></li><li><div>Record a short press with Read RAW using the correct frequency and preset; stop promptly and save with a lab name. You do not need an unknown or security remote to learn the RAW format.</div></li><li><div>Compare the RAW file with the decoded file. Identify frequency, preset, and pulse timings. RAW contains demodulated timing data, not raw I/Q samples.</div></li><li><div>Do not infer rolling security from a failed replay. Use the simulator above to compare fresh and consumed counters. Predict each result before pressing its controls.</div></li><li><div>Record what each representation retains and what it does not tell you.</div></li></ol><p>For this lab, no physical RAW replay is required. The fixed-code replay skill is covered in Module 4.</p><p class="source-note">Read the primary sources: <a href="https://docs.flipper.net/zero/sub-ghz/read-raw">Flipper: demodulated RAW recordings</a>. Course review: 10 September 2026.</p></section>
+
+      <section id="toolkit">
+        <h2>Which tool for the job</h2>
+        <p>You now have three ways to approach a Sub-GHz device: decode it with Read, record it with Read RAW, or recognise that a replay can't help at all. Choosing well is most of the skill. Use the picker below to reason it through for a given device, then check the ethics note underneath — because the line between learning and harming is exactly here.</p>
+
+        <div data-widget="tool-picker"></div>
+
+        <div class="callout legal">
+          <span class="ic">!</span>
+          <div><span class="callout-title">On attacks against rolling codes</span>
+          Techniques exist that try to beat rolling codes — the best known is a "jam-and-replay" family of attacks (RollJam being the famous name) that captures an unused code while blocking it from reaching the receiver. <b>We describe these only as concepts, never as methods.</b> Using them against property that isn't yours is illegal and can be dangerous, and jamming a band is itself an offence. This course exists so you understand <em>why</em> rolling codes work — not to help anyone break them. On your own gate, the answer is always the same: enrol a real remote, don't defeat the code.</div>
+        </div>
+      </section>
+
+      <section id="quiz">
+        <h2>Check yourself</h2>
+        <div data-quiz="m05"></div>
+      </section>
+    <section id="sources"><h2>Verify the details</h2><p class="source-note">Read the primary sources: <a href="https://docs.flipper.net/zero/sub-ghz/read-raw">Flipper: demodulated RAW recordings</a> · <a href="https://ww1.microchip.com/downloads/aemDocuments/documents/MCU08/ProductDocuments/DataSheets/21143C.pdf">Microchip HCS301: synchronization model (PDF)</a>. Course review: 10 September 2026.</p></section></article>
+  </main>
+
+  <footer class="site-footer">
+    <div class="wrap">
+      <p>Signal Path teaches RF with devices you own, for learning and legitimate testing. Radio transmission is regulated where you live; interfering with other people's devices is illegal and harmful. When scope or legality is unclear, use the simulators.</p>
+      <p>Signal Path · a self-guided RF course for the Flipper Zero</p>
+    </div>
+  </footer>
+
+  <script src="../assets/js/data/course.js"></script>
+  <script src="../assets/js/site.js"></script>
+  <script src="../assets/js/data/quiz-bank.js"></script>
+  <script src="../assets/js/widgets/rolling-sim.js"></script>
+  <script src="../assets/js/widgets/tool-picker.js"></script>
+<script src="../assets/js/presentation.js"></script>
+</body>
+</html>

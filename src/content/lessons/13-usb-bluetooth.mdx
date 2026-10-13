@@ -1,0 +1,266 @@
+---
+id: m13
+number: 13
+slug: 13-usb-bluetooth
+title: 'USB and Bluetooth: understand trust'
+description: A keyboard sends key positions, not letters, and the computer obeys every one. Use a visible, harmless script to see the HID trust boundary for yourself.
+stage: build
+week: Week 8
+access: paid
+minutes: 60
+gear:
+  - Flipper Zero on official firmware 1.4.3 or later, with a microSD card inserted
+  - a computer you own, with a USB-C cable
+  - a plain-text editor you can open yourself (Notepad, TextEdit in plain-text mode, gedit, nano)
+  - optional for the Bluetooth step, your own phone with the Flipper mobile app
+transmits: own-device
+outcome: Run a visible, harmless keyboard script on your own computer, explain why the host obeys it, and tell apart the two Bluetooth relationships your Flipper can hold.
+prerequisites:
+  - m00
+tools: []
+scenes: []
+evidence: The exact text your script typed with no system commands run, a written explanation of the HID trust boundary, focus and keyboard layout, and a note naming your own BLE pairing and how you removed it.
+sources:
+  - title: 'Flipper Docs: Bad USB'
+    url: https://docs.flipper.net/zero/bad-usb
+  - title: 'Flipper Developer Docs: BadUSB script (DuckyScript) format'
+    url: https://developer.flipper.net/flipperzero/doxygen/badusb_file_format.html
+  - title: 'Flipper Zero firmware 1.4.3: Bad USB app (bad_usb_app_i.h, folder and extensions)'
+    url: https://github.com/flipperdevices/flipperzero-firmware/blob/1.4.3/applications/main/bad_usb/bad_usb_app_i.h
+  - title: 'Flipper Zero firmware 1.4.3: bad_usb_app.c (USB lock check, Connection Is Active)'
+    url: https://github.com/flipperdevices/flipperzero-firmware/blob/1.4.3/applications/main/bad_usb/bad_usb_app.c
+  - title: 'Flipper Zero firmware 1.4.3: ducky_script.c (worker states, recognition delay)'
+    url: https://github.com/flipperdevices/flipperzero-firmware/blob/1.4.3/applications/main/bad_usb/helpers/ducky_script.c
+  - title: 'Flipper Zero firmware 1.4.3: bad_usb_hid.c (BLE HID profile and key storage)'
+    url: https://github.com/flipperdevices/flipperzero-firmware/blob/1.4.3/applications/main/bad_usb/helpers/bad_usb_hid.c
+  - title: 'USB HID Usage Tables, Version 1.5: Keyboard/Keypad Page (0x07)'
+    url: https://usb.org/sites/default/files/hut1_5.pdf
+  - title: 'USB Device Class Definition for HID, Version 1.11: keyboard boot report'
+    url: https://www.usb.org/sites/default/files/hid1_11.pdf
+reviewed: '2026-10-13'
+badge: usb-bluetooth
+---
+
+## Outcome
+
+You can run a short keyboard script from your Flipper on your own computer, watch it type a sentence you wrote, and explain why the computer did exactly what it was told.
+
+By the end you can:
+
+- explain why a USB keyboard sends key positions, not letters, and why the computer trusts every one;
+- read the Bad USB screen and say what USB mode, BLE mode, the layout and the connection state each mean;
+- tell apart the two different Bluetooth relationships your Flipper can hold, and remove a pairing you made.
+
+## Before you start
+
+- **Prerequisites:** [Module 0](/learn/00-setup) for installing firmware, mounting the SD card and moving files with qFlipper. Nothing from the radio lessons is needed. This module is about trust, not RF.
+- **Gear:** your Flipper with a microSD card inserted, a computer you own, a USB-C cable, and a plain-text editor you open yourself. The optional Bluetooth step needs your own phone with the Flipper mobile app.
+- **Firmware:** official firmware 1.4.3 (released 5 December 2025). Every menu name and number here comes from that release.
+- **Time:** about 60 minutes: 20 to read, 20 for the USB lab, 10 for the optional Bluetooth step, 10 for the quiz and your notebook entry.
+- **Transmits:** the USB lab is wired and sends nothing over the air. The optional step advertises and pairs over Bluetooth Low Energy, between your own Flipper and your own phone, in your own space.
+- **Scope:** your computer, your phone, your space. The script you run types visible text into a document you opened. It runs no commands, downloads nothing and changes no settings. Read [the Romania lab guide](/romania-lab-guide) for the permission rules this course follows before you pair anything.
+
+
+<Callout variant="warn" title="Read every line before you run anything">
+A keyboard script is a list of keypresses the computer cannot tell from a person typing. The example here types one sentence and presses Enter. Read any script in full before you move it to the Flipper, and never run one you have not read, whatever its file name says it does. Run it only against a document you opened yourself, on a machine you own.
+</Callout>
+
+<Callout variant="legal" title="Your machine, or written permission">
+Running a keystroke script on a computer you do not own, or have no written permission to test, is unauthorised access and can be an offence. The lab here uses your own computer only. The Romania lab guide covers the permission rules this course follows.
+</Callout>
+
+## Understand
+
+### The computer cannot see who is typing
+
+Plug in a keyboard and the computer asks it one question: what kind of device are you? A keyboard answers that it is a **Human Interface Device**, a HID, of the keyboard type. From then on the computer accepts a stream of keypresses and acts on each one. It cannot check whether a hand or a chip is behind them. That blind trust is the whole subject of this lesson.
+
+Flipper's documentation describes the Bad USB app as turning the Flipper into a BadUSB device the computer detects as a HID, such as a keyboard or a mouse. The word "bad" names a class of risk, not the contents of any one script. A script can be as small as typing a sentence, which is what you will run.
+
+When you open Bad USB, the app takes sole use of the USB port and refuses to start if qFlipper or the mobile app still holds the link, showing a "Connection Is Active" message that asks you to disconnect first (`bad_usb_app.c`, firmware 1.4.3). Close qFlipper first.
+
+### A keyboard sends positions, not letters
+
+Here is the detail most people miss, and the reason a script can misbehave without doing anything wrong. A USB keyboard does not send the letter `a`. It sends a number that means "the key in the position where `a` sits on a US keyboard." The USB HID Usage Tables call this a usage code. The letter key `a` is usage `0x04`, Enter is `0x28`, the left Shift modifier is `0xE1`. The computer, not the keyboard, decides what each position means, using the keyboard layout you set in your operating system.
+
+The HID standard is explicit that the codes are positions. Its keyboard page notes that because keyboards vary by language, a vendor should reuse the closest key position rather than change the firmware: the Y key on a North American keyboard "in Germany this is typically Z," and both send the same usage code for that position. The keycaps change; the code does not.
+
+<Figure label="A diagram of the keyboard trust boundary. On the left, a person or the Flipper both feed the same stream of key positions into a USB or Bluetooth HID link. In the middle, the host operating system applies its keyboard layout, turning positions into characters. On the right, the characters land in whichever window has focus." caption="The Flipper and a human are indistinguishable to the host: both send HID usage codes. The host decides what each code means (its layout) and where the characters go (the focused window).">
+<svg viewBox="0 0 640 260" width="100%" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+  <text x="0" y="16" class="fill-foreground font-sans" font-size="13" font-weight="700">Source: sends key positions (usage codes)</text>
+  <rect x="8" y="30" width="150" height="34" rx="4" class="fill-primary stroke-primary" fill-opacity="0.08" stroke-width="1.5" />
+  <text x="83" y="52" text-anchor="middle" class="fill-foreground font-sans" font-size="12">a hand typing</text>
+  <rect x="8" y="78" width="150" height="34" rx="4" class="fill-warning stroke-warning" fill-opacity="0.12" stroke-width="1.5" />
+  <text x="83" y="100" text-anchor="middle" class="fill-foreground font-sans" font-size="12">the Flipper (Bad USB)</text>
+  <text x="83" y="138" text-anchor="middle" class="fill-muted-foreground font-mono" font-size="11">0x04 0x28 ...</text>
+  <line x1="158" y1="72" x2="236" y2="72" class="stroke-border" stroke-width="1.5" marker-end="url(#a13)" />
+  <line x1="158" y1="95" x2="236" y2="95" class="stroke-border" stroke-width="1.5" marker-end="url(#a13)" />
+  <text x="197" y="60" text-anchor="middle" class="fill-muted-foreground font-sans" font-size="10">USB or BLE</text>
+  <text x="197" y="112" text-anchor="middle" class="fill-muted-foreground font-sans" font-size="10">HID link</text>
+  <rect x="238" y="46" width="168" height="76" rx="4" class="fill-info stroke-info" fill-opacity="0.10" stroke-width="1.5" />
+  <text x="322" y="78" text-anchor="middle" class="fill-foreground font-sans" font-size="12" font-weight="700">host applies layout</text>
+  <text x="322" y="98" text-anchor="middle" class="fill-muted-foreground font-sans" font-size="11">position to character</text>
+  <line x1="406" y1="84" x2="484" y2="84" class="stroke-border" stroke-width="1.5" marker-end="url(#a13)" />
+  <rect x="486" y="46" width="146" height="76" rx="4" class="fill-foreground stroke-border" fill-opacity="0.05" stroke-width="1.5" />
+  <text x="559" y="78" text-anchor="middle" class="fill-foreground font-sans" font-size="12" font-weight="700">focused window</text>
+  <text x="559" y="98" text-anchor="middle" class="fill-muted-foreground font-sans" font-size="11">text appears here</text>
+  <text x="0" y="176" class="fill-foreground font-sans" font-size="13" font-weight="700">Two things the source does not control</text>
+  <text x="12" y="198" class="fill-muted-foreground font-sans" font-size="12">1. which layout the host uses, so a wrong layout types the wrong letters</text>
+  <text x="12" y="218" class="fill-muted-foreground font-sans" font-size="12">2. which window has focus, so the keystrokes land wherever focus happens to be</text>
+  <defs>
+    <marker id="a13" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto"><path d="M0 0 L8 4 L0 8 z" class="fill-border" /></marker>
+  </defs>
+</svg>
+</Figure>
+
+Two consequences follow, and both show up in the lab.
+
+- **Layout decides the letters.** If the Flipper sends codes for a US keyboard and your computer is set to a German or Romanian layout, some characters come out wrong, because the same position means a different letter. The app keeps a character-to-position map in a 256-byte `.kl` layout file on the SD card (default `en-US.kl`); the **Layout** button picks one that matches your computer.
+- **Focus decides the destination.** Keystrokes go to whatever window is in front. If the wrong window has focus when the script runs, the text lands there.
+
+A standard boot keyboard report is eight bytes: a modifier byte for Shift, Ctrl, Alt and the GUI key, a reserved byte, then up to six key positions. Typing `A` means Shift plus the `a` position. Nothing in that format says who is pressing.
+
+### The script is DuckyScript, and small on purpose
+
+Scripts for the Bad USB app are plain `.txt` files written in DuckyScript, the Rubber Ducky scripting language, extended by Flipper. No compilation happens; the app reads the text line by line. The commands you need here are few.
+
+<div class="table-scroll">
+
+| Line | What it does |
+| --- | --- |
+| `REM text` | A comment. The app ignores the rest of the line. |
+| `DELAY 3000` | Pause once for 3,000 ms before the next line. |
+| `DEFAULT_DELAY 200` | Add a 200 ms pause before every following line. |
+| `STRING text` | Type the text as keypresses. |
+| `STRINGLN text` | Type the text, then press Enter. |
+| `ENTER` | Press the Enter key once. |
+| `WAIT_FOR_BUTTON_PRESS` | Stop until you press the Flipper's button. |
+
+</div>
+
+The full format adds modifier keys, held keys, media keys, mouse moves and an `ID` line that sets a fake USB vendor and product identifier. You need none of them here. The point is the trust boundary, not a long payload.
+
+### Bluetooth is a second, separate relationship
+
+Your Flipper can speak Bluetooth Low Energy in more than one role, and the trust point is that these are different relationships, not one.
+
+- **The mobile app link.** Pairing your Flipper with the official mobile app creates a trusted link for managing the device. It belongs to the app, not to the Bad USB feature.
+- **The keyboard-over-Bluetooth link.** In BLE mode the Bad USB app advertises as a separate HID keyboard. Firmware 1.4.3 gives it its own device name (prefixed `BadUSB`) and its own stored pairing keys, kept apart from the mobile-app link (`bad_usb_hid.c`). A computer that pairs with it sees a Bluetooth keyboard, nothing more.
+
+So "I paired my Flipper" is incomplete. Pairing it with your phone's app is not the same act as letting a computer pair with its keyboard emulation, and the two leave separate records. Record which one you enabled. In BLE mode, **Config → Remove Pairing** forgets only the bonded keyboard device.
+
+### What the Bad USB screen is actually showing you
+
+<Flip>Main Menu → Bad USB</Flip> lists the `.txt` files from the `badusb` folder on your SD card. Pick one to reach the run screen. The top line is the file name; below it the active layout, `(default)` for US English or the name you chose.
+
+- The centre button reads **Run** when idle and **Stop** while running. While a script runs, the right button reads **Pause**.
+- When idle in **USB mode** the right button reads **BLE** and the left reads **Layout**. In **BLE mode** they read **USB** and **Config**. Layout is a global setting, not per script.
+- Before a computer is connected the screen shows **Connect to device**. Press Run first and it shows **Will run on connect** and waits.
+- After a device connects, the firmware waits about 1,500 ms before the first keypress, to let the host recognise the new keyboard (`ducky_script.c`). A long `DELAY` at the top of a script does the same job more visibly.
+- A malformed line shows **ERROR** with the line number, which is where reading the script first pays off.
+
+### What a defender does about it
+
+The host cannot tell a chip from a hand, so defence sits around the link, not in it.
+
+- Lock your screen when you step away. A keyboard needs a session that accepts input.
+- Do not plug in USB devices or cables you were handed or found, and do not accept a Bluetooth pairing you did not start.
+- Check which keyboards your computer has accepted, and remove any you do not recognise.
+- Read any script in full before it runs.
+
+### Misconceptions
+
+- **"The computer can tell the Flipper apart from a real keyboard."** It cannot. Both send the same HID usage codes over the same kind of link.
+- **"The script types letters."** It types key positions. The host turns positions into letters using its layout, which is why a layout mismatch garbles the output.
+- **"A safe-sounding file name makes a script safe."** The name is just text. Only reading every line tells you what it does.
+- **"Pairing my Flipper with the app is the same as letting a PC use its keyboard."** They are separate BLE relationships with separate stored keys.
+
+## Predict and practise
+
+There is no browser tool for this yet, so the lab is on your own hardware. The first run is deliberately dull: one sentence, typed into a document you opened. The learning is in watching a device type as if it were you, then seeing what breaks when the layout or the focus is wrong.
+
+{/* TODO: tool. A HID layout visualiser (type a character, see the usage code and how it renders under US, DE and RO layouts) would let the "positions, not letters" idea run in the browser before the hardware lab. */}
+
+<Lab kicker="Lab 13.1" title="Run a visible, harmless keyboard script" gear="Flipper, a computer you own, a USB-C cable, a plain-text editor. Wired; nothing transmits over the air.">
+
+1. **Predict first.** Write down three things before you touch the Flipper: what you expect to appear in the document, what happens if a different window has focus when the script runs, and which characters, if any, come out wrong under a German layout.
+2. On your computer, open a new plain-text file and save it as `signal-path-hello.txt`. Leave it empty and keep this window visible. Open a second blank plain-text window as well, saved as `wrong-window.txt`.
+3. In a separate editor window, create this four-line script. Read every line, then save it as `hello.txt` (ASCII only, UTF-8 without BOM, not rich text):
+
+   ```text
+   REM Signal Path: visible typing in a document I opened
+   DELAY 3000
+   STRING Signal Path zy - I control this lab.
+   ENTER
+   ```
+
+4. Connect the Flipper to your computer and open qFlipper. Copy `hello.txt` into the `badusb` folder on the SD card. Close qFlipper, so the Bad USB app can take the USB port.
+5. On the Flipper, open <Flip>Main Menu → Bad USB</Flip> and select `hello.txt`. Confirm the screen shows **USB mode** (press the right **BLE/USB** button if it does not). Check the layout line matches your computer; in USB mode press **Layout** and pick a match if the letters would come out wrong.
+6. Click into your `signal-path-hello.txt` window so it has focus. Press **Run** on the Flipper and watch both the Flipper screen and the document. Expected result: after three seconds, the sentence types itself and Enter adds a new line, with `zy` exactly as written.
+7. **Control (focus):** click `wrong-window.txt` so it has focus, and no other window. Never use a terminal, browser, chat window or the script file for this step, because Enter would submit or alter what is there. Run again. Expected result: the keystrokes land in `wrong-window.txt`, not in your target document.
+8. **Layout:** in USB mode press **Layout** and pick a layout that is not your computer's (a German or French one). Re-focus `signal-path-hello.txt` and run. Expected result: some characters, such as `y`, `z` or `-`, come out wrong, because the same positions mean different characters under that layout. Set Layout back afterwards.
+9. Disconnect the Flipper. Delete both throwaway documents, and remove `hello.txt` from the SD card if you do not want to keep it.
+
+</Lab>
+
+Expected observation: identical runs, except that focus decides the destination and layout decides the letters. The Flipper sent the same key positions every time.
+
+<Win>the sentence typed into the document you chose, the text went to `wrong-window.txt` when focus changed, and you can explain why a wrong layout produced wrong characters from the same script.</Win>
+
+The next step is optional and uses Bluetooth, so you can feel the difference between the two pairings.
+
+<Lab kicker="Lab 13.2" title="Pair, then unpair, the keyboard over Bluetooth" gear="Flipper and your own phone or computer; the Flipper mobile app is optional. This advertises and pairs over BLE, between your own devices only.">
+
+1. **Predict first.** Write down whether you think the device you pair with here will also appear in the Flipper mobile app's device list, and why.
+2. Close qFlipper if it is open. If you have the mobile app, check now that it connects to the Flipper, so you have a baseline.
+3. Open <Flip>Main Menu → Bad USB</Flip>, select `hello.txt`, and press the right button until the screen shows **BLE mode**.
+4. On your own phone or computer, open Bluetooth settings and look for a device whose name begins with `BadUSB`. Pair with it, and confirm the pairing prompt on both devices.
+5. Note where this pairing appears. Compare it with the pairing your Flipper has with the mobile app. They are separate relationships with separate names. If you have no app, note that you could not compare.
+6. On the Flipper, press **Config → Remove Pairing** to forget the bonded device. Confirm it has gone from your phone or computer's Bluetooth list.
+7. **Control:** if you have the app, check that it still connects to the Flipper. If you have no app, write down that you could not test this.
+
+</Lab>
+
+Expected observation: the `BadUSB` keyboard is a distinct Bluetooth device from your Flipper's mobile-app link, with its own entry, and Remove Pairing clears only the keyboard one.
+
+<Win>you paired and then removed the BadUSB keyboard, and you can state in one sentence how that relationship differs from pairing your Flipper with its mobile app.</Win>
+
+## Check yourself
+
+<Quiz id="m13" />
+
+Two questions to answer in a sentence each, without notes:
+
+1. A computer is set to a Romanian layout, but a script was written for a US keyboard. Explain, using the idea of key positions, why the username it types might come out wrong.
+2. Your Flipper is paired with the mobile app and you also let your laptop pair with its BadUSB keyboard. Which pairing does **Config → Remove Pairing** clear, and which stays?
+
+## Keep evidence
+
+Open your [notebook](/learn/notebook?module=m13) and save an entry for this module. Map each lab to a field:
+
+- **Setup:** your computer and its keyboard layout, firmware version, and the four-line script exactly as you wrote it.
+- **Prediction:** your answers from Lab 13.1 step 1 and Lab 13.2 step 1.
+- **Observation:** what typed into the right window, what happened when you changed focus, and, if you tried it, how a wrong layout changed the characters. For the Bluetooth step, where each pairing appeared.
+- **Explanation:** why the host obeyed the Flipper, why a keyboard sends positions rather than letters, and how the two Bluetooth relationships differ.
+
+Adequate evidence shows the exact text typed with no operating-system command run, names your own BLE pairing and how you removed it, and explains the trust boundary in your own words. "It typed" is not evidence; "typed into the focused window, wrong window got it when I switched focus, `z` and `-` came out wrong under the German layout" is.
+
+An example entry:
+
+> Official 1.4.3, laptop with a UK layout, `signal-path-hello.txt` open in a text editor. Script: `DELAY 3000`, `STRING Signal Path zy - I control this lab.`, `ENTER`. Predicted the line in the file, the line in whichever window had focus, and `z`, `y` and `-` wrong under German. Got the line exactly in the file. Clicked the browser during the delay: the line went into the address bar, nothing ran. Layout set to German: `y` and `z` swapped, `-` became `ß`. Layout reset. BLE: laptop listed the keyboard as its own device, separate from the phone app; Remove Pairing cleared only that one. The host obeys any keyboard, and a keyboard sends positions, not letters.
+
+Set a review date for tomorrow, then one week later. When you can explain positions-not-letters and the two pairings without your notes, mark it retrieved.
+
+## Continue
+
+Next is [Module 14: iButton and U2F, identity is not authentication](/learn/14-contact-and-authentication). The trust question returns in a sharper form: a device that only presents an identifier, next to one that actually takes part in proving who you are.
+
+**Retrieval question for next week:** without looking, why can a computer not tell the Flipper apart from a real keyboard, and what single setting decides whether the typed characters come out right?
+
+Primary sources, checked 13 October 2026:
+
+- [Flipper Docs: Bad USB](https://docs.flipper.net/zero/bad-usb) for the HID device description, USB and BLE modes, the `badusb` folder, the Layout and Config buttons, and Remove Pairing.
+- [Flipper Developer Docs: BadUSB script format](https://developer.flipper.net/flipperzero/doxygen/badusb_file_format.html) for the DuckyScript commands, the `.txt` requirement and the extended-DuckyScript compatibility note.
+- Flipper Zero firmware 1.4.3: [Bad USB app](https://github.com/flipperdevices/flipperzero-firmware/blob/1.4.3/applications/main/bad_usb/bad_usb_app_i.h) for the `/ext/badusb` folder, `.txt` and `.kl` extensions and the `en-US.kl` default layout; [ducky_script.c](https://github.com/flipperdevices/flipperzero-firmware/blob/1.4.3/applications/main/bad_usb/helpers/ducky_script.c) for the worker states and the 1,500 ms recognition delay; [bad_usb_hid.c](https://github.com/flipperdevices/flipperzero-firmware/blob/1.4.3/applications/main/bad_usb/helpers/bad_usb_hid.c) for the separate BLE HID device name and key storage.
+- [USB HID Usage Tables, Version 1.5](https://usb.org/sites/default/files/hut1_5.pdf), Keyboard/Keypad Page (0x07), for usage codes `0x04` (`a`), `0x28` (Enter) and `0xE1` (left Shift) and the note that codes are key positions, with the North American Y and German Z example.
+- [USB Device Class Definition for HID, Version 1.11](https://www.usb.org/sites/default/files/hid1_11.pdf) for the eight-byte boot keyboard report: one modifier byte, one reserved byte and up to six key positions.

@@ -1,0 +1,20 @@
+---
+import Learn from '@/layouts/Learn.astro';
+import NotebookIsland from '@/components/learn/NotebookIsland';
+import { lessonTitles } from '@/lib/lessons';
+
+const titles = await lessonTitles();
+---
+<Learn title="Notebook" description="Your Signal Path lab notebook: setup, prediction, observation and explanation for each module, a review queue, and backup to a JSON file.">
+  <div class="mx-auto max-w-3xl lg:ml-0 lg:pl-4">
+    <p class="eyebrow">Notebook</p>
+    <h1 class="mt-3 text-3xl sm:text-4xl">Write it down while it is fresh.</h1>
+    <p class="lede mt-4">One entry per module: what you set up, what you predicted, what happened and why. Use aliases, and keep credentials and personal data out of it.</p>
+    <div class="mt-8">
+      <NotebookIsland client:only="react" titles={titles} />
+      <noscript>
+        <p>The notebook needs JavaScript. Without it, keep the same four fields (setup, prediction, observation, explanation) in a text file of your own.</p>
+      </noscript>
+    </div>
+  </div>
+</Learn>

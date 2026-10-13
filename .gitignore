@@ -9,3 +9,15 @@ _site/
 examples/**/dist/
 examples/**/.vscode/
 examples/**/.ufbt/
+.claude/
+dist/
+.astro/
+.env
+.env.*.local
+.env.production
+playwright-report/
+test-results/
+npm-debug.log*
+.env.local
+.e2e-user.json
+docs/v2/screenshots/

@@ -1,0 +1,13 @@
+---
+/** Link to a glossary entry. `id` is the glossary slug (e.g. "ook-on-off-keying"); unknown ids fail the build. */
+import { glossaryById } from '@/data/glossary';
+
+interface Props {
+  id: string;
+}
+const { id } = Astro.props;
+const entry = glossaryById(id);
+if (!entry) throw new Error(`<Term id="${id}">: no glossary entry with that id (see src/data/glossary.ts)`);
+const hasText = Astro.slots.has('default');
+---
+<a href={`/glossary#${id}`} class="term underline decoration-dotted decoration-1 underline-offset-[3px] hover:text-primary" title={entry.short}>{hasText ? <slot /> : entry.term}</a>

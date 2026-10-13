@@ -1,0 +1,130 @@
+---
+/* Pricing. Copy: docs/v2/copy/pricing.md (section ids kept). Rendered on demand so the layout knows the session
+   and the buy button can post to /api/checkout for signed-in visitors (CSS switch on html[data-signed-in]). */
+import Marketing from '@/layouts/Marketing.astro';
+import Section from '@/components/marketing/Section.astro';
+import PricingTable from '@/components/marketing/PricingTable.astro';
+import BonusStack from '@/components/marketing/BonusStack.astro';
+import Guarantee from '@/components/marketing/Guarantee.astro';
+import Faq from '@/components/marketing/Faq.astro';
+import Cta from '@/components/marketing/Cta.astro';
+import LinkButton from '@/components/marketing/LinkButton.astro';
+import { facts, founding, freeToolNames, price, priceZero } from '@/components/marketing/site';
+
+export const prerender = false;
+Astro.response.headers.set('Cache-Control', 'private, no-store');
+
+const compare: [string, string, string][] = [
+  ['Lessons', 'Modules 0 and 1', `All ${facts.lessons}`],
+  ['Browser tools', freeToolNames, `All ${facts.tools}`],
+  ['Quiz questions', 'Starter quiz', `${facts.questions}, with explanations`],
+  ['Lab notebook', 'Notebook and export', 'Notebook, templates, evidence rubric and review schedule'],
+  ['Troubleshooting trees, for when a capture shows nothing', 'Not included', 'Included'],
+  ['App source and build guide', 'Not included', 'Included'],
+  ['Wi-Fi Devboard lesson', 'Not included', 'Included'],
+  ['Permission & Scope Checklist', 'Not included', 'Included'],
+  ['Preset & Frequency Cheat Sheet', 'With a free account', 'Included'],
+  ['Progress sync', 'With a free account', 'Included'],
+  ['Course updates', 'Updates to Modules 0 and 1', `Updates to all ${facts.lessons} lessons`],
+  ['Price', priceZero, `${price} once`],
+];
+---
+<Marketing
+  title={`Pricing: Complete for ${price}`}
+  description={`Two lessons free. Signal Path Complete is ${price} once: all ${facts.lessons} lessons, ${facts.tools} tools, ${facts.questions} quiz questions, updates and a 30-day refund, no reason needed.`}
+>
+  <section id="hero" data-section="hero" aria-labelledby="hero-title">
+    <div class="mx-auto w-full max-w-[75rem] px-4 pt-12 pb-10 sm:px-6 md:pt-20 md:pb-14">
+      <p class="eyebrow">Pricing</p>
+      <h1 id="hero-title" class="mt-4 max-w-[22ch]">Pay {price} once for {facts.lessons} lessons, {facts.tools} tools and {facts.questions} quiz questions.</h1>
+      <p class="mt-6 max-w-2xl text-lg leading-relaxed text-muted-foreground md:text-xl">Try Modules 0 and 1 free first. After you buy Signal Path Complete, you have 30 days to ask for a full refund.</p>
+      <div class="mt-8 flex flex-col items-start gap-2">
+        <LinkButton href="#buy">Get Signal Path Complete</LinkButton>
+        <p class="text-sm text-muted-foreground">30-day refund, no reason needed.</p>
+      </div>
+    </div>
+  </section>
+
+  <div class="mx-auto w-full max-w-[75rem] px-4 sm:px-6">
+    <PricingTable />
+  </div>
+
+  {
+    founding && founding.ends && (
+      <Section id="founding-price" eyebrow="Founding price" title={`${founding.price} until ${founding.ends}`} intro={`After that date, Signal Path Complete costs ${price}. Founding learners get the same updates as everyone else.`}>
+        <LinkButton href="#buy">Get Complete for {founding.price}</LinkButton>
+        <p class="mt-2 text-sm text-muted-foreground">30-day refund, no reason needed.</p>
+      </Section>
+    )
+  }
+
+  <Section id="which-one" eyebrow="Choosing" title="Starter ends where your first real capture begins." intro="Module 2, the first paid lesson, is where you capture a signal from a device you own.">
+    <div class="grid gap-4 md:grid-cols-2">
+      <div class="rounded-[1.25rem] border border-border bg-card p-6">
+        <p class="leading-relaxed"><b class="font-semibold">Pick Starter</b> if you don't own a Flipper yet, or you want to see how a lesson works before you pay. You get Modules 0 and 1 in full.</p>
+      </div>
+      <div class="rounded-[1.25rem] border border-border bg-card p-6">
+        <p class="leading-relaxed"><b class="font-semibold">Pick Complete</b> if you already own a Flipper and a capture has failed or a copy worked only once. Pick it too if you want the stages after Module 1, from protocols to RFID, NFC and your own app.</p>
+      </div>
+    </div>
+    <p class="mt-5 max-w-[65ch] text-muted-foreground">If you want ready-made files to run against other people's gates, cars or badges, neither option has them.</p>
+    <div class="mt-8 flex flex-col gap-3 sm:flex-row sm:items-start sm:gap-5">
+      <div class="flex flex-col items-start gap-2">
+        <LinkButton href="#buy">Get Signal Path Complete</LinkButton>
+        <p class="text-sm text-muted-foreground">30-day refund, no reason needed.</p>
+      </div>
+      <LinkButton href="/learn/00-setup" variant="secondary">Start the free starter</LinkButton>
+    </div>
+  </Section>
+
+  <Section id="compare" eyebrow="Side by side" title="What each option includes">
+    <div class="overflow-x-auto rounded-[1.25rem] border border-border bg-card">
+      <table class="w-full min-w-[34rem] border-collapse text-left text-[0.9375rem]">
+        <caption class="sr-only">Signal Path Starter compared with Signal Path Complete</caption>
+        <thead>
+          <tr class="border-b border-border">
+            <td class="w-[38%] p-4 sm:px-6"></td>
+            <th scope="col" class="p-4 font-semibold sm:px-6">Starter</th>
+            <th scope="col" class="bg-accent/60 p-4 font-semibold text-accent-foreground sm:px-6">Complete</th>
+          </tr>
+        </thead>
+        <tbody>
+          {
+            compare.map(([row, s, c]) => (
+              <tr class="border-b border-border last:border-b-0">
+                <th scope="row" class="p-4 align-top font-medium sm:px-6">{row}</th>
+                <td class:list={['p-4 align-top sm:px-6', s === 'Not included' && 'text-muted-foreground']}>{s}</td>
+                <td class="bg-accent/60 p-4 align-top sm:px-6">{c}</td>
+              </tr>
+            ))
+          }
+        </tbody>
+      </table>
+    </div>
+    <div class="mt-8 flex flex-col items-start gap-2">
+      <LinkButton href="#buy">Get Signal Path Complete</LinkButton>
+      <p class="text-sm text-muted-foreground">30-day refund, no reason needed.</p>
+    </div>
+  </Section>
+
+  <Section id="bonus-stack" eyebrow="Included with Complete" title="What's in Complete, and what we'd charge for each part alone." intro="The values are our estimate of a fair standalone price for each part. The course itself is not counted.">
+    <BonusStack />
+    <div class="mt-8 flex flex-col items-start gap-2">
+      <LinkButton href="#buy">Get Signal Path Complete</LinkButton>
+      <p class="text-sm text-muted-foreground">30-day refund, no reason needed.</p>
+    </div>
+  </Section>
+
+  <section id="guarantee" data-section="guarantee" aria-labelledby="guarantee-title" class="mx-auto w-full max-w-[75rem] scroll-mt-20 px-4 py-9 sm:px-6 md:py-12 lg:py-14">
+    <Guarantee />
+  </section>
+
+  <Section id="faq" eyebrow="Questions" title="Before you buy">
+    <Faq />
+  </Section>
+
+  <Cta title={`Open Module 0 free, or all ${facts.lessons} lessons for ${price}.`} body="If you buy, you have 30 days to change your mind." microcopy="30-day refund, no reason needed.">
+    <LinkButton href="#buy">Get Signal Path Complete</LinkButton>
+    <LinkButton href="/learn/00-setup" variant="inverse">Start the free starter</LinkButton>
+  </Cta>
+</Marketing>

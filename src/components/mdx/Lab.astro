@@ -1,0 +1,19 @@
+---
+/** Hands-on lab block. Put the steps in an ordered list as children. */
+interface Props {
+  kicker: string;
+  title: string;
+  gear?: string;
+}
+const { kicker, title, gear } = Astro.props;
+---
+<section class="lab" aria-label={`${kicker}: ${title}`}>
+  <div class="lab-head">
+    <p class="lab-kicker m-0">{kicker}</p>
+    <h3>{title}</h3>
+  </div>
+  <div class="lab-body">
+    {gear && <p class="lab-gear">Gear: <b>{gear}</b></p>}
+    <slot />
+  </div>
+</section>

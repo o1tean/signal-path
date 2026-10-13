@@ -1,0 +1,23 @@
+---
+/** Closing call to action on a signal-rings surface. Text comes from each page's final-cta copy. */
+interface Props {
+  id?: string;
+  title: string;
+  body?: string;
+  microcopy?: string;
+}
+const { id = 'final-cta', title, body, microcopy } = Astro.props;
+---
+<section id={id} data-section={id} aria-labelledby={`${id}-title`} class="mx-auto w-full max-w-[75rem] px-4 pb-14 sm:px-6 md:pb-24 lg:pb-28">
+  <div class="cta relative isolate overflow-hidden rounded-[1.75rem] bg-scope-bg px-6 ring-1 ring-white/10 ring-inset py-14 text-center sm:px-12 md:py-20">
+    <svg class="pointer-events-none absolute top-full left-1/2 -z-10 size-[56rem] -translate-x-1/2 -translate-y-1/2" viewBox="0 0 800 800" fill="none" aria-hidden="true">
+      {[120, 200, 280, 360, 440].map((r, i) => <circle cx="400" cy="400" r={r} stroke="var(--scope-peak)" stroke-opacity={0.32 - i * 0.055} />)}
+    </svg>
+    <h2 id={`${id}-title`} class="mx-auto max-w-2xl text-[1.875rem] leading-[1.1] tracking-[-0.025em] text-white md:text-[2.75rem]">{title}</h2>
+    {body && <p class="mx-auto mt-4 max-w-xl text-lg leading-relaxed text-scope-text">{body}</p>}
+    <div class="mt-9 flex flex-col items-center justify-center gap-3 sm:flex-row">
+      <slot />
+    </div>
+    {microcopy && <p class="mt-4 text-sm text-scope-text">{microcopy}</p>}
+  </div>
+</section>

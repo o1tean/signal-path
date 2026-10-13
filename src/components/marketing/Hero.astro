@@ -1,0 +1,175 @@
+---
+/** Home hero. Copy: docs/v2/copy/home.md#hero. The 3D Flipper (src/widgets/scene3d, opts.hero) mounts over a
+    static illustration that stays until the scene reports ready or falls back to the same image. */
+import Scene3D from '@/components/mdx/Scene3D.astro';
+import LinkButton from './LinkButton.astro';
+import { facts, price } from './site';
+
+const modes = [
+  { id: 'subghz', label: 'Sub-GHz', band: 'Sub-GHz · fixed-code remote', value: '433.92', unit: 'MHz' },
+  { id: 'nfc', label: 'NFC', band: 'NFC · training tag', value: '13.56', unit: 'MHz' },
+  { id: 'wifi', label: 'Wi-Fi Devboard', band: 'Wi-Fi Devboard · own access point', value: '2.4', unit: 'GHz' },
+];
+---
+<section id="hero" data-section="hero" aria-labelledby="hero-title" class="relative overflow-hidden">
+  <div class="mx-auto w-full max-w-[75rem] px-4 pt-12 sm:px-6 md:pt-20 lg:pt-24">
+    <div class="mx-auto max-w-3xl text-center">
+      <p class="hero-rise inline-flex max-w-full items-center gap-2 rounded-full border border-border bg-card px-3 py-1.5 text-[0.8125rem] text-muted-foreground sm:px-3.5 sm:text-sm">
+        <span class="relative flex size-2" aria-hidden="true">
+          <span class="ping absolute inset-0 rounded-full bg-primary/60"></span>
+          <span class="relative size-2 rounded-full bg-primary"></span>
+        </span>
+        Pressed Read and the screen stayed empty?
+      </p>
+      <h1 id="hero-title" class="display hero-rise mt-6 [--d:60ms]">Explain what your Flipper Zero just captured.</h1>
+      <p class="hero-rise mx-auto mt-6 max-w-[38rem] text-lg leading-relaxed text-muted-foreground [--d:120ms] md:text-xl">
+        By week 3 you can name a remote's frequency, modulation and protocol, and say why a replay worked or failed. Modules 0 and 1 are free.
+      </p>
+      <div class="hero-rise mt-9 flex flex-col items-center justify-center gap-3 [--d:180ms] sm:flex-row sm:gap-5">
+        <LinkButton href="/learn/00-setup" class="w-full sm:w-auto">
+          Start the free starter
+          <svg aria-hidden="true" viewBox="0 0 24 24" class="size-4 transition-transform group-hover:translate-x-0.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"></path></svg>
+        </LinkButton>
+        <LinkButton href="/course" variant="quiet">See all {facts.lessons} lessons</LinkButton>
+      </div>
+      <p class="hero-rise mt-5 text-sm text-muted-foreground [--d:220ms]">Complete is {price}, paid once, with a 30-day refund.</p>
+    </div>
+
+    <div class="hero-stage relative -mx-4 mt-8 sm:mx-auto sm:mt-10 sm:max-w-[60rem] md:mt-14" data-signal-stage data-mode="subghz">
+      <div class="rings pointer-events-none absolute inset-0 flex items-center justify-center" aria-hidden="true">
+        <span></span><span></span><span></span>
+      </div>
+      <img
+        src="/images/device.svg"
+        alt=""
+        width="920"
+        height="460"
+        fetchpriority="high"
+        decoding="async"
+        class="hero-static pointer-events-none absolute inset-0 m-auto h-full w-full object-contain transition-opacity duration-500"
+      />
+      <Scene3D
+        name="flipper"
+        caption=""
+        label="3D model of the Flipper Zero. Drag or use the arrow keys to rotate."
+        opts={{ hero: true, mode: 'subghz' }}
+        class="relative"
+      />
+      <div class="readout absolute bottom-2 left-0 hidden sm:block rounded-xl border border-border bg-card/90 px-4 py-3 text-left backdrop-blur-md sm:bottom-6 sm:left-4" aria-live="polite">
+        <span class="block text-[0.6875rem] font-medium tracking-wide text-muted-foreground uppercase" data-readout-band>{modes[0].band}</span>
+        <span class="mt-0.5 block font-mono text-xl font-semibold tabular-nums sm:text-2xl"><span data-readout-value>{modes[0].value}</span> <span class="text-base text-muted-foreground" data-readout-unit>{modes[0].unit}</span></span>
+      </div>
+    </div>
+
+    <div class="flex flex-col items-center gap-3 pt-4 pb-14 md:pb-20">
+      <div role="group" aria-label="Show a device interface" class="inline-flex rounded-full border border-border bg-card p-1">
+        {
+          modes.map((m, i) => (
+            <button
+              type="button"
+              data-mode-button={m.id}
+              data-band={m.band}
+              data-value={m.value}
+              data-unit={m.unit}
+              aria-pressed={i === 0 ? 'true' : 'false'}
+              class="min-h-11 rounded-full px-3.5 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground aria-pressed:bg-foreground aria-pressed:text-background sm:px-5"
+            >
+              {m.label}
+            </button>
+          ))
+        }
+      </div>
+      <p class="text-xs text-muted-foreground">Official Flipper Zero body model, rendered in your browser. Drag to rotate.</p>
+    </div>
+  </div>
+</section>
+
+<style>
+  .hero-stage {
+    aspect-ratio: 2 / 1;
+  }
+  .hero-stage:has(.scene3d[data-scene-state='ready'], .scene3d[data-scene-state='fallback']) .hero-static {
+    opacity: 0;
+  }
+  /* the 3D scene draws its own signal rings */
+  .hero-stage:has(.scene3d[data-scene-state='ready']) .rings {
+    display: none;
+  }
+  /* signal rings behind the device: transform and opacity only */
+  .rings span {
+    position: absolute;
+    width: min(46%, 30rem);
+    aspect-ratio: 1;
+    border-radius: 9999px;
+    border: 1px solid color-mix(in oklch, var(--primary) 35%, transparent);
+    opacity: 0;
+    animation: ring 6s var(--motion-ease) infinite;
+  }
+  .rings span:nth-child(2) {
+    animation-delay: 2s;
+  }
+  .rings span:nth-child(3) {
+    animation-delay: 4s;
+  }
+  @keyframes ring {
+    0% {
+      transform: scale(0.55);
+      opacity: 0;
+    }
+    20% {
+      opacity: 0.9;
+    }
+    100% {
+      transform: scale(1.6);
+      opacity: 0;
+    }
+  }
+  .ping {
+    animation: ping 2.4s cubic-bezier(0, 0, 0.2, 1) infinite;
+  }
+  @keyframes ping {
+    75%,
+    100% {
+      transform: scale(2.4);
+      opacity: 0;
+    }
+  }
+  /* one entrance, from an already-visible state, only when motion is allowed */
+  @media (prefers-reduced-motion: no-preference) {
+    :global(html:not(.motion-off)) .hero-rise {
+      animation: rise 700ms var(--motion-ease) both;
+      animation-delay: var(--d, 0ms);
+    }
+  }
+  @keyframes rise {
+    from {
+      opacity: 0.001;
+      transform: translateY(10px);
+    }
+  }
+  /* static rings when motion is off */
+  :global(html.motion-off) .rings span:nth-child(1) {
+    opacity: 0.5;
+    transform: scale(0.8);
+  }
+  :global(html.motion-off) .rings span:nth-child(2) {
+    opacity: 0.3;
+    transform: scale(1.15);
+  }
+</style>
+
+<script>
+  // Mode buttons: the 3D scene follows data-mode on the stage; the readout follows the pressed button.
+  const stage = document.querySelector<HTMLElement>('[data-signal-stage]');
+  const buttons = [...document.querySelectorAll<HTMLButtonElement>('[data-mode-button]')];
+  for (const b of buttons) {
+    b.addEventListener('click', () => {
+      if (!stage) return;
+      stage.dataset.mode = b.dataset.modeButton;
+      for (const o of buttons) o.setAttribute('aria-pressed', String(o === b));
+      stage.querySelector('[data-readout-band]')!.textContent = b.dataset.band ?? '';
+      stage.querySelector('[data-readout-value]')!.textContent = b.dataset.value ?? '';
+      stage.querySelector('[data-readout-unit]')!.textContent = b.dataset.unit ?? '';
+    });
+  }
+</script>

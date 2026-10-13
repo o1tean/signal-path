@@ -1,0 +1,408 @@
+---
+id: m00
+number: 0
+slug: 00-setup
+title: Meet your radio lab
+description: Set up your Flipper Zero, learn its menus and the .sub file format, and watch your own remote register on the Frequency Analyzer before any radio theory.
+stage: starter
+week: Week 0
+access: free
+minutes: 90
+gear:
+  - Flipper Zero, charged over USB-C
+  - microSD card (16 to 32 GB is plenty)
+  - qFlipper on a computer, or the Flipper Mobile App on your phone
+  - one fixed-code remote you own, such as a wireless doorbell button
+  - one infrared TV remote you own, as a control
+  - 'optional for Lab 0.2: an LED-strip remote, a ceiling-fan remote and a shoebox'
+transmits: none
+outcome: Record a Frequency Analyzer reading from your own remote and a no-reading control, with your firmware version, region and SD card status.
+prerequisites: []
+tools:
+  - flipper-sim
+scenes:
+  - flipper
+evidence: A setup record with firmware version, region code and SD card status, plus one Frequency Analyzer reading from your own remote, a control press, and the limits of both.
+sources:
+  - title: 'Flipper: first start'
+    url: https://docs.flipper.net/zero/basics/first-start
+  - title: 'Flipper: firmware update'
+    url: https://docs.flipper.net/zero/basics/firmware-update
+  - title: 'Flipper: microSD card setup'
+    url: https://docs.flipper.net/zero/basics/sd-card
+  - title: 'Flipper: controls'
+    url: https://docs.flipper.net/zero/basics/control
+  - title: 'Flipper: desktop'
+    url: https://docs.flipper.net/zero/basics/desktop
+  - title: 'Flipper: settings'
+    url: https://docs.flipper.net/zero/basics/settings
+  - title: 'Flipper: Sub-GHz hardware and menus'
+    url: https://docs.flipper.net/zero/sub-ghz
+  - title: 'Flipper: reading signals and the Frequency Analyzer'
+    url: https://docs.flipper.net/zero/sub-ghz/read
+  - title: 'Flipper: Sub-GHz frequencies by region'
+    url: https://docs.flipper.net/zero/sub-ghz/frequencies
+  - title: 'Flipper: tech specs'
+    url: https://docs.flipper.net/zero/development/hardware/tech-specs
+  - title: 'Flipper developer docs: Sub-GHz file format'
+    url: https://developer.flipper.net/flipperzero/doxygen/subghz_file_format.html
+  - title: 'Momentum firmware README'
+    url: https://github.com/Next-Flip/Momentum-Firmware
+  - title: 'Official firmware source: Sub-GHz start menu'
+    url: https://github.com/flipperdevices/flipperzero-firmware/blob/dev/applications/main/subghz/scenes/subghz_scene_start.c
+  - title: 'Official firmware source: Frequency Analyzer worker'
+    url: https://github.com/flipperdevices/flipperzero-firmware/blob/dev/applications/main/subghz/helpers/subghz_frequency_analyzer_worker.c
+  - title: 'Official firmware source: Frequency Analyzer threshold'
+    url: https://github.com/flipperdevices/flipperzero-firmware/blob/dev/applications/main/subghz/helpers/subghz_frequency_analyzer_worker.h
+reviewed: '2026-10-13'
+badge: signal-seeker
+---
+
+## Outcome
+
+You can record a Frequency Analyzer reading from your own remote, next to a control press that gives no reading, together with your Flipper's firmware version, region and SD card status.
+
+By the end you can:
+
+- set up the device, record its firmware version and region code, and confirm the microSD card works;
+- find your way into the Sub-GHz menu and back to the desktop in the simulator, and read a `.sub` file line by line;
+- explain what a Frequency Analyzer reading does and does not prove, using a control press as evidence.
+
+Radio feels abstract until you watch a reading appear when you press a doorbell. So that is the job today: press the doorbell and write down what happened.
+
+## Before you start
+
+- **Prerequisites:** none. If words like "frequency" and "hertz" are new, skim the [primer](/primer) first.
+- **Time:** about 90 minutes, including the quiz and notebook entry. The firmware update (Flipper's documentation says about 10 minutes through the mobile app) is the slowest part, so start it first or do it the day before.
+- **What transmits:** nothing on the Flipper. Your remote transmits when you press it, which is what it was built to do.
+- **Scope:** your own device, your own space, your own remotes.
+
+### Set up and keep a lab record
+
+1. Charge the Flipper over USB-C. To switch it on, hold <kbd>Back</kbd> for 3 seconds.
+2. Insert a microSD card. The Flipper accepts cards up to 256 GB; 16 to 32 GB from a known brand is plenty. Back up anything on the card before you format it at <Flip>Settings → Storage → Format SD Card</Flip>. Push the card in until it clicks; a card that works loose is a common reason a save fails. If you format the card later, run the firmware update again, because the firmware's assets live on the card.
+3. Update the firmware with qFlipper (desktop, over USB) or the Flipper Mobile App (phone, over Bluetooth). Keep the card inserted: the update needs it. Choose the **Release** channel, which Flipper recommends for general use.
+4. Record two facts. Holding <kbd>Down</kbd> on the desktop opens Device Info, which shows the firmware and hardware details and the ISO region code. Flipper's frequencies page names this screen as the place to read the region. <Flip>Settings → About</Flip> also shows hardware, region and firmware information, so use whichever screen shows the version number on yours.
+
+### Choose a documented starting point
+
+Use official firmware for this course. If you already run Momentum, a community firmware, record its version and keep going; the radio principles are the same.
+
+<Callout variant="warn" title="Leave region settings alone">
+Momentum's [README](https://github.com/Next-Flip/Momentum-Firmware) lists a setting under Momentum Settings → Protocols that extends Sub-GHz to 281–361, 378–481 and 749–962 MHz, wider than the chip's documented bands. Other firmware may offer further ways to widen the transmit range. Leave region and range settings at their defaults: this course never needs them, and widening the range can let you transmit where you are not allowed to.
+</Callout>
+
+<Callout variant="legal" title="One rule, from the first press">
+Everything in Signal Path uses devices **you own**, in a space **you control**. Today you only receive, but receiving is not a blanket permission: a receiver can still collect other people's private data, and the rules on intercepting communications are separate from the rules on transmitting. The [Romania lab guide](/romania-lab-guide) sets out what applies; read it before this hardware lab. This course is education, not legal advice.
+{/* VERIFY (owner): cite the actual Romanian provisions and ANCOM short-range-device conditions in the lab guide, and have a qualified person review. */}
+</Callout>
+
+## Understand
+
+### What the Flipper actually is
+
+The Flipper Zero is several small radios and interfaces in one case, like a pocket knife where each blade speaks to a different family of everyday electronics.
+
+<Scene3D name="flipper" opts={{ mode: 'subghz' }} caption="Official body model · drag to rotate" label="3D model of the Flipper Zero body. Drag or use arrow keys to rotate." />
+
+<div class="table-scroll">
+
+| Tool | What it talks to | Everyday examples |
+| --- | --- | --- |
+| **Sub-GHz radio** <span class="pill orange">our focus</span> | Low-power radios below 1 GHz, through a TI <Term id="cc1101">CC1101</Term> transceiver | Doorbells, LED-strip and fan remotes, weather stations, tyre-pressure sensors |
+| **125 kHz RFID** | Low-frequency tags powered by the reader's field | Older building fobs, animal microchips, supply-chain tags |
+| **13.56 MHz NFC** | High-frequency cards: ISO 14443A/B, MIFARE, FeliCa, NFC Forum tags | Transit cards, hotel keys, stickers |
+| **Infrared** | Light at about 940 nm, usually on a 38 kHz carrier | TVs, air conditioners, projectors |
+| **iButton** | Contact keys: Dallas 1-Wire, Cyfral, Metakom | Intercom and building keys |
+| **GPIO** | 13 user pins at 3.3 V logic (5 V tolerant inputs) | Sensors, add-on boards such as the Wi-Fi Devboard |
+
+</div>
+
+Each step on the axis below is ten times the last, which is why kilohertz and gigahertz fit on one line.
+
+<Figure label="A logarithmic frequency axis from 100 kHz to 10 GHz. 125 kHz RFID sits at the far left, 13.56 MHz NFC in the middle, the Sub-GHz radio's three bands between 300 and 928 MHz, and Bluetooth LE at 2.4 GHz to the right of 1 GHz." caption="Where the Flipper's radios sit. Each tick is ten times the previous one. Infrared is light, far off this scale at about 320 THz.">
+<svg viewBox="0 0 660 190" width="100%" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+  <line x1="30" y1="130" x2="630" y2="130" class="stroke-foreground" stroke-width="1.5" />
+  <g class="stroke-border" stroke-width="1">
+    <line x1="30" y1="124" x2="30" y2="136" /><line x1="150" y1="124" x2="150" y2="136" /><line x1="270" y1="124" x2="270" y2="136" />
+    <line x1="390" y1="124" x2="390" y2="136" /><line x1="510" y1="124" x2="510" y2="136" /><line x1="630" y1="124" x2="630" y2="136" />
+  </g>
+  <g class="fill-muted-foreground font-mono" font-size="11" text-anchor="middle">
+    <text x="30" y="152">100 kHz</text><text x="150" y="152">1 MHz</text><text x="270" y="152">10 MHz</text>
+    <text x="390" y="152">100 MHz</text><text x="510" y="152">1 GHz</text><text x="630" y="152" text-anchor="end">10 GHz</text>
+  </g>
+  <rect x="40" y="96" width="4" height="34" class="fill-info" />
+  <text x="44" y="88" class="fill-foreground font-sans" font-size="12" text-anchor="middle">RFID 125 kHz</text>
+  <rect x="284" y="96" width="4" height="34" class="fill-info" />
+  <text x="286" y="88" class="fill-foreground font-sans" font-size="12" text-anchor="middle">NFC 13.56 MHz</text>
+  <rect x="447" y="66" width="8" height="64" class="fill-primary" />
+  <rect x="460" y="66" width="10" height="64" class="fill-primary" />
+  <rect x="497" y="66" width="9" height="64" class="fill-primary" />
+  <text x="476" y="40" class="fill-foreground font-sans" font-size="12" font-weight="700" text-anchor="middle">Sub-GHz (CC1101)</text>
+  <text x="476" y="56" class="fill-muted-foreground font-mono" font-size="10" text-anchor="middle">300–348 · 387–464 · 779–928 MHz</text>
+  <rect x="554" y="96" width="4" height="34" class="fill-muted-foreground" />
+  <text x="580" y="88" class="fill-foreground font-sans" font-size="12" text-anchor="middle">Bluetooth LE 2.4 GHz</text>
+  <text x="30" y="180" class="fill-muted-foreground font-sans" font-size="11">Log scale: equal gaps mean equal ratios, not equal differences.</text>
+</svg>
+</Figure>
+
+The first half of this course works almost entirely in <Term id="sub-ghz">Sub-GHz</Term>, the radio spectrum below 1 GHz where cheap short-range remotes live. RFID, NFC, infrared, iButton and GPIO each get their own module later.
+
+<Callout variant="note" title='Why "Sub-GHz"?'>
+"Sub" means below. Sub-GHz is the radio spectrum under one gigahertz (1,000 MHz), where cheap short-range remotes live. The Flipper's chip and antenna are designed for **300–348, 387–464 and 779–928 MHz**. Do not memorise those. Module 1 gives you the four numbers that matter.
+</Callout>
+
+### Listening and transmitting are different jobs
+
+Receiving puts no energy into the air. Transmitting does, which is why it is the regulated part. Flipper's documentation says the <Term id="region-regulatory">region</Term> is determined during a firmware update, and that only that region's transmit ranges are unlocked. For the European Union the documented ranges are **433.05–434.79 MHz** and **868.15–868.55 MHz**. Flipper's page says "European Union", not a country, so check your national rules too. Try to send outside the allowed ranges and the device refuses.
+
+The region list is a firmware guard rail. It does not replace the conditions set by your national regulator (ANCOM in Romania). You only receive in Week 0 and most of Week 1, and the transmit rules come before you send anything.
+
+### The SD card and your first file format
+
+Captured signals, RFID cards, NFC tags, infrared remotes and apps all land on the microSD card as ordinary files. Without a card, you cannot save captures or update the firmware.
+
+For Sub-GHz, the file you will create over and over is a <Term id="sub-file">.sub file</Term>: a short, human-readable text file that describes one signal. Here is a saved fixed-code remote in the format Flipper's developer documentation gives:
+
+```text
+Filetype: Flipper SubGhz Key File
+Version: 1
+Frequency: 433920000
+Preset: FuriHalSubGhzPresetOok650Async
+Protocol: Princeton
+Bit: 24
+Key: 00 00 00 00 00 8C 5A 3B
+TE: 400
+```
+
+Read it like a label on a jar:
+
+<div class="table-scroll">
+
+| Line | What it means | Units and notes |
+| --- | --- | --- |
+| `Frequency` | Where the signal lives | Hertz: 433920000 Hz is 433.92 MHz |
+| `Preset` | How the radio listens | `Ook650Async` is the AM650 <Term id="preset">preset</Term> |
+| `Protocol` | Which remote "language" it speaks | Princeton is a common fixed-code <Term id="protocol">protocol</Term> |
+| `Bit` | How long the code is | 24 bits |
+| `Key` | The code itself | Hexadecimal bytes |
+| `TE` | The basic pulse length | Microseconds |
+
+</div>
+
+Modules 1 to 3 explain each field (frequency, preset, protocol, bit, key, TE), and when Read cannot name a protocol, Read RAW saves raw pulse timings instead of a key (Module 5). Today, notice only that a capture is a small text file you can read.
+
+### Getting around: buttons and menus
+
+<div class="table-scroll">
+
+| Button | On the desktop | Inside a menu or app |
+| --- | --- | --- |
+| <kbd>OK</kbd> | Opens the main menu | Selects, confirms, launches |
+| <kbd>Up</kbd> / <kbd>Down</kbd> | Up opens the Lock menu; holding Down opens Device Info | Move through a list |
+| <kbd>Left</kbd> / <kbd>Right</kbd> | Press or hold to open up to four quick-access apps | Change a value or switch between options |
+| <kbd>Back</kbd> | Hold 3 s to switch on when off | Steps out one level or quits the app |
+
+</div>
+
+<Figure label="A menu map. From the desktop, OK opens the main menu, Up opens the Lock menu, and holding Down opens Device Info. The main menu lists apps including Sub-GHz. Sub-GHz contains Read, Read RAW, Saved, Add Manually, Frequency Analyzer, Region Information and Radio Settings. Back returns one level at each step." caption="The paths you need this week. Back always returns one level, so pressing it a few times brings you home.">
+<svg viewBox="0 0 680 300" width="100%" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+  <g class="font-sans" font-size="13">
+    <rect x="10" y="120" width="120" height="44" rx="8" class="fill-card stroke-foreground" stroke-width="1.5" />
+    <text x="70" y="147" class="fill-foreground" text-anchor="middle" font-weight="700">Desktop</text>
+    <rect x="200" y="120" width="130" height="44" rx="8" class="fill-card stroke-foreground" stroke-width="1.5" />
+    <text x="265" y="147" class="fill-foreground" text-anchor="middle" font-weight="700">Main menu</text>
+    <rect x="200" y="30" width="130" height="36" rx="8" class="fill-card stroke-border" stroke-width="1" />
+    <text x="265" y="53" class="fill-muted-foreground" text-anchor="middle">Lock menu</text>
+    <rect x="200" y="224" width="130" height="36" rx="8" class="fill-card stroke-border" stroke-width="1" />
+    <text x="265" y="247" class="fill-muted-foreground" text-anchor="middle">Device Info</text>
+    <rect x="400" y="120" width="100" height="44" rx="8" class="fill-card stroke-primary" stroke-width="2" />
+    <text x="450" y="147" class="fill-foreground" text-anchor="middle" font-weight="700">Sub-GHz</text>
+  </g>
+  <g class="stroke-muted-foreground" stroke-width="1.5" fill="none">
+    <path d="M130 142 H196" /><path d="M188 137 L196 142 L188 147" />
+    <path d="M70 120 V48 H196" /><path d="M188 43 L196 48 L188 53" />
+    <path d="M70 164 V242 H196" /><path d="M188 237 L196 242 L188 247" />
+    <path d="M330 142 H396" /><path d="M388 137 L396 142 L388 147" />
+    <path d="M500 142 H530" />
+    <path d="M530 22 V280" />
+  </g>
+  <g class="fill-muted-foreground font-mono" font-size="11">
+    <text x="140" y="136">OK</text>
+    <text x="78" y="40">Up</text>
+    <text x="78" y="236">hold Down</text>
+    <text x="340" y="136">OK</text>
+  </g>
+  <g class="font-mono" font-size="12">
+    <text x="540" y="26" class="fill-foreground">Read</text>
+    <text x="540" y="64" class="fill-foreground">Read RAW</text>
+    <text x="540" y="102" class="fill-foreground">Saved</text>
+    <text x="540" y="140" class="fill-foreground">Add Manually</text>
+    <text x="540" y="178" class="fill-primary" font-weight="700">Frequency Analyzer</text>
+    <text x="540" y="216" class="fill-foreground">Region Information</text>
+    <text x="540" y="254" class="fill-foreground">Radio Settings</text>
+  </g>
+  <g class="stroke-muted-foreground" stroke-width="1"><path d="M530 22 H536 M530 60 H536 M530 98 H536 M530 136 H536 M530 174 H536 M530 212 H536 M530 250 H536" /></g>
+  <text x="10" y="294" class="fill-muted-foreground font-sans" font-size="11">Back steps out one level from any box.</text>
+</svg>
+</Figure>
+
+#### Inside the Sub-GHz app
+
+Official firmware shows seven items, in this order:
+
+<div class="table-scroll">
+
+| Item | What it does | You'll use it in |
+| --- | --- | --- |
+| **Read** | Listens on a set frequency and decodes signals from protocols it knows | Module 3 |
+| **Read RAW** | Records the raw pulse timing, including protocols it cannot name | Module 5 |
+| **Saved** | Your library of saved `.sub` files | Module 3 |
+| **Add Manually** | Creates a virtual remote from a known protocol without capturing one | Module 4 |
+| **Frequency Analyzer** | Finds the frequency of a strong signal held close to the device | **Today** and Module 1 |
+| **Region Information** | Shows your region and the frequencies allowed for transmission | Today |
+| **Radio Settings** | Switches between the internal antenna and an external module or antenna | Only if you add an external module |
+
+</div>
+
+If your firmware differs, for example Momentum, match items by what they do rather than by their label.
+
+### What the Frequency Analyzer screen is actually showing you
+
+The analyzer does not draw a spectrum. It runs a two-pass search, over and over:
+
+1. **Coarse pass.** It hops through a list of frequencies, letting the receiver settle for 2 ms on each, and measures signal strength (<Term id="rssi">RSSI</Term>).
+2. **Fine pass.** If the strongest reading beats a threshold, it re-scans 300 kHz either side of that frequency in 20 kHz steps and displays the winner. Flipper's documentation gives the threshold as −90 dBm; the official firmware source on its dev branch, checked 13 October 2026, sets it at −93 dBm. This lesson rounds to "about −90 dBm". The 2 ms, 300 kHz and 20 kHz values come from the same source file, so they may change in a later firmware release.
+
+So the number on screen is the frequency with the highest RSSI that cleared the threshold, rounded to a 20 kHz step. Because it hops, a very short burst can fall between visits and be missed, which is why you hold the button down. Flipper's documentation calls the results approximate and says to hold the remote close to the device, mainly so a nearby transmitter you care about beats the others.
+
+<Figure label="A time plot of signal strength in dBm. A noisy trace hovers around minus 100 dBm, below a dashed threshold line at minus 90 dBm. While a remote button is held, the trace jumps to about minus 50 dBm, then falls back when released. Only the time above the threshold produces a frequency on screen." caption="Illustrative values. The analyzer only reports a frequency while something nearby is stronger than its threshold. Before the first hit the screen stays blank, and below the line nothing new appears, even though the air is not empty.">
+<svg viewBox="0 0 660 250" width="100%" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+  <g class="fill-muted-foreground font-mono" font-size="11" text-anchor="end">
+    <text x="58" y="44">−40</text><text x="58" y="94">−60</text><text x="58" y="144">−80</text><text x="58" y="194">−100</text>
+  </g>
+  <text x="14" y="120" class="fill-muted-foreground font-mono" font-size="11" transform="rotate(-90 14 120)" text-anchor="middle">dBm</text>
+  <line x1="64" y1="20" x2="64" y2="210" class="stroke-border" stroke-width="1" />
+  <line x1="64" y1="210" x2="650" y2="210" class="stroke-border" stroke-width="1" />
+  <line x1="64" y1="169" x2="650" y2="169" class="stroke-warning" stroke-width="1.5" stroke-dasharray="6 5" />
+  <text x="646" y="162" class="fill-muted-foreground font-mono" font-size="11" text-anchor="end">threshold ≈ −90 dBm</text>
+  <rect x="270" y="20" width="170" height="190" class="fill-primary" opacity="0.08" />
+  <text x="355" y="36" class="fill-foreground font-sans" font-size="12" text-anchor="middle" font-weight="700">button held</text>
+  <polyline fill="none" class="stroke-primary" stroke-width="2" points="64,192 80,196 96,189 112,195 128,191 144,198 160,190 176,194 192,197 208,190 224,195 240,192 256,196 270,193 274,70 290,66 306,72 322,64 338,69 354,67 370,73 386,65 402,70 418,66 434,71 440,68 444,194 460,190 476,196 492,191 508,195 524,189 540,196 556,192 572,195 588,190 604,197 620,193 636,191 650,195" />
+  <text x="160" y="232" class="fill-muted-foreground font-sans" font-size="12" text-anchor="middle">screen: no frequency</text>
+  <text x="355" y="232" class="fill-foreground font-sans" font-size="12" text-anchor="middle" font-weight="700">screen: 433.92 MHz</text>
+  <text x="550" y="232" class="fill-muted-foreground font-sans" font-size="12" text-anchor="middle">screen: after release</text>
+</svg>
+</Figure>
+
+#### A worked example in dBm
+
+Signal strength is in <Term id="dbm">dBm</Term>: decibels relative to one milliwatt. Every 10 dB is a factor of ten in power. −90 dBm is one picowatt and −60 dBm is one nanowatt. The difference is 30 dB, so the second signal carries 10 × 10 × 10 = **1,000 times** the power of the first.
+
+In open space, doubling the distance leaves roughly a quarter of the power, about 6 dB less. At 433 MHz the loss is about 25 dB at 1 m and 31 dB at 2 m, so a doorbell button is usually still well above the threshold across a room. Walls, a short burst or the antenna's orientation are more likely reasons for a miss than distance alone.
+
+### Misconceptions to drop now
+
+- **"A blank analyzer means empty air."** It means nothing nearby beat about −90 dBm on the frequencies it scanned. The <Term id="noise-floor">noise floor</Term> is always there.
+- **"The analyzer gives the exact frequency."** It gives the strongest 20 kHz step. 433.90 and 433.92 MHz are the same remote.
+- **"The analyzer decodes the signal."** It only measures strength. Read and Read RAW name and save signals.
+- **"My region list means transmitting is legal."** It is a firmware limit, not a licence.
+
+## Predict and practise
+
+Start in the browser. The simulator is a teaching approximation of the Sub-GHz menu and D-pad; its item list and order differ from the real device, so Region Information and Radio Settings are not in it (Lab 0.1 covers them on the hardware). **Task:** open Frequency Analyzer, then get back to the desktop. Predict how many button presses it takes, write the number down, then count. The lists do not wrap, so Down from the last item stays put.
+
+<Widget name="flipper-sim" opts={{ start: 'subghz' }} />
+{/* TODO: tool. flipper-sim still lists "Test" and lacks Region Information and Radio Settings. Official order: Read, Read RAW, Saved, Add Manually, Frequency Analyzer, Region Information, Radio Settings. Then the task can target Region Information. */}
+
+<Callout variant="note" title="Lost? Press Back.">
+A few presses of <kbd>Back</kbd> always bring you to the desktop. If the device freezes, Flipper documents two recoveries: hold <kbd>Left</kbd> and <kbd>Back</kbd> for 5 seconds to reboot, or hold <kbd>Back</kbd> alone for 30 seconds for a hard reboot.
+</Callout>
+
+<Lab kicker="Lab 0.1" title="Watch live radio energy" gear="Flipper, your own fixed-code remote, your own infrared TV remote. The Flipper only receives.">
+
+1. **Predict first.** In your notebook write four predictions: what the analyzer shows with nothing pressed, with your doorbell button a few centimetres away, with an infrared TV remote in the same spot, and at the distance in step 8. A wrong prediction is good evidence; record it as it is.
+2. **SD card.** Open <Flip>Settings → Storage</Flip>, check the card is detected and note its size.
+3. From the desktop press <kbd>OK</kbd>, then open <Flip>Sub-GHz → Frequency Analyzer</Flip>.
+4. **Baseline.** Watch for 20 seconds with nothing pressed. Note whether any frequency appears. A blank screen or a stray result from something else nearby are both normal.
+5. **Test press.** Hold your fixed-code remote a few centimetres from the Flipper and press and hold its button. Expect a frequency within a second or two, often near 433.92 MHz in Europe. Record the number.
+6. **Release.** Let go and note whether the last result stays on the screen on your firmware. Press again two more times and record each result. Differences of 20 kHz are the step size, not a different remote.
+7. **Control.** Press a button on your infrared TV remote in the same spot. It sends light, not Sub-GHz radio, so the analyzer should show nothing from it. If something appears, name the likely other transmitter. Then repeat the baseline once more with no press at all.
+8. **Distance.** Move to another room, or 5 to 10 m away with a wall in between, and press again. Record the distance at which the reading stops appearing, or that it never did. Either result is valid.
+9. Open <Flip>Sub-GHz → Region Information</Flip> and record what it lists for your region.
+10. **Read a file.** Copy the `.sub` example above into your notebook and write the meaning of each line next to it from the table, without looking at the table. If you have a saved capture on the card, compare it.
+
+</Lab>
+
+<Win>your remote gives a stable frequency (within 20 kHz) on three presses; the infrared press gives no frequency, or you can name which other transmitter caused one; you have a card size, a region and a distance result written down; and you can say in one sentence why a blank screen is not proof of empty air.</Win>
+
+<Callout variant="story" title="The doorbell moment">
+For most people the first "so this is real" moment is a doorbell button. You press it in your hand and a number appears on a screen a few centimetres away. The decoding in later modules is more useful, but it rarely feels as direct as that first reading.
+</Callout>
+
+<Lab kicker="Lab 0.2" title="Build your radio box" gear="A shoebox and the remotes you own">
+
+Good first devices are cheap, fixed-code and yours. Collect a few into one box for the coming weeks:
+
+1. A **wireless doorbell button**, the classic starter.
+2. An **RF LED-strip remote**, the small handset for colour-changing lights (skip it if you do not have one).
+3. A **ceiling-fan remote**, often simple on, off and speed codes (skip it if you do not have one).
+4. An **infrared TV remote** as your standing control.
+5. For each one, write the label on the back (many print a frequency such as 433.92 MHz) and check the battery. Predict first: will the measured frequency match the label?
+6. **Measure.** Open the Frequency Analyzer, hold each radio remote about 3 cm from the Flipper, press and hold, and record the reading. The infrared remote is the negative case and should give nothing. Compare each reading with its label.
+
+Leave remotes for cars, gates, garages and alarms out of the box. They usually use <Term id="rolling-code">rolling codes</Term> and are tied to systems other people depend on. Module 5 teaches rolling codes with a simulator instead.
+
+</Lab>
+
+<Win>every radio remote in the box has a battery check, a label frequency and a measured frequency, the infrared remote shows no reading, and you have written down any remote whose reading differs from its label by more than 20 kHz.</Win>
+
+<Callout variant="tip" title="Batteries matter">
+A weak battery makes a remote unreliable: it may send a short or garbled burst, or nothing. If a remote shows nothing at a few centimetres, try a fresh cell before you blame the Flipper.
+</Callout>
+
+## Check yourself
+
+<Quiz id="m00" />
+
+Two questions to answer in your own words:
+
+1. Your analyzer stayed blank during the baseline. What two things could be true about the air around you?
+2. Why does an infrared remote make a good control for a Sub-GHz experiment, and what would it mean if it did produce a reading?
+
+## Keep evidence
+
+Open your [notebook](/learn/notebook?module=m00) and save an entry for this module:
+
+- **Setup:** firmware (official or Momentum, with version), region code, SD card size and whether it is formatted.
+- **Prediction:** your four predictions from step 1 of Lab 0.1, and which were wrong.
+- **Observation:** the baseline, the three remote readings, the infrared control, the distance result and what Region Information listed.
+- **Explanation and limits:** what the analyzer can and cannot tell you.
+
+Adequate evidence names the device, gives numbers rather than "it worked", and includes the control. An example entry:
+
+```text
+Setup: official firmware, Release channel; region EU; 32 GB card, formatted on device.
+Prediction: blank at rest; ~433.92 MHz on doorbell press; nothing from TV remote.
+Observation: baseline blank for 20 s. Doorbell: 433.92, 433.90, 433.92 MHz.
+  TV remote: nothing. Doorbell through one wall at 6 m: nothing. At 3 m: 433.92.
+Explanation: analyzer shows the strongest 20 kHz step above about -90 dBm.
+  Blank does not mean empty air. The wall or a short burst between hops is a
+  likelier cause of the miss at 6 m than distance alone. Prediction wrong: I expected a reading at 6 m.
+```
+
+Set a review date for tomorrow. When you can explain the reading without your notes, press "I explained it without notes."
+
+## Continue
+
+[Module 1: Find the frequency](/learn/01-frequency) builds directly on Lab 0.1. You will meet the four frequencies most remotes use and turn today's single reading into a map of your radio box.
+
+**Retrieval question for next week:** without looking, answer this. A friend's remote shows 433.92 MHz once and nothing the second time. Give three explanations and the control that would tell them apart.
+
+Primary sources, verified 13 October 2026:
+
+- [Flipper: first start](https://docs.flipper.net/zero/basics/first-start), [firmware update](https://docs.flipper.net/zero/basics/firmware-update), [microSD card setup](https://docs.flipper.net/zero/basics/sd-card), [controls](https://docs.flipper.net/zero/basics/control), [desktop](https://docs.flipper.net/zero/basics/desktop) and [settings](https://docs.flipper.net/zero/basics/settings)
+- [Flipper: Sub-GHz hardware and menus](https://docs.flipper.net/zero/sub-ghz), [reading signals and the Frequency Analyzer](https://docs.flipper.net/zero/sub-ghz/read) and [frequencies by region](https://docs.flipper.net/zero/sub-ghz/frequencies)
+- [Flipper: tech specs](https://docs.flipper.net/zero/development/hardware/tech-specs) and [Sub-GHz file format](https://developer.flipper.net/flipperzero/doxygen/subghz_file_format.html)
+- [Momentum firmware README](https://github.com/Next-Flip/Momentum-Firmware), for the extended-range setting
+- Official firmware source (dev branch): [Sub-GHz start menu](https://github.com/flipperdevices/flipperzero-firmware/blob/dev/applications/main/subghz/scenes/subghz_scene_start.c) and [Frequency Analyzer worker](https://github.com/flipperdevices/flipperzero-firmware/blob/dev/applications/main/subghz/helpers/subghz_frequency_analyzer_worker.c) with its [threshold header](https://github.com/flipperdevices/flipperzero-firmware/blob/dev/applications/main/subghz/helpers/subghz_frequency_analyzer_worker.h)

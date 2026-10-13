@@ -1,0 +1,67 @@
+---
+/** Public reference page: header, optional in-page index from the fragment's <section id><h2>, and the fragment. */
+import Marketing from '@/layouts/Marketing.astro';
+import HtmlFragment from './HtmlFragment.astro';
+
+interface Props {
+  title: string;
+  description: string;
+  eyebrow: string;
+  heading: string;
+  lede: string;
+  /** optional second intro paragraph (the copy's "Body") */
+  body?: string;
+  html: string;
+}
+const { title, description, eyebrow, heading, lede, body, html } = Astro.props;
+const toc = [...html.matchAll(/<section id="([^"]+)">\s*<h2[^>]*>(.*?)<\/h2>/g)].map((m) => ({
+  id: m[1],
+  text: m[2].replace(/<[^>]+>/g, '').replace(/&amp;/g, '&'),
+}));
+---
+<Marketing title={title} description={description}>
+  <header class="border-b border-border">
+    <div class="mx-auto w-full max-w-[75rem] px-4 pt-12 pb-10 sm:px-6 md:pt-20 md:pb-14">
+      <p class="eyebrow">{eyebrow}</p>
+      <h1 class="mt-4 max-w-[20ch]">{heading}</h1>
+      <p class="mt-6 max-w-2xl text-lg leading-relaxed text-muted-foreground md:text-xl">{lede}</p>
+      {body && <p class="mt-4 max-w-2xl leading-relaxed text-muted-foreground">{body}</p>}
+    </div>
+  </header>
+  <div class:list={['mx-auto w-full max-w-[75rem] gap-14 px-4 pt-10 pb-16 sm:px-6 md:pt-14 md:pb-24', toc.length > 2 && 'lg:grid lg:grid-cols-[13rem_minmax(0,1fr)]']}>
+    {
+      toc.length > 2 && (
+        <nav aria-label="On this page" class="hidden lg:block">
+          <div class="sticky top-24">
+            <p class="mb-3 text-xs font-semibold tracking-wide text-muted-foreground uppercase">On this page</p>
+            <ol class="grid gap-0.5 border-l border-border text-sm">
+              {toc.map((t) => (
+                <li>
+                  <a href={`#${t.id}`} class="-ml-px flex min-h-9 items-center border-l border-transparent pl-3 leading-snug text-muted-foreground hover:border-foreground hover:text-foreground">{t.text}</a>
+                </li>
+              ))}
+            </ol>
+          </div>
+        </nav>
+      )
+    }
+    <article class="lesson-prose min-w-0">
+      <HtmlFragment html={html} />
+    </article>
+  </div>
+</Marketing>
+
+<style>
+  /* the fragment opens with a section whose first heading needs no divider above it */
+  article > :global(section:first-child > h2:first-child) {
+    margin-top: 0;
+    padding-top: 0;
+    border-top: 0;
+  }
+  /* wide tables in the ported fragments scroll inside the column instead of widening the page */
+  article :global(table:not(.table-scroll table)) {
+    display: block;
+    max-width: 100%;
+    overflow-x: auto;
+  }
+</style>

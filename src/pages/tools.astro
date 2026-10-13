@@ -1,0 +1,92 @@
+---
+/* Tools. Copy: docs/v2/copy/tools.md. Free tools (src/data/tools.ts `free`) mount the real widget from src/widgets;
+   the others show a still preview and a link to the lesson or pricing. Names, labels and lines come from tools.ts. */
+import Marketing from '@/layouts/Marketing.astro';
+import Widget from '@/components/mdx/Widget.astro';
+import Section from '@/components/marketing/Section.astro';
+import LinkButton from '@/components/marketing/LinkButton.astro';
+import ToolPreview from '@/components/marketing/ToolPreview.astro';
+import Cta from '@/components/marketing/Cta.astro';
+import { facts, price, spell } from '@/components/marketing/site';
+import { freeTools, tools } from '@/data/tools';
+
+export const prerender = true;
+const free = freeTools();
+const locked = tools.filter((t) => !t.free);
+// copy section ids that differ from widget ids
+const sectionId: Record<string, string> = { 'rf-calc': 'rf-calculator', 'rolling-sim': 'rolling-code-sim' };
+---
+<Marketing
+  title="Interactive RF tools for Flipper Zero owners"
+  description={`${spell(facts.tools)} browser tools on synthetic signals. Name a frequency, watch OOK and FSK waves, decode pulses and test a rolling code. ${spell(facts.freeTools)} are free to try here.`}
+>
+  <section id="tools-hero" data-section="tools-hero" aria-labelledby="hero-title">
+    <div class="mx-auto w-full max-w-[75rem] px-4 pt-12 pb-6 sm:px-6 md:pt-20">
+      <p class="eyebrow">Interactive tools</p>
+      <h1 id="hero-title" class="mt-4 max-w-[18ch]">See a signal before you capture one.</h1>
+      <p class="mt-6 max-w-2xl text-lg leading-relaxed text-muted-foreground md:text-xl">{spell(facts.tools)} tools that run in your browser on synthetic signals. None of them connects to a radio, and each one also appears inside the lesson that teaches it.</p>
+      <p class="mt-4 max-w-2xl leading-relaxed text-muted-foreground">{spell(facts.freeTools)} are free to use here. The other {spell(facts.lockedTools).toLowerCase()} come with Signal Path Complete. Its lessons also use nine 3D concept scenes and a 3D model of the Flipper Zero.</p>
+      <div class="mt-8 flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-5">
+        <LinkButton href="#tune-in">Try Tune In</LinkButton>
+        <LinkButton href="/learn/00-setup" variant="quiet">Start the free starter</LinkButton>
+      </div>
+      <nav aria-label="Tools on this page" class="mt-10 flex flex-wrap gap-2">
+        {
+          tools.map((t) => (
+            <a href={`#${t.id}`} class="inline-flex min-h-11 items-center gap-2 rounded-full border border-border bg-card px-4 text-sm hover:border-foreground/25">
+              {t.name}
+              {t.free && (<><span class="size-1.5 rounded-full bg-success" aria-hidden="true" /><span class="sr-only">(free)</span></>)}
+            </a>
+          ))
+        }
+      </nav>
+    </div>
+  </section>
+
+  <Section>
+    <div class="grid gap-14">
+      {
+        free.map((t) => (
+          <article id={t.id} data-section={sectionId[t.id] ?? t.id} aria-labelledby={`${t.id}-title`} class="scroll-mt-24">
+            <header class="flex flex-col gap-2 pb-4">
+              <div>
+                <p class="flex items-center gap-2 text-sm text-muted-foreground">
+                  <span class="pill grey">Free</span>
+                  {t.label}
+                </p>
+                <h2 id={`${t.id}-title`} class="mt-2 text-2xl tracking-[-0.02em]">{t.name}</h2>
+                <p class="mt-1.5 max-w-[60ch] text-muted-foreground">{t.line}</p>
+              </div>
+            </header>
+            <div class="[&_.sp-widget]:my-0">
+              <Widget name={t.id} />
+            </div>
+          </article>
+        ))
+      }
+    </div>
+
+    <ul class="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      {
+        locked.map((t) => (
+          <li id={t.id} data-section={sectionId[t.id] ?? t.id} class="flex scroll-mt-24 flex-col rounded-[1.25rem] border border-border bg-card p-5">
+            <ToolPreview id={t.id} />
+            <p class="mt-5 text-xs leading-snug text-muted-foreground">{t.label}</p>
+            <h2 class="mt-1 text-lg">{t.name}</h2>
+            <p class="mt-1.5 flex-1 text-sm leading-relaxed text-muted-foreground">{t.line}</p>
+            {t.locked && (
+              <a href={t.locked.href} aria-label={`${t.name}: ${t.locked.label}`} class="mt-4 inline-flex min-h-11 items-center gap-1.5 self-start text-sm font-medium text-primary underline decoration-primary/30 underline-offset-4 hover:decoration-primary">
+                {t.locked.label} <span aria-hidden="true">→</span>
+              </a>
+            )}
+          </li>
+        ))
+      }
+    </ul>
+  </Section>
+
+  <Cta id="tools-cta" title={`Use all ${spell(facts.tools).toLowerCase()} inside the lessons that teach them.`} body={`Signal Path Complete includes every tool, ${facts.lessons} lessons and ${facts.questions} quiz questions for ${price}.`} microcopy="30-day refund, no reason needed.">
+    <LinkButton href="/pricing#buy">Get Signal Path Complete</LinkButton>
+    <LinkButton href="/learn/00-setup" variant="inverse">Start the free starter</LinkButton>
+  </Cta>
+</Marketing>

@@ -1,0 +1,315 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Module 9 · Troubleshooting field guide · Signal Path</title>
+  <meta name="description" content="A diagnostic toolkit for the handful of things that actually go wrong for beginners: nothing decodes, replay does nothing, the analyzer is blank, and range is terrible.">
+  <link rel="stylesheet" href="../assets/css/site.css">
+  <script>(function(){try{var t=localStorage.getItem("signalpath.theme");if(t==="light"||t==="dark")document.documentElement.setAttribute("data-theme",t);}catch(e){}})();</script>
+<link rel="stylesheet" href="../assets/css/presentation.css">
+<link rel="icon" type="image/png" href="../assets/images/signal-path-logo.png">
+</head>
+<body data-root="../" data-page="m09">
+  <header class="topbar"></header>
+
+  <main class="page">
+    <aside class="toc" aria-label="On this page">
+      <span class="eyebrow">On this page</span>
+      <ol>
+        <li><a href="#goal">Goal</a></li>
+        <li><a href="#method">How to diagnose</a></li>
+        <li><a href="#no-decode">Nothing decodes in Read</a></li>
+        <li><a href="#analyzer">Frequency Analyzer is blank</a></li>
+        <li><a href="#replay">Replay does nothing (or once)</a></li>
+        <li><a href="#range">Terrible range on transmit</a></li>
+        <li><a href="#sd">The .sub won't load</a></li>
+        <li><a href="#lab">Lab</a></li>
+        <li><a href="#field-notes">Field notes</a></li>
+        <li><a href="#quiz">Check yourself</a></li>
+      </ol>
+    </aside>
+
+    <article class="content">
+      <div class="mod-header">
+        <div class="mod-index">9</div>
+        <div class="mod-titles">
+          <div class="mod-week">Week 5 · Fixing what goes wrong</div>
+          <h1>Troubleshooting field guide</h1>
+          <p class="lede">Almost every "it doesn't work" moment on the Flipper is one of about six problems. Here is how to tell them apart fast, and what actually fixes each one.</p>
+          <div class="mod-meta">
+            <span class="chip">⏱ <b>45 min</b></span>
+            <span class="chip">Gear: <b>Flipper + a remote that's misbehaving</b></span>
+          </div>
+        </div>
+      </div>
+
+      <section id="goal">
+        <h2>Goal</h2>
+        <p>By now you can find a frequency, pick a modulation, decode a protocol, replay to your own gear, and handle raw and rolling signals. This module is a repair manual. When something refuses to work, you should be able to name the failure, run a short checklist, and know within a minute or two whether you have a fixable mistake or a signal behaving exactly as designed.</p>
+        <p>Six problems catch beginners over and over: <b>nothing decodes in Read</b>, <b>the Frequency Analyzer stays blank</b>, <b>a capture replays but does nothing</b>, <b>a replay that works once then stops</b>, <b>terrible transmit range</b>, and <b>a <code>.sub</code> file that won't load</b>. Each one below is written as problem → likely causes → fixes.</p>
+        <div class="callout note">
+          <span class="ic">i</span>
+          <div><span class="callout-title">The most important thing to learn here</span>Half of these "faults" are not faults. A rolling code that replays once and dies is <em>working correctly</em>. A remote the Flipper won't decode into a named protocol is not broken — it just needs Read RAW. Knowing which is which is the whole skill.</div>
+        </div>
+      </section>
+
+      <section id="method">
+        <h2>How to diagnose: change one thing at a time</h2>
+        <p>The fastest way to stay confused is to change three settings at once. The fastest way to a fix is boring and disciplined:</p>
+        <ol class="steps">
+          <li><b>Confirm the signal exists.</b> Before fighting with decoding, open <span class="flip">Sub-GHz → Frequency Analyzer</span>, hold the remote a few centimetres away, and press. A frequency means there's a signal to work with; nothing means the problem is upstream of decoding.</li>
+          <li><b>Change one variable, then re-test.</b> Frequency, then modulation, then distance, then battery — one at a time, noting what you changed.</li>
+          <li><b>Separate "can't hear it" from "can't name it".</b> Read failing tells you nothing alone. Read RAW records the pulses whether or not the Flipper knows the protocol, so it's your ground truth: if RAW captures and Read doesn't, the signal is fine and the protocol is just unknown.</li>
+          <li><b>Write down what fixed it.</b> The same remotes will misbehave again next month. A one-line note ("garage remote: it was on 310.0, not 315") saves the hunt twice.</li>
+        </ol>
+        <p>Keep the three Sub-GHz tools straight in your head, because most of troubleshooting is picking the right one:</p>
+        <div class="table-scroll">
+          <table>
+            <thead><tr><th>Tool</th><th>What it's for</th><th>Reach for it when…</th></tr></thead>
+            <tbody>
+              <tr><td><b>Frequency Analyzer</b></td><td>Finds the frequency of a nearby, strong transmitter</td><td>You don't yet know the frequency, or want proof the remote transmits at all</td></tr>
+              <tr><td><b>Read</b></td><td>Listens on one frequency/preset and decodes known protocols into a name, bit count and key</td><td>You know (or can guess) the frequency and want a clean, named capture</td></tr>
+              <tr><td><b>Read RAW</b></td><td>Records the raw pulse timings with no attempt to decode</td><td>Read shows nothing but a signal is clearly there, or the protocol is unusual</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section id="no-decode">
+        <h2>Problem: nothing decodes in Read</h2>
+        <p>You open <span class="flip">Sub-GHz → Read</span>, press the remote, and the screen just sits there. This is the single most common beginner report, and it has six usual causes. Walk them in order — the flowchart below is the same order, top to bottom.</p>
+
+        <figure class="diagram">
+          <svg viewBox="0 0 640 470" width="100%" role="img" aria-label="Decision flowchart for a signal that will not decode. Step one: open Read and press the remote a few centimetres away. Check whether Frequency Analyzer shows a peak; if not, the remote is too far, too weak, or on the wrong band, so move closer, fit a fresh battery and try 315, 433.92 or 868 megahertz. If there is a peak but Read is blank, step the preset through AM650, AM270, FM238 and FM476. If still nothing, the Flipper cannot name the protocol, so capture with Read RAW. If it decodes but the counter rises each press, it is a rolling code working as designed.">
+            <g font-family="IBM Plex Mono, monospace" font-size="12.5">
+              <!-- Box A -->
+              <rect x="40" y="14" width="320" height="52" rx="8" fill="none" stroke="currentColor" stroke-width="1.5"/>
+              <text x="200" y="35" text-anchor="middle" fill="currentColor">Open Read. Press the remote a few</text>
+              <text x="200" y="53" text-anchor="middle" fill="currentColor">centimetres from the Flipper.</text>
+              <line x1="200" y1="66" x2="200" y2="94" stroke="currentColor" stroke-width="1.5"/>
+              <polygon points="200,100 195,90 205,90" fill="currentColor"/>
+
+              <!-- Box B: analyzer peak? -->
+              <rect x="40" y="100" width="320" height="44" rx="8" fill="none" stroke="var(--cyan)" stroke-width="1.75"/>
+              <text x="200" y="127" text-anchor="middle" fill="var(--cyan)">Does Frequency Analyzer show a peak?</text>
+
+              <!-- branch NO to the right -->
+              <line x1="360" y1="122" x2="398" y2="122" stroke="var(--muted)" stroke-width="1.5"/>
+              <polygon points="404,122 394,117 394,127" fill="var(--muted)"/>
+              <text x="378" y="114" text-anchor="middle" fill="var(--muted)" font-size="11">No</text>
+              <rect x="404" y="96" width="220" height="70" rx="8" fill="none" stroke="var(--muted)" stroke-width="1.25"/>
+              <text x="414" y="116" fill="var(--muted)" font-size="11.5">Too far, too weak, or wrong</text>
+              <text x="414" y="132" fill="var(--muted)" font-size="11.5">band. Step closer, fresh</text>
+              <text x="414" y="148" fill="var(--muted)" font-size="11.5">battery, try 315 / 433.92 / 868.</text>
+
+              <!-- YES down -->
+              <line x1="200" y1="144" x2="200" y2="180" stroke="currentColor" stroke-width="1.5"/>
+              <polygon points="200,186 195,176 205,176" fill="currentColor"/>
+              <text x="212" y="167" fill="var(--muted)" font-size="11">Yes</text>
+
+              <!-- Box C: sweep preset -->
+              <rect x="40" y="186" width="320" height="52" rx="8" fill="none" stroke="currentColor" stroke-width="1.5"/>
+              <text x="200" y="207" text-anchor="middle" fill="currentColor">Read still blank? Step the preset:</text>
+              <text x="200" y="225" text-anchor="middle" fill="currentColor">AM650 &#8594; AM270 &#8594; FM238 &#8594; FM476.</text>
+              <line x1="200" y1="238" x2="200" y2="270" stroke="currentColor" stroke-width="1.5"/>
+              <polygon points="200,276 195,266 205,266" fill="currentColor"/>
+
+              <!-- Box D: read raw -->
+              <rect x="40" y="276" width="320" height="52" rx="8" fill="none" stroke="currentColor" stroke-width="1.5"/>
+              <text x="200" y="297" text-anchor="middle" fill="currentColor">Still nothing? The Flipper can't</text>
+              <text x="200" y="315" text-anchor="middle" fill="currentColor">name it &#8212; capture with Read RAW.</text>
+              <line x1="200" y1="328" x2="200" y2="360" stroke="currentColor" stroke-width="1.5"/>
+              <polygon points="200,366 195,356 205,356" fill="currentColor"/>
+
+              <!-- Box E: rolling -->
+              <rect x="40" y="366" width="320" height="60" rx="8" fill="none" stroke="var(--orange)" stroke-width="1.75"/>
+              <text x="200" y="390" text-anchor="middle" fill="var(--orange)">Decodes, but Cnt rises each press?</text>
+              <text x="200" y="408" text-anchor="middle" fill="var(--orange)">Rolling code. Working as designed.</text>
+            </g>
+          </svg>
+          <figcaption>The "signal won't decode" tree. Work top to bottom, changing one thing per step.</figcaption>
+        </figure>
+
+        <h3>1 · Wrong frequency</h3>
+        <p>Read only listens on one frequency at a time. If you left it on 433.92 MHz and your remote is a North-American keyfob on 315 MHz, you will hear silence. The fix is to stop guessing: use <span class="flip">Sub-GHz → Frequency Analyzer</span> to read the actual frequency off the remote, then set Read to that. The four numbers you will meet most are 315, 433.92, 868 and 915 MHz.</p>
+
+        <h3>2 · Wrong modulation</h3>
+        <p>Even on the right frequency, Read has to be on the right modulation preset or the pulses look like noise. Sweep the four stock presets deliberately: <span class="pill am">AM650</span> <span class="pill am">AM270</span> <span class="pill fm">FM238</span> <span class="pill fm">FM476</span>. Most cheap OOK remotes (garages, barriers, plug sockets) land on AM650; narrower or noisier ones want AM270; FSK devices want one of the FM presets. Change the preset in Read's configuration, re-press the remote, repeat.</p>
+        <div class="callout tip">
+          <span class="ic">✓</span>
+          <div><span class="callout-title">Shortcut</span>AM650 first, then AM270 covers the large majority of fixed-code remotes. If both fail and the analyzer still sees a peak, try the FM presets before you assume the worst.</div>
+        </div>
+
+        <h3>3 · Too far, or too weak</h3>
+        <p>Sub-GHz receiving falls off fast with distance and through walls. A remote pressed across the room, or a low-power sensor, may not reach the Flipper's small internal antenna. Hold the remote within a few centimetres, point it at the top of the Flipper, and press firmly. A dying battery in the <em>remote</em> also weakens its signal — swap it if you can.</p>
+
+        <h3>4 · It's a protocol the Flipper can't decode</h3>
+        <p>Read only prints a name, bit count and key for protocols it recognises, and plenty of real devices use variants it has never been taught. That's not a failure of the capture — it's a gap in the decoder. Switch to <span class="flip">Sub-GHz → Read RAW</span>, which records the pulse timings regardless. If RAW captures a clean burst on every press, the signal is fine and you simply have an unnamed protocol. (You can still replay a RAW capture of a fixed-code device — see <a href="05-raw-and-rolling.html">Module 5</a>.)</p>
+
+        <h3>5 · It's rolling, and that's not a bug</h3>
+        <p>If Read <em>does</em> decode it — say <span class="pill rolling">Nice FloR-S</span> or a KeeLoq-based protocol — but a <b>Cnt</b> (counter) value climbs by one every press, you're looking at a <b>rolling code</b>. It decoded perfectly; it just won't replay, because the counter makes every press different. See <a href="05-raw-and-rolling.html">Module 5</a> for the full story — the short version is "the security feature doing its job."</p>
+
+        <h3>6 · A noisy band</h3>
+        <p>Some frequencies, 433.92 MHz especially, are crowded — weather stations, tyre sensors and other remotes all chatter there. If Read keeps triggering on junk or the analyzer keeps jumping, move away from other electronics, or capture the exact instant you press with Read RAW so you can pick your burst out of the noise later.</p>
+
+        <p>Not sure which of the three tools to pick for a given situation? Poke at this — describe the symptom and it points you at Read, Read RAW or the Frequency Analyzer:</p>
+        <div data-widget="tool-picker"></div>
+      </section>
+
+      <section id="analyzer">
+        <h2>Problem: Frequency Analyzer shows nothing, or jumps around</h2>
+        <p>The Frequency Analyzer is your "is there even a signal?" tool. When it misbehaves, it is usually one of these:</p>
+        <div class="grid2">
+          <div class="card">
+            <h3 style="font-size:16px">It shows nothing</h3>
+            <ul>
+              <li><b>Remote too far.</b> The analyzer needs a strong, close signal — within a few centimetres, button held down.</li>
+              <li><b>Low-power device.</b> Sensors and some keyfobs transmit weakly; you may need to almost touch the Flipper.</li>
+              <li><b>Quick tap vs press-and-hold.</b> A fast tap can end before the analyzer settles. Press and <em>hold</em>.</li>
+              <li><b>Frequency outside the default set.</b> The analyzer sweeps a built-in list of common frequencies, not every hertz the radio can reach, so an unusual frequency won't appear.</li>
+            </ul>
+          </div>
+          <div class="card">
+            <h3 style="font-size:16px">It jumps around</h3>
+            <ul>
+              <li><b>You're catching noise.</b> With no strong signal present, the readout wanders across whatever ambient RF is loudest. Numbers that flicker with nothing pressed are just the noise floor.</li>
+              <li><b>Rolling remotes and hoppers.</b> Some remotes transmit on slightly shifting or multiple frequencies; a little wobble is normal.</li>
+              <li><b>Other transmitters nearby.</b> Move away from Wi‑Fi routers, monitors and other remotes and try again.</li>
+            </ul>
+          </div>
+        </div>
+        <div class="callout note">
+          <span class="ic">i</span>
+          <div><span class="callout-title">Trust it only when you press</span>A reading that only appears <em>while you hold your remote's button</em>, and disappears when you release, is real. A reading that's there whether or not you press anything is noise. That press/release test is the fastest way to tell them apart.</div>
+        </div>
+        <p>If your device really does sit on an odd frequency outside the analyzer's default list, that's exactly what Momentum's extended-frequency options are for — see <a href="08-momentum.html">Module 8</a>.</p>
+      </section>
+
+      <section id="replay">
+        <h2>Problem: you captured it, but replay does nothing (or works once)</h2>
+        <p>These two symptoms feel the same in the moment but have completely different causes, so keep them separate.</p>
+
+        <h3>Replay works once, then stops</h3>
+        <p>This is the classic. You save a gate or garage remote, it works the first time, and after that the real remote works but yours doesn't. That's a <b>rolling code</b> — the single most important thing to recognise on this whole course.</p>
+        <p>Rolling-code remotes (families like <span class="pill rolling">Nice FloR-S</span>, <b>KeeLoq</b>, and Chamberlain/LiftMaster's <b>Security+ 2.0</b>) include a counter that increases every press. The receiver remembers roughly where the counter should be and rejects any code that isn't ahead of what it has already seen. Your replay sends an <em>old</em> counter value the receiver has already burned, so it's ignored. You can spot these on the Read screen before you even try: they decode fine but show a <b>Cnt</b> that climbs by one each press.</p>
+        <div class="callout legal">
+          <span class="ic">!</span>
+          <div><span class="callout-title">This is not a to-do list</span>The point of rolling codes is that a captured code can't be reused — that's the security working. Signal Path never covers defeating rolling codes on property you don't own, and community "jamming" or capture-and-hold tools exist only to say: they're illegal to use against other people's devices, and we give no steps. See <a href="05-raw-and-rolling.html">Module 5</a> and the <a href="../case-studies.html">case studies</a>.</div>
+        </div>
+
+        <h3>Replay does nothing at all — even on a fixed-code device you own</h3>
+        <p>If you're sure it's a simple fixed-code device (it decodes with a stable key and no climbing counter) and replay still does nothing, work this checklist:</p>
+        <ol class="steps">
+          <li><b>Weak transmit or range.</b> The Flipper's internal antenna is modest. Get close to your receiver and try again before assuming the capture is bad.</li>
+          <li><b>Wrong device, or too far.</b> Double-check you're aiming at the right receiver and that it's actually powered and in range.</li>
+          <li><b>Partial or noisy capture.</b> If you recorded with Read RAW in a crowded band, you may have grabbed only part of the burst or mixed in noise. Re-record cleanly, close to the remote, pressing once and deliberately.</li>
+          <li><b>The device expects several presses.</b> Some receivers only act after two or three repeats, or a press-and-hold. Send the capture a few times, or hold as your real remote would.</li>
+          <li><b>It was rolling after all.</b> If it worked exactly once and never again, go back up a section — that's a counter, not a range problem.</li>
+        </ol>
+      </section>
+
+      <section id="range">
+        <h2>Problem: terrible range on transmit</h2>
+        <p>Your capture is good and your device is fixed-code, but you have to be almost touching the receiver for it to react. Sub-GHz range on a stock Flipper is genuinely limited, and several things stack up:</p>
+        <dl class="kv">
+          <dt>antenna</dt><dd>The Flipper has a small internal PCB antenna tuned to work broadly, not brilliantly. It is a compromise across a huge band, so no single frequency is optimal.</dd>
+          <dt>orientation</dt><dd>Antennas are directional. Try holding the Flipper flat, then upright; keep it roughly parallel to the receiver's antenna. Small changes in angle can matter more than distance.</dd>
+          <dt>obstacles</dt><dd>Walls, metal, and especially a car body soak up Sub-GHz energy. Line of sight helps enormously. A gate motor inside a metal box is a worst case.</dd>
+          <dt>battery</dt><dd>A low Flipper battery can reduce transmit power. Charge it before you blame the capture.</dd>
+          <dt>external module</dt><dd>A proper external <b>CC1101</b> radio module with a real whip antenna is the biggest single upgrade for range. That's covered in <a href="08-momentum.html">Module 8</a>.</dd>
+        </dl>
+        <p>The physics explains the compromise: wavelength is <span class="mono">&#955; = c / f</span>, so 433.92 MHz has a wavelength of about 69 cm and an ideal quarter-wave antenna of roughly 17 cm — too big for a pocket. The internal antenna trades length for portability; an external module lets you fit an antenna closer to that ideal.</p>
+        <div class="callout warn">
+          <span class="ic">!</span>
+          <div><span class="callout-title">More power is not a free win</span>Boosting transmit range also means reaching further into other people's space. Keep transmissions to your own devices, in a space you control, and don't blast a crowded band. Range is a tool, not a bragging right.</div>
+        </div>
+      </section>
+
+      <section id="sd">
+        <h2>Problem: the .sub won't load, or the SD card acts up</h2>
+        <p>Sub-GHz captures live as <code>.sub</code> text files on the microSD card, and RFID and NFC files live there too. When files vanish, won't open, or the Flipper complains about storage, the cause is almost always the card itself, not your capture. Keep this generic and low-drama:</p>
+        <ol class="steps">
+          <li><b>Re-seat the card.</b> Power down, remove the microSD, blow out any dust, push it back until it clicks, and boot again. A card that's a hair loose looks exactly like a dead card.</li>
+          <li><b>Check the format.</b> The Flipper expects the card formatted as <b>FAT32</b>. A card that came as exFAT, or one that got corrupted, can fail to mount. Back up anything you care about, then reformat to FAT32 (on a computer, or with the Flipper's own storage tools).</li>
+          <li><b>Sanity-check the filename.</b> Keep names simple: letters, numbers, dashes, and the <code>.sub</code> extension. Odd characters or a wrong extension can make a file refuse to open. If you edited a capture on a computer, make sure you didn't save it as <code>.sub.txt</code>.</li>
+          <li><b>Look at the file's insides.</b> A valid Sub-GHz key file starts with lines like <code>Filetype: Flipper SubGhz Key File</code>, <code>Version: 1</code>, a <code>Frequency:</code>, a <code>Preset:</code>, and either protocol fields or a <code>RAW_Data:</code> block. If those top lines are missing or mangled, the file is the problem, not the reader.</li>
+          <li><b>Try a known-good card.</b> If nothing loads and even fresh captures won't save, the card may be failing. A different, decent-quality microSD is a cheap test.</li>
+        </ol>
+        <details>
+          <summary>What a healthy fixed-code .sub looks like</summary>
+          <div class="d-body">
+            <p>A Princeton garage remote, for example, saves as a short text file:</p>
+            <pre><code>Filetype: Flipper SubGhz Key File
+Version: 1
+Frequency: 433920000
+Preset: FuriHalSubGhzPresetOok650Async
+Protocol: Princeton
+Bit: 24
+Key: 00 00 00 00 00 8C 5A 3B
+TE: 400</code></pre>
+            <p>If your file opens in a text editor and looks like that, it's fine — the trouble is elsewhere (frequency, range, or a rolling code). A RAW capture instead carries <code>Filetype: Flipper SubGhz RAW File</code> and long <code>RAW_Data:</code> lines of alternating positive and negative microsecond durations.</p>
+          </div>
+        </details>
+      </section>
+
+      <section id="lab">
+        <h2>Lab</h2>
+        <div class="lab">
+          <div class="lab-kicker">Lab 9.1</div>
+          <h3>Take a stubborn device all the way down the tree</h3>
+          <p class="lab-gear">Gear: <b>your Flipper, and one remote or fob that has refused to cooperate</b> (a garage remote, a car keyfob, a cheap plug socket, a barrier remote — the more annoying the better).</p>
+          <ol>
+            <li>Pick the device that has been beating you. Write down what you expect before you start.</li>
+            <li>Open <span class="flip">Sub-GHz → Frequency Analyzer</span>, hold the remote a few centimetres away, press and <b>hold</b>. Record the frequency, or record "nothing" if it stays blank.</li>
+            <li>If you got nothing: get closer, fit a fresh battery in the remote, and try again. Still nothing? Note that the device may sit outside the analyzer's default frequency list and move on.</li>
+            <li>If you got a frequency: open <span class="flip">Sub-GHz → Read</span>, set that frequency, and sweep the preset — <b>AM650, AM270, FM238, FM476</b> — pressing the remote after each. Record which preset (if any) produces a decode.</li>
+            <li>If Read decodes it, write down the <b>protocol, bit count, and key</b>. Press it several more times and watch for a <b>Cnt</b> value. If Cnt climbs, mark it <span class="pill rolling">rolling</span> and stop — you've correctly diagnosed it.</li>
+            <li>If Read shows nothing but the analyzer saw a peak, switch to <span class="flip">Sub-GHz → Read RAW</span> and capture a burst. Note whether RAW grabbed a clean signal — that proves the transmission is real and the protocol is simply unnamed.</li>
+            <li>Write the one line that closes the case: <em>what was actually wrong, and what fixed it</em> — or "nothing was wrong; it's a rolling code and behaving correctly."</li>
+          </ol>
+        </div>
+        <div class="win"><span class="ic">✓</span><span><b>You've got it when:</b> you can state, in one sentence, why your stubborn device did what it did — wrong frequency, wrong preset, too weak, unnamed protocol, or a rolling code doing exactly its job — and you have a note you could hand to someone else to reproduce.</span></div>
+      </section>
+
+      <section id="field-notes">
+        <h2>Field notes: the one-glance table</h2>
+        <p>Tape this to the inside of your skull. When something breaks, start at the symptom and read across.</p>
+        <div class="table-scroll">
+          <table>
+            <thead><tr><th>Symptom</th><th>Most likely cause</th><th>First thing to try</th></tr></thead>
+            <tbody>
+              <tr><td>Read shows nothing</td><td>Wrong frequency or wrong preset</td><td>Analyzer for the frequency, then sweep AM650 / AM270 / FM238 / FM476</td></tr>
+              <tr><td>Read shows nothing, analyzer saw a peak</td><td>Unknown protocol</td><td>Capture with Read RAW instead</td></tr>
+              <tr><td>Analyzer stays blank</td><td>Too far / too weak / odd frequency</td><td>Get within a few cm, press and hold, fresh battery</td></tr>
+              <tr><td>Analyzer wanders with nothing pressed</td><td>Just the noise floor</td><td>Trust only readings that track your button</td></tr>
+              <tr><td>Replay works once, then never</td><td>Rolling code (counter)</td><td>Nothing — it's working as designed (Module 5)</td></tr>
+              <tr><td>Replay never works, fixed-code</td><td>Range, aim, or partial capture</td><td>Get closer, re-record cleanly, send a few times</td></tr>
+              <tr><td>Terrible transmit range</td><td>Internal antenna / obstacles / battery</td><td>Change orientation, charge up, consider an external module</td></tr>
+              <tr><td>.sub won't load</td><td>SD card or filename</td><td>Re-seat card, confirm FAT32, check the file's top lines</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section id="quiz">
+        <h2>Check yourself</h2>
+        <div data-quiz="m09"></div>
+      </section>
+    <section id="sources"><h2>Verify the details</h2><p class="source-note">Read the primary sources: <a href="https://docs.flipper.net/zero/sub-ghz/read">Flipper: reading signals and presets</a> · <a href="https://docs.flipper.net/zero/sub-ghz/read-raw">Flipper: demodulated RAW recordings</a>. Course review: 10 September 2026.</p></section></article>
+  </main>
+
+  <footer class="site-footer">
+    <div class="wrap">
+      <p>Signal Path teaches RF with devices you own, for learning and legitimate testing. Radio transmission is regulated where you live; interfering with other people's devices is illegal and harmful. When scope or legality is unclear, use the simulators.</p>
+      <p>Signal Path · a self-guided RF course for the Flipper Zero</p>
+    </div>
+  </footer>
+
+  <script src="../assets/js/data/course.js"></script>
+  <script src="../assets/js/site.js"></script>
+  <script src="../assets/js/data/quiz-bank.js"></script>
+  <script src="../assets/js/widgets/tool-picker.js"></script>
+<script src="../assets/js/presentation.js"></script>
+</body>
+</html>

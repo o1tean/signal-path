@@ -1,0 +1,259 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Module 7 · NFC at 13.56 MHz · Signal Path</title>
+  <meta name="description" content="Understand NFC as its own 13.56 MHz world: card types, what the Flipper can and can't clone, and why your bank card can be read but never used to pay.">
+  <link rel="stylesheet" href="../assets/css/site.css">
+  <script>(function(){try{var t=localStorage.getItem("signalpath.theme");if(t==="light"||t==="dark")document.documentElement.setAttribute("data-theme",t);}catch(e){}})();</script>
+<link rel="stylesheet" href="../assets/css/presentation.css">
+<link rel="icon" type="image/png" href="../assets/images/signal-path-logo.png">
+</head>
+<body data-root="../" data-page="m07">
+  <header class="topbar"></header>
+
+  <main class="page">
+    <aside class="toc" aria-label="On this page">
+      <span class="eyebrow">On this page</span>
+      <ol>
+        <li><a href="#goal">Goal</a></li>
+        <li><a href="#hf-world">HF: the 13.56 MHz world</a></li>
+        <li><a href="#card-types">Cards you'll meet</a></li>
+        <li><a href="#flipper-nfc">What the Flipper can do</a></li>
+        <li><a href="#bank-cards">The bank-card myth</a></li>
+        <li><a href="#lab">Lab</a></li>
+        <li><a href="#going-deeper">Going deeper</a></li>
+        <li><a href="#quiz">Check yourself</a></li>
+      </ol>
+    </aside>
+
+    <article class="content">
+      <div class="mod-header">
+        <div class="mod-index">7</div>
+        <div class="mod-titles">
+          <div class="mod-week">Week 4 · Access control</div>
+          <h1>NFC at 13.56 MHz</h1>
+          <p class="lede">Contactless cards, tags and toys all share one frequency: 13.56 MHz. This module maps the NFC world, shows what the Flipper genuinely reads and copies, and quietly kills the "it can clone my credit card" myth.</p>
+          <div class="mod-meta">
+            <span class="chip">⏱ <b>50 min</b></span>
+            <span class="chip">Gear: <b>an NFC tag or card you own</b></span>
+            <span class="chip">App: <b>NFC</b></span>
+          </div>
+        </div>
+      </div>
+
+      <section id="goal">
+        <h2>Goal</h2>
+        <p>By the end of this module you can read an NFC tag or card that <b>belongs to you</b>, tell the difference between a tag the Flipper copies fully and one it only reads partly, and explain — calmly, to the friend who's convinced a Flipper can drain a bank account — why that's not how any of this works.</p>
+        <p>NFC stands for <b>near-field communication</b>. Like the 125&nbsp;kHz fobs in <a href="06-rfid.html">Module 6</a>, it's near-field and short-range and the card is usually passive. But it lives up at <b>13.56&nbsp;MHz</b>, it's built on real international standards, and some of its cards can hold secret keys and do actual cryptography. That last part is why "can the Flipper clone this?" has a genuinely different answer for every card type — and why the honest answer is often "it can read it, but it can't copy the part that matters."</p>
+      </section>
+
+      <section id="hf-world">
+        <h2>HF: the 13.56 MHz world</h2>
+        <p>Radio people group frequencies into bands. The three you now care about sit far apart:</p>
+        <div class="scene3d" data-scene3d="nearfield" data-label="3D animation: a 13.56 MHz reader coil couples with a card antenna through a near field." data-opts='{"kind":"card"}'><span class="scene3d-caption">Concept animation · drag to rotate</span></div>
+
+        <ul>
+          <li><b>LF — low frequency</b> — <span class="mono">125 kHz</span>, the old prox fobs from Module 6.</li>
+          <li><b>HF — high frequency</b> — <span class="mono">13.56 MHz</span>, where all NFC lives. This module.</li>
+          <li><b>UHF-ish Sub-GHz</b> — <span class="mono">300–928 MHz</span>, the CC1101 radio and everything in Modules 1–5.</li>
+        </ul>
+        <p>They aren't a little apart; they're orders of magnitude apart. Here's the same three worlds on a single (logarithmic) scale, so you can see just how much ground separates a door fob from a garage remote:</p>
+
+        <figure class="diagram">
+          <svg viewBox="0 0 640 180" width="100%" role="img" aria-label="A logarithmic frequency scale from 100 kilohertz to 1 gigahertz. 125 kilohertz LF RFID sits at the far left, 13.56 megahertz NFC sits in the middle, and the 300 to 928 megahertz Sub-GHz band sits at the right.">
+            <!-- axis -->
+            <line x1="40" y1="110" x2="600" y2="110" stroke="var(--line-strong)" stroke-width="2"/>
+            <!-- decade ticks: 100kHz, 1MHz, 10MHz, 100MHz, 1GHz across 40..600 -->
+            <g stroke="var(--faint)" stroke-width="1" font-family="var(--font-mono)" font-size="10" fill="var(--faint)">
+              <line x1="40" y1="104" x2="40" y2="116"/><text x="40" y="132" text-anchor="middle">100 kHz</text>
+              <line x1="180" y1="104" x2="180" y2="116"/><text x="180" y="132" text-anchor="middle">1 MHz</text>
+              <line x1="320" y1="104" x2="320" y2="116"/><text x="320" y="132" text-anchor="middle">10 MHz</text>
+              <line x1="460" y1="104" x2="460" y2="116"/><text x="460" y="132" text-anchor="middle">100 MHz</text>
+              <line x1="600" y1="104" x2="600" y2="116"/><text x="600" y="132" text-anchor="middle">1 GHz</text>
+            </g>
+            <!-- 125 kHz LF marker at ~ log10(125k) -> between 100k(40) and 1M(180): 40 + 140*log10(1.25)=40+13.6=53.6 -->
+            <g>
+              <line x1="54" y1="72" x2="54" y2="110" stroke="var(--cyan)" stroke-width="2.5"/>
+              <circle cx="54" cy="72" r="4" fill="var(--cyan)"/>
+              <text x="54" y="60" text-anchor="middle" fill="var(--cyan)" font-family="var(--font-mono)" font-size="11" font-weight="600">125 kHz</text>
+              <text x="54" y="164" text-anchor="middle" fill="var(--muted)" font-family="var(--font-mono)" font-size="10">LF · Mod 6</text>
+            </g>
+            <!-- 13.56 MHz HF marker: log10(13.56M) between 10M(320) and 100M(460): 320 + 140*log10(1.356)=320+18.5=338.5 -->
+            <g>
+              <line x1="339" y1="52" x2="339" y2="110" stroke="var(--orange)" stroke-width="2.5"/>
+              <circle cx="339" cy="52" r="4" fill="var(--orange)"/>
+              <text x="339" y="40" text-anchor="middle" fill="var(--orange)" font-family="var(--font-mono)" font-size="11" font-weight="600">13.56 MHz</text>
+              <text x="339" y="164" text-anchor="middle" fill="var(--orange)" font-family="var(--font-mono)" font-size="10">HF · NFC · this module</text>
+            </g>
+            <!-- Sub-GHz band 300-928 MHz: 300M -> 460+140*log10(3)=460+66.8=526.8 ; 928M -> 460+140*log10(9.28)=460+135.4=595.4 -->
+            <rect x="527" y="86" width="68" height="24" rx="4" fill="var(--purple-soft)" stroke="var(--purple)" stroke-width="1.5"/>
+            <text x="561" y="78" text-anchor="middle" fill="var(--purple)" font-family="var(--font-mono)" font-size="10.5" font-weight="600">300–928 MHz</text>
+            <text x="561" y="164" text-anchor="middle" fill="var(--muted)" font-family="var(--font-mono)" font-size="10">Sub-GHz · Mods 1–5</text>
+          </svg>
+          <figcaption>Three tiny points on a huge scale. NFC (13.56 MHz) sits roughly a hundred times higher than an LF fob and a factor of ~20–70 below the Sub-GHz band. Different frequency, different app, different physics.</figcaption>
+        </figure>
+
+        <p>NFC is <b>short-range by design</b>, and for the same reason 125&nbsp;kHz was: it's near-field. The reader and card couple through the field between them rather than sending a wave across the room, so a practical read happens over a couple of centimetres. That's a deliberate security property — you have to <em>intend</em> to tap. It's why "someone across the café read my card" makes for a good scare story and a poor physics lesson.</p>
+        <div class="callout note">
+          <span class="ic">i</span>
+          <div>The whole NFC family is built on <b>ISO/IEC 14443</b>, a standard with an <b>A</b> and a <b>B</b> variant that differ in low-level signalling. You rarely need to care which is which — the Flipper figures it out — but it's why one reader can talk to cards from a dozen different makers.</div>
+        </div>
+      </section>
+
+      <section id="card-types">
+        <h2>Cards you'll meet</h2>
+        <p>"NFC card" is a category, not a thing. What matters for you is how much the card can <b>keep to itself</b>. Here are the four you'll actually run into, from dumbest to smartest:</p>
+
+        <div class="table-scroll">
+          <table>
+            <thead>
+              <tr><th>Card</th><th>Brains</th><th>What's on it</th><th>Can the Flipper copy it?</th></tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><b>NTAG / Ultralight</b></td>
+                <td>Simple memory</td>
+                <td>A UID plus a few hundred bytes of open storage. No real crypto.</td>
+                <td><span class="pill green">Usually yes</span> — read the data, write it to a matching blank.</td>
+              </tr>
+              <tr>
+                <td><b>Mifare Classic</b></td>
+                <td>Weak crypto</td>
+                <td>Data split into sectors, each locked by a <b>key</b>. The cipher is old and broken.</td>
+                <td><span class="pill yellow">Sometimes</span> — only if the keys are known/recoverable. No keys, no full copy.</td>
+              </tr>
+              <tr>
+                <td><b>DESFire</b></td>
+                <td>Strong crypto</td>
+                <td>Sectored data behind modern encryption (AES).</td>
+                <td><span class="pill red">No</span> — you can see it exists and read its UID, not its protected contents.</td>
+              </tr>
+              <tr>
+                <td><b>EMV bank card</b></td>
+                <td>Strong crypto</td>
+                <td>Some public fields; the secrets that authorise a payment never leave the chip.</td>
+                <td><span class="pill red">No</span> — reads limited public data only. Covered below.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3>UID, keys, and why "read" isn't "clone"</h3>
+        <p>Every ISO 14443 card has a <b>UID</b> — a unique identifier it announces to any reader, much like the EM4100 number from last module. Reading a UID is trivial and unprotected. But on the smarter cards the UID is just the doorbell; the valuable data sits behind <b>keys</b>. <b>Mifare Classic</b> famously has weak, decades-old crypto, so with the right keys its sectors can be read and copied — but a card whose keys you don't have is a card you can't fully clone. <b>DESFire</b> uses real modern encryption and simply doesn't hand over its protected contents to anyone without the key. The pattern to hold onto: <b>reading a card's UID tells you almost nothing about whether you can copy the card.</b></p>
+        <div class="callout warn">
+          <span class="ic">!</span>
+          <div><span class="callout-title">"But the Flipper read it fine!"</span>Seeing a card's type and UID on screen is the <em>beginning</em> of the story, not proof you copied it. A DESFire badge reads instantly — and copies not at all. Always check: did it capture the <b>protected data</b>, or just the front-door UID?</div>
+        </div>
+      </section>
+
+      <section id="flipper-nfc">
+        <h2>What the Flipper can do</h2>
+        <p>The NFC app follows the same rhythm as everything else in this course: <b>read</b>, <b>save</b>, <b>emulate</b>. The catch is that how far each step gets depends entirely on the card in your hand.</p>
+        <ol class="steps">
+          <li><b>Read.</b> Tap the card to the back of the Flipper. It identifies the type (Ultralight, Classic, DESFire, EMV…) and reads what it's allowed to — always the UID, and as much protected data as the keys permit.</li>
+          <li><b>Save.</b> Store the capture on the SD card. For a simple tag that's the whole tag; for a locked card it's whatever was readable.</li>
+          <li><b>Emulate.</b> Present the saved data to a reader. This works cleanly for simple tags and for cards you captured completely; for anything key-protected you didn't fully read, emulation won't satisfy the real reader.</li>
+        </ol>
+        <p>So the honest summary is: <b>the Flipper reads many NFC cards, but full cloning depends on the card's crypto and whether the keys are available.</b> Simple NTAG-style tags copy end to end. Mifare Classic copies only when its keys are known. DESFire and bank cards don't copy at all. None of that is a limitation of the Flipper so much as a fact about the cards.</p>
+
+        <h3>Writing NTAG: the friendly end of NFC</h3>
+        <p>Not all NFC is locked down, and the writable end is genuinely fun. <b>NTAG</b> chips are cheap, open, rewritable tags — the little stickers and discs you can program to open a URL, hold a text note, or store any small blob. A well-known example is toy figures: <b>amiibo</b> data is essentially an NTAG215 payload, and enthusiasts write that data onto blank <b>NTAG215</b> tags they own to use with their own consoles. It's a clean illustration of the whole model — a tag with no crypto is just portable memory, and the Flipper can read it, save it, and write it to a blank of the same type.</p>
+        <div class="callout tip">
+          <span class="ic">✓</span>
+          <div>A pack of blank <b>NTAG215</b> tags is the NFC equivalent of the T5577 blanks from Module 6: cheap, rewritable, and perfect for practising the full read → save → write loop on hardware that's entirely yours.</div>
+        </div>
+      </section>
+
+      <section id="bank-cards">
+        <h2>The bank-card myth</h2>
+        <p>This is the one everyone asks about, so let's be precise. Hold a contactless <b>credit or debit card</b> (an <b>EMV</b> card) to the Flipper's NFC app and it <em>will</em> read something. What it reads is a small amount of <b>public</b> information the card is designed to expose — enough for a point-of-sale terminal to start a conversation. What it does <b>not</b> read, because the card never reveals it to anyone, is the material that actually authorises a payment.</p>
+        <div class="grid2">
+          <div class="card">
+            <p class="eyebrow green" style="color:var(--green); margin-bottom:6px;">Sometimes readable (public)</p>
+            <ul style="margin-bottom:0;">
+              <li>The card's presence and type</li>
+              <li>A card number and expiry in some cases</li>
+              <li>A list of recent-ish transaction traces on some cards</li>
+            </ul>
+          </div>
+          <div class="card">
+            <p class="eyebrow" style="color:var(--red); margin-bottom:6px;">Never readable</p>
+            <ul style="margin-bottom:0;">
+              <li>The <b>CVV</b> and your <b>PIN</b></li>
+              <li>The secret keys inside the chip</li>
+              <li>Anything that lets you <b>pay</b> as that card</li>
+            </ul>
+          </div>
+        </div>
+        <p>Here's why "clone it and pay" is impossible: every contactless payment uses a <b>one-time cryptogram</b> that the chip computes with a secret key it will never surrender. The terminal and the bank check that cryptogram. A copy of the public fields can't produce a valid one, so an emulated card is refused. The Flipper can be a curious reader of the front page; it cannot forge the signature inside. Reading a few public bytes is not "having your card."</p>
+        <div class="callout legal">
+          <span class="ic">§</span>
+          <div>
+            <span class="callout-title">Own it, and only it</span>
+            Read your <b>own</b> cards. Even where a payment card exposes a number, using that number is fraud, full stop — and the chip won't let you pay with a clone anyway. Transit passes and building badges are a subtler trap: some are copyable, but duplicating a card you don't control (or dodging a fare) can be a crime regardless of whether the technology cooperates. The rule from Module 6 carries straight over: learn on tags and cards that are yours.
+          </div>
+        </div>
+      </section>
+
+      <section id="lab">
+        <h2>Lab</h2>
+        <div class="lab">
+          <div class="lab-kicker">Lab 7.1</div>
+          <h3>Read your own tag, then note what really copied</h3>
+          <p class="lab-gear">Gear: <b>an NFC tag or card you own</b> — ideally a blank NTAG plus one card you carry (transit, gym, or an old hotel key you kept)</p>
+          <ol>
+            <li>Open the <span class="flip">NFC</span> app and choose <span class="flip">NFC → Read</span>.</li>
+            <li>Tap your card flat to the back of the Flipper. Note the <b>type</b> it reports (Ultralight/NTAG, Mifare Classic, DESFire, EMV…) and the <b>UID</b>.</li>
+            <li><b>Save</b> the capture with a clear name.</li>
+            <li>Now read a <b>blank NTAG</b> tag you own. Because it has no crypto, this one reads completely.</li>
+            <li>Try <b>Emulate</b> on the NTAG capture — a simple tag emulates cleanly. Then look back at the card you read in step 2 and ask: did the Flipper capture its <b>protected</b> data, or only the UID and type?</li>
+            <li>Write one sentence in your notes: for each item, <b>read fully</b>, <b>read partially</b>, or <b>UID only</b> — and why.</li>
+          </ol>
+        </div>
+        <div class="win"><span class="ic">✓</span><span><b>You've got it when:</b> you've read at least two of your own NFC items, emulated a simple NTAG, and can point at one card and say "the Flipper only saw its UID — the rest is behind keys it doesn't have," and at another and say "that one copied end to end because it has no crypto."</span></div>
+      </section>
+
+      <section id="going-deeper">
+        <h2>Going deeper</h2>
+        <details>
+          <summary>My office badge is 13.56 MHz — can the Flipper copy it?</summary>
+          <div class="d-body">
+            <p>It depends entirely on the card. If it's a bare Ultralight/NTAG, likely yes. If it's Mifare Classic, only if the sector keys are known or recoverable. If it's DESFire, no — the protected data stays put. And separately from what's technically possible: a work badge is access you don't control, so copying it can breach policy or law even when the chip is cooperative. Practise on your own tags; the concepts transfer without the risk.</p>
+          </div>
+        </details>
+        <details>
+          <summary>Why is Mifare Classic called "weak" if it still needs keys?</summary>
+          <div class="d-body">
+            <p>Because its cipher (an old proprietary one) has been thoroughly broken by researchers, so its keys are far easier to recover than a modern card's would be — the lock exists, but the tumblers are known. "Weak crypto" doesn't mean "no lock"; it means the lock is from an era before the attacks that defeat it were public. DESFire's AES-based design is the modern answer, and it's why security-conscious buildings migrated to it.</p>
+          </div>
+        </details>
+        <details>
+          <summary>Is my phone's tap-to-pay the same as a card?</summary>
+          <div class="d-body">
+            <p>Same frequency, same near-field idea, even more locked down. Phone wallets add a secure element and one-time tokens on top of the EMV cryptogram, so there's even less useful data exposed to a curious reader and still nothing that lets anyone pay as you. The Flipper might notice a payment device is present; it cannot become one.</p>
+          </div>
+        </details>
+      </section>
+
+      <section id="quiz">
+        <h2>Check yourself</h2>
+        <div data-quiz="m07"></div>
+      </section>
+    <section id="sources"><h2>Verify the details</h2><p class="source-note">Read the primary sources: <a href="https://docs.flipper.net/zero/nfc">Flipper: NFC</a>. Course review: 10 September 2026.</p></section></article>
+  </main>
+
+  <footer class="site-footer">
+    <div class="wrap">
+      <p>Signal Path teaches RF with devices you own, for learning and legitimate testing. Radio transmission is regulated where you live; interfering with other people's devices is illegal and harmful. When scope or legality is unclear, use the simulators.</p>
+      <p>Signal Path · a self-guided RF course for the Flipper Zero</p>
+    </div>
+  </footer>
+
+  <script src="../assets/js/data/course.js"></script>
+  <script src="../assets/js/site.js"></script>
+  <script src="../assets/js/data/quiz-bank.js"></script>
+<script src="../assets/js/presentation.js"></script>
+</body>
+</html>

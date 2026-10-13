@@ -1,0 +1,17 @@
+---
+/* Stripe cancel_url. Copy: docs/v2/copy/checkout.md#cancel. */
+import Marketing from '@/layouts/Marketing.astro';
+import LinkButton from '@/components/marketing/LinkButton.astro';
+---
+<Marketing title="Checkout cancelled" description="Checkout was cancelled and nothing was charged." index={false}>
+  <div class="mx-auto max-w-xl px-4 py-16 sm:py-24">
+    <p class="eyebrow">Checkout cancelled</p>
+    <h1 class="mt-3">You haven't been charged.</h1>
+    <p class="lede mt-4">Your free lessons and your progress are where you left them.</p>
+    <p class="mt-4 text-muted-foreground">The pricing FAQ covers hardware, time, refunds and VAT. You can come back to checkout whenever you like.</p>
+    <div class="mt-8 flex flex-wrap gap-3">
+      <LinkButton href="/pricing#faq" size="md">Back to pricing</LinkButton>
+      <LinkButton href="/learn" variant="secondary" size="md">Continue with the free lessons</LinkButton>
+    </div>
+  </div>
+</Marketing>

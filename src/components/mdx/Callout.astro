@@ -1,0 +1,17 @@
+---
+/** Aside with a tinted frame. Variants map to the legacy callout colours. */
+interface Props {
+  variant?: 'note' | 'tip' | 'warn' | 'story' | 'legal';
+  title?: string;
+}
+const { variant = 'note', title } = Astro.props;
+const glyph = { note: '?', tip: 'i', warn: '!', story: '“', legal: '§' }[variant];
+const hasIcon = Astro.slots.has('icon');
+---
+<aside class:list={['callout', variant]} role="note" aria-label={title}>
+  <span class="ic" aria-hidden="true">{hasIcon ? <slot name="icon" /> : glyph}</span>
+  <div>
+    {title && <span class="callout-title">{title}</span>}
+    <slot />
+  </div>
+</aside>

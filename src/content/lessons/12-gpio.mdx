@@ -1,0 +1,349 @@
+---
+id: m12
+number: 12
+slug: 12-gpio
+title: 'GPIO: signals you can touch'
+description: Wire an LED to your Flipper Zero's GPIO with a current you calculated first, read the pinout before you connect anything, and prove a UART link by loopback.
+stage: build
+week: Week 8
+access: paid
+minutes: 75
+gear:
+  - Flipper Zero on official firmware 1.4.3 or later, with a microSD card
+  - solderless breadboard and male-to-male jumper wires
+  - one red 3 mm or 5 mm LED and one 1 kΩ resistor (brown, black, red)
+  - one female-to-female jumper wire for the loopback
+  - a computer with a USB-C cable and a serial terminal (screen on macOS or Linux, PuTTY on Windows)
+  - optional, a multimeter with a mA range
+transmits: none
+outcome: Drive one GPIO pin to light an LED at a current you calculated first, and prove a UART path with a loopback, without putting more than 3.3 V on any signal pin.
+prerequisites:
+  - m00
+tools: []
+scenes:
+  - gpio
+evidence: A circuit drawing with pin numbers, resistor value and estimated current, the LED result with a wrong-pin control, and a loopback log with and without the jumper.
+sources:
+  - title: 'Flipper Docs: GPIO and modules'
+    url: https://docs.flipper.net/zero/gpio-and-modules
+  - title: 'Flipper Zero firmware 1.4.3: GPIO app source'
+    url: https://github.com/flipperdevices/flipperzero-firmware/tree/1.4.3/applications/main/gpio
+  - title: 'Flipper Zero firmware 1.4.3: GPIO pin table (furi_hal_resources.c)'
+    url: https://github.com/flipperdevices/flipperzero-firmware/blob/1.4.3/targets/f7/furi_hal/furi_hal_resources.c
+  - title: 'NXP UM10204: I2C-bus specification and user manual, Rev. 7.0'
+    url: https://www.nxp.com/docs/en/user-guide/UM10204.pdf
+  - title: 'Analog Devices: Introduction to SPI Interface'
+    url: https://www.analog.com/en/resources/analog-dialogue/articles/introduction-to-spi-interface.html
+  - title: 'Analog Devices: UART, a hardware communication protocol'
+    url: https://www.analog.com/en/resources/analog-dialogue/articles/uart-a-hardware-communication-protocol.html
+  - title: 'Texas Instruments SLLA544: RS-232 frequently asked questions'
+    url: https://www.ti.com/lit/an/slla544/slla544.pdf
+reviewed: '2026-10-13'
+badge: gpio
+---
+
+## Outcome
+
+You can light an LED from one Flipper GPIO pin at a current you worked out on paper first, and you can prove a serial link works before you trust it with another board.
+
+By the end you can:
+
+- read the Flipper's 18-pin header by number and name, and say which pins are power, ground, general I/O and serial;
+- calculate an LED's current from the supply, the forward voltage and every resistor in the path, including the 51 Ω one inside the Flipper;
+- explain what UART, SPI and I²C each need electrically, and run a loopback test that separates wiring faults from settings faults.
+
+## Before you start
+
+- **Prerequisite:** [Module 0](/learn/00-setup), for firmware, the microSD card and the menus. [Module 11](/learn/11-infrared) is the previous lesson in this stage but nothing here depends on it.
+- **Gear:** the list above. A multimeter is optional.
+- **Firmware:** official firmware. Menu names and pin behaviour below were checked against the GPIO app source in release 1.4.3 (December 2025).
+- **Time:** about 75 minutes: 25 to read, 25 for the LED, 25 for the loopback.
+- **Transmits:** no radio. You drive 3.3 V logic on your own breadboard.
+- **Scope:** your own Flipper, your own parts, your own desk. Nothing in this lesson connects to another device's board.
+
+<Callout variant="warn" title="Three things you never connect in this course">
+Anything mains-powered, any port with unknown voltage, and any RS-232 serial port. RS-232 signals sit between +3 V and +15 V or between −3 V and −15 V, so a single wire can put a negative voltage on a pin built for 0 to 3.3 V. If you cannot name a pin's voltage from a document, it does not touch your Flipper.
+</Callout>
+
+## Understand
+
+### A pin is a switch to a voltage
+
+<Scene3D name="gpio" label="3D animation: the 18-pin GPIO header with an LED and series resistor wired from PA7 to ground, with current flowing while the pin is high." />
+
+GPIO means general-purpose input/output. Each I/O pin on the Flipper's top header connects to a pin of its STM32WB55 microcontroller. Software decides what that pin does:
+
+- **Output, high:** the chip connects the pin to its 3.3 V supply through a transistor.
+- **Output, low:** the chip connects the pin to ground.
+- **Input:** the chip only watches the voltage and reports high or low.
+- **Off (analog or high impedance):** the pin neither drives nor reads. Firmware parks unused pins here.
+
+Flipper's documentation states that each I/O pin can source up to 20 mA and connects to the microcontroller through a 51 Ω resistor with ESD protection. Treat a pin as a signal line. A module takes its power from pin 1 or pin 9 and uses a GPIO pin only to tell it what to do.
+
+### The header, pin by pin
+
+Count from pin 1 on the official pinout diagram and check orientation twice before you plug in a wire. This table comes from Flipper's GPIO page and the firmware's pin table in release 1.4.3.
+
+<div class="table-scroll">
+
+| Pin | Name | What it is | In GPIO Manual Control |
+| --- | --- | --- | --- |
+| 1 | 5V | 5 V supply, up to 1.2 A | no |
+| 2 | PA7 | general I/O | yes |
+| 3 | PA6 | general I/O | yes |
+| 4 | PA4 | general I/O | yes |
+| 5 | PB3 | general I/O | yes |
+| 6 | PB2 | general I/O | yes |
+| 7 | PC3 | general I/O | yes |
+| 8 | GND | ground | no |
+| 9 | 3V3 | 3.3 V supply, up to 1.2 A, on by default | no |
+| 10 | PA14 | SWD clock for debugging | no |
+| 11 | GND | ground | no |
+| 12 | PA13 | SWD data for debugging | no |
+| 13 | PB6 | UART TX | no |
+| 14 | PB7 | UART RX | no |
+| 15 | PC1 | general I/O | yes |
+| 16 | PC0 | general I/O | yes |
+| 17 | PB14 | 1-Wire (iButton line) | no |
+| 18 | GND | ground | no |
+
+</div>
+
+Pin 9 is switched off briefly during firmware updates and while the microSD card mounts, so anything powered from it loses power at those moments. Flipper's docs also say to connect modules with a large capacitive load only while the Flipper is off. Pin 1 is off on battery until you set <Flip>GPIO → 5V on GPIO</Flip> to ON; Flipper's docs say that on USB it is fed directly from USB, so treat it as live whenever a cable is plugged in.
+
+### 3.3 V logic and the 5 V input exception
+
+The I/O pins work at 3.3 V logic. Flipper's documentation adds one exception: a pin configured as an **input** is 5 V tolerant, and the same pin configured as an **output** is not. The docs still advise you not to connect 5 V I/O peripherals at all.
+
+Here is why that advice is right. Firmware changes pin modes without asking you. Opening <Flip>GPIO → GPIO Manual Control</Flip> turns all eight general I/O pins into outputs driven low. A 5 V signal sitting on any of them at that moment is now fighting an output. The 5 V pin on the header says nothing about what the signal pins accept.
+
+### Worked example: the LED current
+
+An LED needs a resistor in series because it does not limit its own current. Once the voltage across it passes its forward voltage, a little more voltage brings a lot more current. The resistor turns the leftover voltage into a fixed current with Ohm's law.
+
+Take a red LED and assume a forward voltage of 2.0 V. Read your own LED's datasheet if you have it; red LEDs are usually near 2 V, other colours are higher. The path from PA7 to ground has two resistors: the Flipper's 51 Ω and your 1 kΩ.
+
+- Voltage left for the resistors: 3.3 V − 2.0 V = 1.3 V.
+- Total resistance: 1,000 Ω + 51 Ω = 1,051 Ω.
+- Current: 1.3 V ÷ 1,051 Ω = **1.24 mA**, about 6 % of the 20 mA limit.
+- Drop across your 1 kΩ: 1.24 mA × 1,000 Ω = 1.24 V. Across the internal 51 Ω: 0.06 V.
+
+<Figure label="Circuit diagram: inside the Flipper, PA7 passes through a 51 ohm resistor to header pin 2. From pin 2 a wire runs to a 1 kilohm resistor, then to the LED anode; the LED cathode returns to header pin 8, ground. Labels show 3.3 volts at the pin, about 1.24 volts across the 1 kilohm resistor, about 2.0 volts across the LED, and a current of about 1.24 milliamps." caption="The full current path. The 51 Ω resistor is inside the Flipper, so it is easy to forget; it matters most when someone leaves out the external resistor.">
+<svg viewBox="0 0 640 220" width="100%" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+  <rect x="10" y="24" width="170" height="172" rx="8" fill="none" class="stroke-border" stroke-width="1.5" />
+  <text x="22" y="46" class="fill-foreground font-sans" font-size="14" font-weight="700">Flipper Zero</text>
+  <text x="22" y="74" class="fill-muted-foreground font-mono" font-size="11">STM32 PA7</text>
+  <line x1="90" y1="70" x2="100" y2="70" class="stroke-foreground" stroke-width="2" />
+  <path d="M100 70 l5 -7 l10 14 l10 -14 l10 14 l10 -14 l5 7" fill="none" class="stroke-muted-foreground" stroke-width="2" />
+  <line x1="150" y1="70" x2="180" y2="70" class="stroke-foreground" stroke-width="2" />
+  <text x="108" y="98" class="fill-muted-foreground font-mono" font-size="11">51 Ω</text>
+  <text x="22" y="164" class="fill-muted-foreground font-mono" font-size="11">ground</text>
+  <line x1="80" y1="160" x2="180" y2="160" class="stroke-foreground" stroke-width="2" />
+  <circle cx="180" cy="70" r="5" class="fill-primary" />
+  <circle cx="180" cy="160" r="5" class="fill-primary" />
+  <text x="190" y="58" class="fill-foreground font-mono" font-size="12">pin 2 · PA7 · 3.3 V when high</text>
+  <text x="190" y="184" class="fill-foreground font-mono" font-size="12">pin 8 · GND · 0 V</text>
+  <line x1="180" y1="70" x2="300" y2="70" class="stroke-primary" stroke-width="2" />
+  <path d="M300 70 l6 -9 l12 18 l12 -18 l12 18 l12 -18 l12 18 l6 -9" fill="none" class="stroke-primary" stroke-width="2.5" />
+  <line x1="372" y1="70" x2="500" y2="70" class="stroke-primary" stroke-width="2" />
+  <text x="300" y="104" class="fill-foreground font-mono" font-size="12">1 kΩ</text>
+  <text x="300" y="120" class="fill-muted-foreground font-mono" font-size="11">≈ 1.24 V across</text>
+  <line x1="500" y1="70" x2="500" y2="98" class="stroke-primary" stroke-width="2" />
+  <path d="M484 98 L516 98 L500 126 Z" class="fill-warning stroke-warning" fill-opacity="0.35" stroke-width="2" />
+  <line x1="484" y1="126" x2="516" y2="126" class="stroke-warning" stroke-width="2.5" />
+  <path d="M522 104 l12 -10 M528 116 l12 -10" class="stroke-warning" stroke-width="1.5" />
+  <text x="546" y="106" class="fill-foreground font-mono" font-size="12">LED</text>
+  <text x="546" y="122" class="fill-muted-foreground font-mono" font-size="11">≈ 2.0 V</text>
+  <text x="440" y="96" text-anchor="end" class="fill-muted-foreground font-mono" font-size="10">anode +</text>
+  <text x="440" y="140" text-anchor="end" class="fill-muted-foreground font-mono" font-size="10">cathode −</text>
+  <line x1="500" y1="126" x2="500" y2="160" class="stroke-primary" stroke-width="2" />
+  <line x1="500" y1="160" x2="180" y2="160" class="stroke-primary" stroke-width="2" />
+  <path d="M410 64 l10 6 l-10 6" fill="none" class="stroke-info" stroke-width="2" />
+  <text x="400" y="54" class="fill-info font-mono" font-size="12">I ≈ 1.24 mA</text>
+</svg>
+</Figure>
+
+The same sum for other resistor values shows why the external resistor is not optional.
+
+<div class="table-scroll">
+
+| External resistor | Total in path | Estimated current | Verdict |
+| --- | --- | --- | --- |
+| none | 51 Ω | 1.3 V ÷ 51 Ω ≈ 25 mA | above the 20 mA rating; never do this |
+| 330 Ω | 381 Ω | 3.4 mA | bright, comfortably inside the limit |
+| 1 kΩ | 1,051 Ω | 1.24 mA | this lesson's circuit |
+| 2.2 kΩ | 2,251 Ω | 0.58 mA | dimmer, still a clear indicator |
+
+</div>
+
+These are estimates: the pin's driver resistance and the LED's forward voltage both shift with current, so a meter reads a little differently.
+
+### What the screen is actually showing you
+
+<Flip>GPIO → GPIO Manual Control</Flip> opens a screen titled "GPIO Output Mode Test" with the line "Press &lt; or &gt; to change pin" and the selected pin name below it. Three facts from the firmware source decide how you use it:
+
+- **On entry**, all eight general I/O pins (PA7, PA6, PA4, PB3, PB2, PC3, PC1, PC0) become push-pull outputs, driven low.
+- **Holding OK** drives the selected pin high. **Releasing OK** drives it low again. Nothing latches. The Flipper's own green status LED lights while you hold OK, which tells you the press registered.
+- **On exit**, the pins go back to the off state. The last entry in the list, `ALL`, drives all eight at once.
+
+So if the green LED lights and your LED does not, the button did its job. Check your circuit and your choice of pin.
+
+### Three ways chips talk: UART, SPI and I²C
+
+Real modules exchange bytes. Three serial buses cover most of them.
+
+<div class="table-scroll">
+
+| | UART | SPI | I²C |
+| --- | --- | --- | --- |
+| Signal wires | TX and RX, plus ground | clock, chip select, two data lines, plus ground | SDA and SCL, plus ground |
+| Clock | none; both ends agree on a baud rate | the controller drives it | the controller drives it |
+| Choosing a device | point to point, one device per pair | one chip-select line per device, usually active low | an address on the shared bus, usually 7-bit |
+| Idle level | high | chip select high | both lines high, held by pull-up resistors |
+| Classic mistake | TX to TX | two chip selects active at once | missing pull-ups |
+
+</div>
+
+**UART** is asynchronous: there is no clock wire, so both ends must agree in advance on the baud rate and the frame. The common frame is 8N1: one start bit, eight data bits sent least significant bit first, no parity, one stop bit. Each side's TX goes to the other side's RX, and the grounds are joined, because a voltage only means something relative to a shared reference.
+
+<Figure label="Timing diagram of one UART frame carrying the letter A, byte 0x41, at 115,200 baud. The line idles high, drops low for the start bit, then sends bits b0 to b7 as 1, 0, 0, 0, 0, 0, 1, 0, then returns high for the stop bit and idle." caption="One 8N1 frame for the letter A (0x41 = 0100 0001), least significant bit first. At 115,200 baud each bit lasts 8.68 µs and the ten-bit frame lasts 86.8 µs. A receiver set to a different baud rate samples in the wrong places and reads a different byte.">
+<svg viewBox="0 0 680 200" width="100%" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+  <g class="stroke-border" stroke-width="1" stroke-dasharray="3 4">
+    <line x1="80" y1="36" x2="80" y2="122" /><line x1="128" y1="36" x2="128" y2="122" /><line x1="176" y1="36" x2="176" y2="122" />
+    <line x1="224" y1="36" x2="224" y2="122" /><line x1="272" y1="36" x2="272" y2="122" /><line x1="320" y1="36" x2="320" y2="122" />
+    <line x1="368" y1="36" x2="368" y2="122" /><line x1="416" y1="36" x2="416" y2="122" /><line x1="464" y1="36" x2="464" y2="122" />
+    <line x1="512" y1="36" x2="512" y2="122" /><line x1="560" y1="36" x2="560" y2="122" />
+  </g>
+  <path d="M32 50 H80 V110 H128 V50 H176 V110 H416 V50 H464 V110 H512 V50 H608" fill="none" class="stroke-primary" stroke-width="2.5" />
+  <text x="614" y="54" class="fill-muted-foreground font-mono" font-size="11">high 1</text>
+  <text x="614" y="114" class="fill-muted-foreground font-mono" font-size="11">low 0</text>
+  <g class="fill-foreground font-mono" font-size="11" text-anchor="middle">
+    <text x="56" y="140">idle</text><text x="104" y="140">start</text><text x="152" y="140">b0</text><text x="200" y="140">b1</text>
+    <text x="248" y="140">b2</text><text x="296" y="140">b3</text><text x="344" y="140">b4</text><text x="392" y="140">b5</text>
+    <text x="440" y="140">b6</text><text x="488" y="140">b7</text><text x="536" y="140">stop</text><text x="584" y="140">idle</text>
+  </g>
+  <g class="fill-muted-foreground font-mono" font-size="11" text-anchor="middle">
+    <text x="104" y="156">0</text><text x="152" y="156">1</text><text x="200" y="156">0</text><text x="248" y="156">0</text>
+    <text x="296" y="156">0</text><text x="344" y="156">0</text><text x="392" y="156">0</text><text x="440" y="156">1</text>
+    <text x="488" y="156">0</text><text x="536" y="156">1</text>
+  </g>
+  <text x="32" y="22" class="fill-foreground font-sans" font-size="14" font-weight="700">UART 8N1 frame: "A" = 0x41</text>
+  <text x="32" y="186" class="fill-muted-foreground font-mono" font-size="11">1 bit = 1 ÷ 115,200 s = 8.68 µs · 10 bits = 86.8 µs</text>
+</svg>
+</Figure>
+
+**SPI** has a clock driven by the controller, so there is no baud rate to agree. It is full duplex: data goes out on one line while it comes back on the other. The controller pulls one peripheral's chip-select line low to talk to it.
+
+**I²C** shares two lines between many devices. According to NXP's specification, devices only ever pull SDA and SCL low (open-drain outputs), and pull-up resistors return the lines high; when the bus is free, both lines are high. That is why a bare I²C module with no pull-ups anywhere on the bus shows nothing: no device can ever produce a high.
+
+All three need compatible voltage levels and a common ground. A connector's shape tells you none of that.
+
+<Figure label="Two wiring sketches. Left: the Flipper's pin 13 TX connects to a 3.3 volt board's RX, the board's TX connects to the Flipper's pin 14 RX, and the grounds are joined. Right: a loopback, where one jumper connects the Flipper's own pin 13 TX to pin 14 RX." caption="Left: TX always goes to the other end's RX, and ground is shared. Right: a loopback joins the Flipper's TX to its own RX, so every byte sent comes straight back. Lab 12.2 uses the right-hand wiring only.">
+<svg viewBox="0 0 640 210" width="100%" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+  <rect x="10" y="30" width="110" height="140" rx="8" fill="none" class="stroke-border" stroke-width="1.5" />
+  <text x="20" y="22" class="fill-foreground font-sans" font-size="13" font-weight="700">Flipper</text>
+  <rect x="250" y="30" width="110" height="140" rx="8" fill="none" class="stroke-border" stroke-width="1.5" />
+  <text x="260" y="22" class="fill-foreground font-sans" font-size="13" font-weight="700">3.3 V board</text>
+  <text x="20" y="64" class="fill-foreground font-mono" font-size="11">13 TX</text>
+  <text x="20" y="104" class="fill-foreground font-mono" font-size="11">14 RX</text>
+  <text x="20" y="144" class="fill-foreground font-mono" font-size="11">GND</text>
+  <text x="350" y="64" text-anchor="end" class="fill-foreground font-mono" font-size="11">RX</text>
+  <text x="350" y="104" text-anchor="end" class="fill-foreground font-mono" font-size="11">TX</text>
+  <text x="350" y="144" text-anchor="end" class="fill-foreground font-mono" font-size="11">GND</text>
+  <line x1="120" y1="60" x2="250" y2="60" class="stroke-primary" stroke-width="2" />
+  <path d="M236 54 l12 6 l-12 6" fill="none" class="stroke-primary" stroke-width="2" />
+  <line x1="120" y1="100" x2="250" y2="100" class="stroke-info" stroke-width="2" />
+  <path d="M134 94 l-12 6 l12 6" fill="none" class="stroke-info" stroke-width="2" />
+  <line x1="120" y1="140" x2="250" y2="140" class="stroke-muted-foreground" stroke-width="2" />
+  <rect x="440" y="30" width="110" height="140" rx="8" fill="none" class="stroke-border" stroke-width="1.5" />
+  <text x="450" y="22" class="fill-foreground font-sans" font-size="13" font-weight="700">Flipper</text>
+  <text x="540" y="74" text-anchor="end" class="fill-foreground font-mono" font-size="11">13 TX</text>
+  <text x="540" y="124" text-anchor="end" class="fill-foreground font-mono" font-size="11">14 RX</text>
+  <path d="M550 70 C 620 70, 620 120, 550 120" fill="none" class="stroke-warning" stroke-width="2.5" />
+  <text x="600" y="100" class="fill-warning font-mono" font-size="11">jumper</text>
+  <text x="440" y="196" class="fill-muted-foreground font-mono" font-size="11">bytes out return as bytes in</text>
+</svg>
+</Figure>
+
+{/* TODO: tool. An LED current calculator (supply, forward voltage, resistors) and a UART frame visualiser with a baud-mismatch slider would let learners predict both labs in the browser first. */}
+
+### Misconceptions
+
+- **"The 5 V pin means the header is 5 V."** Pin 1 is a supply. The signal pins are 3.3 V logic and lose their input-only 5 V tolerance the moment firmware makes them outputs.
+- **"A GPIO pin can power my module."** A pin sources up to 20 mA. Power comes from pin 1 or pin 9; the GPIO pin only signals.
+- **"TX goes to TX, the labels match."** Labels describe each device's own view. Your TX is the other side's RX.
+- **"The loopback worked, so my board will talk."** A loopback proves your own TX, RX and USB path. It cannot test another device's baud rate or levels.
+
+## Predict and practise
+
+<Lab kicker="Lab 12.1" title="Light an LED at a current you calculated" gear="Flipper, breadboard, red LED, 1 kΩ resistor, two jumpers. Optional multimeter. Nothing transmits.">
+
+1. **Predict first.** Write down: the current you expect (show the sum, including the 51 Ω), which leg of the LED goes towards PA7, and what the LED does when you release OK.
+2. Unplug USB and switch the Flipper off. Find pin 2 (PA7) and pin 8 (GND) on the official pinout. Check orientation a second time.
+3. Build the path: pin 2 → 1 kΩ resistor → LED anode (the longer leg) → LED cathode → pin 8. Nothing else connects to the header. Check that no wire touches pin 1 or pin 9.
+4. Switch on. Open <Flip>GPIO → GPIO Manual Control</Flip>, press right or left until the screen shows `PA7`, then hold OK. Watch your LED and the Flipper's green status LED. Release.
+5. **Control:** select `PA6` and hold OK. Your LED should stay dark while the green status LED still lights. Go back to `PA7` and confirm it lights again.
+6. Optional, with a meter: switch off, put the meter in series between the resistor and the LED on its mA range, switch on and hold OK on `PA7`. Record the reading next to your estimate.
+7. If the LED never lights, switch off before you change anything. Check, one at a time: LED direction, resistor value, the selected pin, the jumper into pin 2. Then exit the app, switch off and unplug the circuit.
+
+</Lab>
+
+Expected observation: the LED lights only while you hold OK on `PA7`, the green status LED lights on every OK press, and `PA6` lights nothing on your board. A meter, if you used one, reads close to 1.2 mA.
+
+<Win>you can predict the current within a few tenths of a milliamp before switching on, and explain the PA6 control: the button worked, the pin changed, and your circuit only listens to pin 2.</Win>
+
+<Lab kicker="Lab 12.2" title="Prove a serial path with a loopback" gear="Flipper, one female-to-female jumper, a computer with a USB-C cable and a serial terminal. Nothing connects to any other board.">
+
+1. **Predict first.** Write down: with pin 13 joined to pin 14, what appears when you type in the terminal? With the jumper removed, what happens to the Flipper's TX and RX byte counts?
+2. Switch the Flipper off. Fit one jumper from pin 13 (TX) to pin 14 (RX). Nothing else on the header.
+3. Switch on, connect USB, and quit qFlipper if it is open so the serial port is free. Open <Flip>GPIO → USB-UART Bridge</Flip>. Leave the defaults: USB channel `0 (CLI)`, UART pins `13,14`, baud rate `Host`. Channel 0 borrows the port the command line normally uses, which is why qFlipper cannot stay connected, and `Host` means the Flipper's UART runs at whatever rate your terminal asks for.
+4. On the computer, open the Flipper's serial port at 115200. On macOS run `ls /dev/cu.usbmodem*` and then `screen` with that port and `115200`; on Linux the port is usually `/dev/ttyACM0`; on Windows choose its COM port in PuTTY.
+5. Type a short word. Note what the terminal shows and the TX and RX counts on the Flipper's screen.
+6. **Control:** pull the jumper off pin 14 and type again. Note what changes. Refit it and confirm the echo returns.
+7. Close the terminal (in `screen`, press Ctrl-A then K), exit the bridge, switch off and remove the jumper.
+
+</Lab>
+
+Expected observation: with the jumper, each character you type appears once and both counters rise together. Without it, the terminal shows nothing while the TX count keeps rising and RX stays put. Changing the terminal's baud rate does not break a loopback, because the same UART sends and receives at the same rate.
+
+<Win>you can explain why the TX count rose with the jumper removed, and why a passing loopback still says nothing about the baud rate of a board you have not connected.</Win>
+
+## Check yourself
+
+<Quiz id="m12" />
+
+Two questions to answer in a sentence each, without notes:
+
+1. A module's datasheet says "VCC 5 V, logic 5 V". What would you need to know or add before connecting its data pin to PA4?
+2. Your loopback passes, but a documented 3.3 V board on the same pins prints garbage. Name two settings you would compare first.
+
+## Keep evidence
+
+Open your [notebook](/learn/notebook?module=m12) and save an entry for this module. Map each lab to a field:
+
+- **Setup:** firmware version, the parts with their values, and the pin numbers you used.
+- **Prediction:** your current estimate with the working, and your loopback predictions, written before either lab.
+- **Observation:** LED on `PA7`, dark on `PA6`, any meter reading; the loopback echo and both counter readings with and without the jumper.
+- **Explanation:** why the PA6 control stayed dark, and what the loopback does and does not prove.
+
+Adequate evidence is a drawing with pin numbers and component values, one positive result and one control for each lab. An example entry:
+
+> Official 1.4.3. Pin 2 PA7 → 1 kΩ → red LED → pin 8 GND. Predicted (3.3 − 2.0) ÷ 1,051 Ω = 1.24 mA. Hold OK on PA7: LED on, green status LED on. PA6: green on, my LED dark. Meter: 1.1 mA. Loopback 13 → 14, 115200: "hello" echoed, TX 5, RX 5. Jumper off: no echo, TX 10, RX 5. Loopback proves my side only.
+
+Set a review date one week from today. When you can redo the current sum and the control explanation without notes, mark it retrieved.
+
+## Continue
+
+Next is [Module 13: USB and Bluetooth](/learn/13-usb-bluetooth). The USB-UART bridge was the Flipper presenting itself to a computer as a serial port; Module 13 asks what a computer trusts when a device says what it is. If you take the optional [Wi-Fi Devboard extension](/learn/18-wifi-devboard), that board plugs into this header and talks over the same UART pins.
+
+**Retrieval question for next week:** without looking, what happens to all eight general I/O pins when you open GPIO Manual Control, and why does that make 5 V peripherals risky even on an input-only pin?
+
+Primary sources, checked 13 October 2026:
+
+- [Flipper Docs: GPIO and modules](https://docs.flipper.net/zero/gpio-and-modules) for logic levels, current limits and the GPIO menu.
+- [Firmware 1.4.3: GPIO app](https://github.com/flipperdevices/flipperzero-firmware/tree/1.4.3/applications/main/gpio) for Manual Control and USB-UART Bridge behaviour.
+- [Firmware 1.4.3: furi_hal_resources.c](https://github.com/flipperdevices/flipperzero-firmware/blob/1.4.3/targets/f7/furi_hal/furi_hal_resources.c) for the pin numbers and names.
+- [NXP UM10204, Rev. 7.0](https://www.nxp.com/docs/en/user-guide/UM10204.pdf), section 3.1, for open-drain lines and pull-ups.
+- [Analog Devices: Introduction to SPI Interface](https://www.analog.com/en/resources/analog-dialogue/articles/introduction-to-spi-interface.html) for chip select and the clock.
+- [Analog Devices: UART, a hardware communication protocol](https://www.analog.com/en/resources/analog-dialogue/articles/uart-a-hardware-communication-protocol.html) for asynchronous framing.
+- [TI SLLA544: RS-232 FAQ](https://www.ti.com/lit/an/slla544/slla544.pdf) for the ±3 V to ±15 V signal levels.

@@ -1,0 +1,35 @@
+---
+/** FAQ accordion from src/data/faq.ts on native <details> (keyboard and screen reader friendly without JavaScript).
+    `name` makes the browser keep one item open at a time where supported. */
+import { faq } from '@/data/faq';
+import { facts } from './site';
+
+interface Props {
+  ids?: readonly string[];
+}
+const { ids } = Astro.props;
+const items = ids ? ids.map((id) => faq.find((f) => f.id === id)!).filter(Boolean) : faq;
+---
+<div class="divide-y divide-border border-y border-border">
+  {
+    items.map((f) => (
+      <details id={`faq-${f.id}`} name="faq" class="group scroll-mt-24">
+        <summary class="flex min-h-16 cursor-pointer list-none items-center justify-between gap-6 py-4 text-left text-[1.0625rem] font-medium transition-colors hover:text-primary [&::-webkit-details-marker]:hidden">
+          {f.q}
+          <span class="relative size-4 shrink-0 text-muted-foreground" aria-hidden="true">
+            <span class="absolute top-1/2 left-0 h-[1.5px] w-4 -translate-y-1/2 rounded bg-current" />
+            <span class="absolute top-1/2 left-0 h-[1.5px] w-4 -translate-y-1/2 rotate-90 rounded bg-current transition-transform duration-200 group-open:rotate-0" />
+          </span>
+        </summary>
+        <div class="max-w-[68ch] pb-6 leading-relaxed text-muted-foreground">
+          <p>{f.a.replace('{lessons}', String(facts.lessons))}</p>
+          {f.link && (
+            <a href={f.link.href} class="mt-3 inline-flex min-h-11 items-center font-medium text-foreground underline decoration-primary/40 underline-offset-4 hover:decoration-primary">
+              {f.link.label}
+            </a>
+          )}
+        </div>
+      </details>
+    ))
+  }
+</div>

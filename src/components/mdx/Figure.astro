@@ -1,0 +1,12 @@
+---
+/** Figure with a caption. Give `label` when the figure is a diagram (inline SVG) so it reads as one image. */
+interface Props {
+  caption?: string;
+  label?: string;
+}
+const { caption, label } = Astro.props;
+---
+<figure role={label ? 'img' : undefined} aria-label={label}>
+  <slot />
+  {caption && <figcaption>{caption}</figcaption>}
+</figure>

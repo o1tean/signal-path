@@ -1,0 +1,11 @@
+---
+/** "You've got it when" success criterion. Pass `criterion` or write it as children. */
+interface Props {
+  criterion?: string;
+}
+const { criterion } = Astro.props;
+---
+<div class="win">
+  <span class="ic" aria-hidden="true">✓</span>
+  <p class="m-0"><b>You&rsquo;ve got it when:</b>{' '}{criterion ?? <slot />}</p>
+</div>

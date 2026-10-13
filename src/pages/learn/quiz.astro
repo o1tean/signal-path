@@ -1,0 +1,30 @@
+---
+import Learn from '@/layouts/Learn.astro';
+import QuizPractice from '@/components/learn/QuizPractice';
+import { freeQuiz } from '@/data/quiz/free';
+import { paidQuiz } from '@/data/quiz/paid';
+import { hasAccess } from '@/lib/access';
+import { getLessons } from '@/lib/lessons';
+
+// On-demand: paid banks reach the island only after hasAccess(), server side.
+const paid = hasAccess(Astro.locals, 'paid');
+if (paid) Astro.response.headers.set('Cache-Control', 'private, no-store');
+const banks = paid ? { ...freeQuiz, ...paidQuiz } : freeQuiz;
+const lessons = await getLessons();
+const labels = Object.fromEntries(
+  Object.keys(banks).map((id) => {
+    const m = lessons.find((l) => l.id === id);
+    return [id, m ? `Module ${m.n}: ${m.title}` : 'The primer'];
+  }),
+);
+---
+<Learn title="Quiz practice" description="Practise Signal Path quiz questions with explanations. Pick a module or shuffle every question you have access to. Best scores are saved in this browser.">
+  <div class="mx-auto max-w-3xl lg:ml-0 lg:pl-4">
+    <p class="eyebrow">Quiz practice</p>
+    <h1 class="mt-3 text-3xl sm:text-4xl">Check what stuck.</h1>
+    <p class="lede mt-4">Each answer shows an explanation, and your best score per quiz is saved in this browser. Questions for Modules 2 to 18 appear here and in their lessons with Signal Path Complete.</p>
+    <div class="mt-8">
+      <QuizPractice client:only="react" banks={banks} labels={labels} />
+    </div>
+  </div>
+</Learn>

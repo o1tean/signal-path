@@ -1,0 +1,32 @@
+---
+/* /checkout: the signed-in step before Stripe. Sign-in sends buyers here (next=/pricing#buy), because the
+   pricing page is static and cannot know who is signed in. Errors from /api/checkout form posts land here too. */
+import Marketing from '@/layouts/Marketing.astro';
+import BuyButton from '@/components/marketing/BuyButton.astro';
+import { formatPrice, tiers } from '@/data/offer';
+
+const { locals, url } = Astro;
+Astro.response.headers.set('Cache-Control', 'private, no-store');
+if (!locals.user) return Astro.redirect('/login?next=%2Fpricing%23buy', 303);
+if (locals.entitlements.includes('course-complete')) return Astro.redirect('/learn', 303);
+
+const complete = tiers.find((t) => t.key === 'complete')!;
+const error = url.searchParams.get('error');
+const errors: Record<string, string> = {
+  'not-configured': 'Checkout is not configured yet. Your account is ready, so you can buy as soon as it opens.',
+  'stripe-error': 'We could not reach the payment page. Try again in a minute.',
+  'unknown-product': 'That product cannot be bought.',
+};
+---
+<Marketing title="Checkout" description="Continue to payment for Signal Path Complete." index={false}>
+  <div class="mx-auto max-w-md px-4 py-16 sm:py-24">
+    <p class="eyebrow">{complete.name}</p>
+    <h1 class="mt-3">Continue to payment.</h1>
+    <p class="lede mt-4">Signed in as {locals.user.email}. You pay {formatPrice(complete.price, complete.currency)} once on Stripe's checkout page.</p>
+    {error && <p class="mt-6 rounded-md border border-border bg-muted p-3 text-sm" role="alert">{errors[error] ?? errors['stripe-error']}</p>}
+    <div class="mt-8">
+      <BuyButton label="Continue to payment" />
+    </div>
+    <a href="/pricing" class="mt-4 inline-flex min-h-11 items-center text-sm text-muted-foreground hover:text-foreground">Back to pricing</a>
+  </div>
+</Marketing>

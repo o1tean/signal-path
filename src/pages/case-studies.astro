@@ -1,0 +1,15 @@
+---
+/* Copy: docs/v2/copy/resources.md#case-studies, meta.md#case-studies. */
+import ResourcePage from '@/components/content/ResourcePage.astro';
+import html from '@/content/pages/case-studies.html?raw';
+export const prerender = true;
+---
+<ResourcePage
+  title="Flipper Zero beginner problems, explained"
+  description="Why a copied gate remote works once, why a car fob won't clone, and why Read shows nothing at 433.92 MHz. Five hypothetical cases traced to the cause."
+  eyebrow="Case studies"
+  heading="Five beginner problems, worked through to the cause."
+  lede="Why a copied gate remote seems to work once, why a car fob won't clone, and three more problems new owners run into."
+  body="Each case is a hypothetical example built from documented behaviour, and it is labelled as one. Each explains a cause. None is a procedure for a real system."
+  html={html}
+/>

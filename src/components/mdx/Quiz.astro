@@ -1,0 +1,17 @@
+---
+/* Server-side quiz loader for lessons. Paid questions are read here, on the server, and only for a lesson
+   body that already passed hasAccess(); the island receives exactly that module's questions as props. */
+import QuizIsland from '@/components/learn/QuizIsland';
+import { freeQuiz } from '@/data/quiz/free';
+import { paidQuiz } from '@/data/quiz/paid';
+
+interface Props {
+  id: string;
+  limit?: number;
+  shuffle?: boolean;
+}
+const { id, limit, shuffle } = Astro.props;
+const questions = freeQuiz[id] ?? paidQuiz[id];
+if (!questions) throw new Error(`<Quiz id="${id}">: no questions in src/data/quiz for that id`);
+---
+<QuizIsland client:only="react" id={id} questions={questions} limit={limit} shuffle={shuffle} title="Quiz" />

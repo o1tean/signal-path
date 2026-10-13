@@ -1,0 +1,51 @@
+---
+/** Site footer. Copy: docs/v2/copy/chrome.md (footer, cookie-line). */
+import { footerNav } from './nav';
+import { need, owner } from './site';
+
+const year = new Date().getFullYear();
+const link = 'inline-flex min-h-11 md:min-h-9 items-center text-muted-foreground transition-colors hover:text-foreground';
+---
+<footer class="border-t border-border bg-card">
+  <div class="mx-auto grid w-full max-w-[75rem] grid-cols-2 gap-x-8 gap-y-10 px-4 pt-14 pb-10 sm:grid-cols-3 sm:px-6 md:grid-cols-[1.6fr_repeat(3,1fr)] md:pt-16">
+    <div class="col-span-2 max-w-sm sm:col-span-3 md:col-span-1">
+      <a href="/" class="inline-flex min-h-11 items-center gap-2.5 font-semibold tracking-tight">
+        <img src="/images/signal-path-logo.png" alt="" width="28" height="28" class="size-7" loading="lazy" />
+        Signal Path
+      </a>
+      <p class="mt-3 text-sm leading-relaxed text-muted-foreground">A 12-week Flipper Zero course. Every lab runs on equipment you own or have permission to test.</p>
+    </div>
+    {
+      footerNav.map((col) => (
+        <nav aria-label={col.title}>
+          <p class="text-sm font-semibold">{col.title}</p>
+          <ul class="mt-3 grid gap-0.5 text-sm">
+            {col.links.map((l) => (
+              <li>
+                <a href={l.href} class={link}>{l.label}</a>
+              </li>
+            ))}
+            {col.title === 'Rules and help' && (
+              <li>
+                {owner.supportEmail ? (
+                  <a href={`mailto:${owner.supportEmail}`} class={link}>Contact</a>
+                ) : (
+                  <span class="inline-flex min-h-9 items-center text-muted-foreground">Contact ({need(null, 'support email')})</span>
+                )}
+              </li>
+            )}
+          </ul>
+        </nav>
+      ))
+    }
+  </div>
+  <div class="border-t border-border">
+    <div class="mx-auto grid w-full max-w-[75rem] gap-2 px-4 py-6 text-xs leading-relaxed text-muted-foreground sm:px-6 md:grid-cols-[1fr_auto] md:gap-8">
+      <div class="grid gap-2">
+        <p>Signal Path is an independent course and is not affiliated with or endorsed by Flipper Devices Inc. Flipper Zero is a trademark of its owner.</p>
+        <p>We set only the cookies that keep you signed in. Details in the <a href="/legal/privacy" class="underline underline-offset-2 hover:text-foreground">privacy notice</a>.</p>
+      </div>
+      <p class="md:text-right">© {year} {need(owner.legalEntity, 'legal entity name')}</p>
+    </div>
+  </div>
+</footer>

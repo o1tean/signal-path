@@ -1,0 +1,33 @@
+---
+/** Decorative 128x64 pixel screen in the lesson header (legacy module header LCD). */
+interface Props {
+  moduleId: string;
+  number: number;
+  title: string;
+  week: string;
+}
+const { moduleId, number, title, week } = Astro.props;
+---
+<canvas class="lesson-lcd hidden h-24 w-48 shrink-0 rounded-md [image-rendering:pixelated] md:block" width="128" height="64" aria-hidden="true" data-module={moduleId} data-number={String(number).padStart(2, '0')} data-title={title} data-week={week}></canvas>
+<script>
+  import { ICONS, lcd, wrap, type LcdSpec } from '@/lib/pixel';
+  import { animationAllowed } from '@/lib/learner';
+
+  document.querySelectorAll<HTMLCanvasElement>('canvas.lesson-lcd').forEach((c) => {
+    const ctx = c.getContext('2d');
+    if (!ctx) return;
+    const d = c.dataset;
+    const spec: LcdSpec = {
+      title: `MODULE ${d.number}`,
+      icon: ICONS[d.module ?? ''] ?? 'logo',
+      lines: wrap(d.title ?? '', 14).slice(0, 3),
+      anim: 'scan',
+      foot: (d.week ?? '').toUpperCase(),
+      right: 'OK >',
+    };
+    lcd(ctx, spec, 0);
+    setInterval(() => {
+      if (animationAllowed() && !document.hidden && c.getBoundingClientRect().bottom > 0) lcd(ctx, spec, performance.now() / 1000);
+    }, 333);
+  });
+</script>
