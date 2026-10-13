@@ -1,0 +1,40 @@
+---
+/** Legal page shell. Copy: docs/v2/copy/legal.md (bodies live next to each route as _name.md). */
+import Marketing from '@/layouts/Marketing.astro';
+
+interface Props {
+  title: string;
+  description: string;
+  heading: string;
+  subheading: string;
+}
+const { title, description, heading, subheading } = Astro.props;
+---
+<Marketing title={title} description={description}>
+  <header class="border-b border-border">
+    <div class="mx-auto w-full max-w-3xl px-4 pt-12 pb-10 sm:px-6 md:pt-20 md:pb-12">
+      <p class="eyebrow">Legal</p>
+      <h1 class="mt-4">{heading}</h1>
+      <p class="mt-5 text-lg leading-relaxed text-muted-foreground">{subheading}</p>
+    </div>
+  </header>
+  <article class="lesson-prose legal mx-auto w-full max-w-3xl px-4 pt-10 pb-16 sm:px-6 md:pb-24">
+    <aside class="callout warn" role="note">
+      <span class="ic" aria-hidden="true">!</span>
+      <div><span class="callout-title">Draft for review</span>Have a qualified lawyer in the selling entity's country review this page before launch. Items marked [NEED: …] must be filled in first.</div>
+    </aside>
+    <slot />
+  </article>
+</Marketing>
+
+<style>
+  .legal :global(h2) {
+    font-size: 1.375rem;
+    margin-top: 2.5rem;
+    padding-top: 2rem;
+  }
+  .legal :global(table) {
+    display: block;
+    overflow-x: auto;
+  }
+</style>

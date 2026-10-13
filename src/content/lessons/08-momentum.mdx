@@ -1,0 +1,291 @@
+---
+id: m08
+number: 8
+slug: 08-momentum
+title: Firmware, apps & Momentum
+description: Separate what the hardware fixes from what firmware changes, record your version and API number, back up your Flipper and find the way back before you switch.
+stage: atlas
+week: Week 5
+access: paid
+minutes: 70
+gear:
+  - Flipper Zero on official firmware 1.4.3 or later, with its microSD card inserted
+  - qFlipper on a computer and a USB-C data cable
+  - one .sub file you saved from your own remote in Modules 2 to 4
+  - a browser for the official app catalog (lab.flipper.net, Chromium-based for the device connection)
+transmits: none
+outcome: Record your firmware version, API number and region, keep a readable backup, and explain with that record whether an app or a fork will run and how you would recover.
+prerequisites:
+  - m00
+  - m02
+  - m04
+tools: []
+scenes: []
+evidence: A baseline record with firmware version, API number and region, a qFlipper backup and one readable .sub file, an app compatibility prediction, and your written recovery route.
+sources:
+  - title: 'Flipper Docs: Firmware update'
+    url: https://docs.flipper.net/zero/basics/firmware-update
+  - title: 'Flipper Docs: Firmware recovery'
+    url: https://docs.flipper.net/zero/basics/firmware-update/firmware-recovery
+  - title: 'Flipper Docs: Settings'
+    url: https://docs.flipper.net/zero/basics/settings
+  - title: 'Flipper Docs: qFlipper'
+    url: https://docs.flipper.net/zero/qflipper
+  - title: 'Flipper Docs: Apps'
+    url: https://docs.flipper.net/zero/apps
+  - title: 'Flipper Docs: Sub-GHz'
+    url: https://docs.flipper.net/zero/sub-ghz
+  - title: 'Flipper Developer Docs: FAP (Flipper Application Package)'
+    url: https://developer.flipper.net/flipperzero/doxygen/apps_on_sd_card.html
+  - title: 'Flipper Developer Docs: Wi-Fi Developer Board'
+    url: https://developer.flipper.net/flipperzero/doxygen/dev_board.html
+  - title: 'Flipper Zero firmware 1.4.3: About screens (about.c)'
+    url: https://github.com/flipperdevices/flipperzero-firmware/blob/1.4.3/applications/settings/about/about.c
+  - title: 'Flipper Zero firmware 1.4.3: app API checks (application_manifest.c)'
+    url: https://github.com/flipperdevices/flipperzero-firmware/blob/1.4.3/lib/flipper_application/application_manifest.c
+  - title: 'Flipper Zero firmware 1.4.3: loader error screens (loader.c)'
+    url: https://github.com/flipperdevices/flipperzero-firmware/blob/1.4.3/applications/services/loader/loader.c
+  - title: 'Flipper Zero firmware 1.4.3: API version (api_symbols.csv)'
+    url: https://github.com/flipperdevices/flipperzero-firmware/blob/1.4.3/targets/f7/api_symbols.csv
+  - title: 'Flipper Zero firmware 1.5.1-rc: API version (api_symbols.csv)'
+    url: https://github.com/flipperdevices/flipperzero-firmware/blob/1.5.1-rc/targets/f7/api_symbols.csv
+  - title: 'Momentum Firmware mntm-012: API version (api_symbols.csv)'
+    url: https://github.com/Next-Flip/Momentum-Firmware/blob/mntm-012/targets/f7/api_symbols.csv
+  - title: 'Momentum Firmware: README and releases'
+    url: https://github.com/Next-Flip/Momentum-Firmware
+  - title: 'Unleashed Firmware: README'
+    url: https://github.com/DarkFlippers/unleashed-firmware
+  - title: 'RogueMaster Firmware: README'
+    url: https://github.com/RogueMaster/flipperzero-firmware-wPlugins
+reviewed: '2026-10-13'
+badge: momentum-pilot
+---
+
+## Outcome
+
+You can say exactly which firmware your Flipper runs, prove you can get back to it, and judge a fork or an app by what it changes.
+
+By the end you can:
+
+- read your firmware version, API number and region from the device and write them down as a baseline;
+- predict whether a given app will load, using the API major number alone;
+- name the recovery route for three failure cases and what each one erases.
+
+## Before you start
+
+- **Prerequisites:** [Module 0](/learn/00-setup) for the menus and the SD card, [Module 2](/learn/02-modulation) for presets and the `.sub` file you will reopen, and [Module 4](/learn/04-transmit) for region lists and why a firmware limit is not a licence.
+- **Gear:** your Flipper with its microSD card, qFlipper on a computer, a USB-C data cable, and one `.sub` file you saved from your own remote.
+- **Firmware:** stay on official firmware for this lesson. Release 1.4.3 (December 2025) is the current release; the 1.5 release candidates are in testing (checked 13 October 2026). If you already run a fork, record it and keep going; Lab 8.1 works the same.
+- **Time:** about 70 minutes: 25 to read, 45 at the desk.
+- **Transmits:** nothing. You read screens, copy files and read documentation.
+- **Scope:** your own device and your own files. Keep captures of other people's devices and any credential files out of shared folders and public repositories.
+
+## Understand
+
+### Four layers: what a firmware switch and a repair touch
+
+Think of the Flipper as a stack. Each layer has a different owner and a different way to fail.
+
+<Figure label="A stack of four layers. At the bottom, hardware: the STM32WB55 processor, the CC1101 radio covering 300 to 348, 387 to 464 and 779 to 928 MHz, and the antenna. Above it, firmware in internal flash: menus, protocols, region list and the app API. Above that, internal storage: settings, dolphin level and Bluetooth pairings. At the top, the microSD card: your captures, the apps as .fap files built against an API version, and custom presets. Brackets mark that switching firmware replaces the firmware layer and can stop apps on the card from loading, that a repair erases internal storage, that the microSD card is kept by updates and repair, and that no software changes the hardware." caption="What changes when you switch firmware or repair. The radio bands are the hardware limits from Flipper's Sub-GHz documentation; no firmware moves them. A repair rewrites flash and wipes internal storage, but leaves the microSD card alone.">
+<svg viewBox="0 0 640 270" width="100%" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+  <rect x="0" y="8" width="430" height="52" rx="6" class="fill-primary stroke-primary" fill-opacity="0.08" stroke-width="1.5" />
+  <text x="14" y="30" class="fill-foreground font-sans" font-size="14" font-weight="700">microSD card</text>
+  <text x="14" y="49" class="fill-muted-foreground font-mono" font-size="11">captures, apps/*.fap (built for one API, e.g. 87.1), setting_user</text>
+  <rect x="0" y="70" width="430" height="52" rx="6" fill="none" class="stroke-warning" stroke-width="1.5" />
+  <text x="14" y="92" class="fill-foreground font-sans" font-size="14" font-weight="700">Internal storage</text>
+  <text x="14" y="111" class="fill-muted-foreground font-mono" font-size="11">settings, dolphin level, Bluetooth pairings</text>
+  <rect x="0" y="132" width="430" height="52" rx="6" fill="none" class="stroke-info" stroke-width="1.5" />
+  <text x="14" y="154" class="fill-foreground font-sans" font-size="14" font-weight="700">Firmware (internal flash)</text>
+  <text x="14" y="173" class="fill-muted-foreground font-mono" font-size="11">menus, protocols, region list, app API</text>
+  <rect x="0" y="194" width="430" height="66" rx="6" class="fill-muted stroke-border" stroke-width="1.5" />
+  <text x="14" y="216" class="fill-foreground font-sans" font-size="14" font-weight="700">Hardware</text>
+  <text x="14" y="235" class="fill-muted-foreground font-mono" font-size="11">STM32WB55, CC1101, antenna</text>
+  <text x="14" y="251" class="fill-muted-foreground font-mono" font-size="11">300–348, 387–464, 779–928 MHz</text>
+  <text x="446" y="38" class="fill-primary font-sans" font-size="12">kept by updates and repair</text>
+  <path d="M436 72 h10 v50 h-10" fill="none" class="stroke-warning" stroke-width="1.5" />
+  <text x="458" y="102" class="fill-warning font-sans" font-size="12">repair erases this</text>
+  <path d="M436 134 h10 v50 h-10" fill="none" class="stroke-info" stroke-width="1.5" />
+  <text x="458" y="152" class="fill-info font-sans" font-size="12">switch firmware: this is</text>
+  <text x="458" y="168" class="fill-info font-sans" font-size="12">replaced, apps may not load</text>
+  <text x="446" y="232" class="fill-muted-foreground font-sans" font-size="12">no software changes this</text>
+</svg>
+</Figure>
+
+The bottom layer sets the ceiling. Flipper's documentation gives the <Term id="cc1101">CC1101</Term> and its antenna three operating bands: 300–348, 387–464 and 779–928 MHz. Firmware decides which of those frequencies the menus offer and which it will transmit on. It cannot add a radio or give the antenna more gain.
+
+Official firmware already covers three things people switch for:
+
+- **External apps.** Catalog apps install through the Flipper Mobile App or Flipper Lab and appear under <Flip>Apps</Flip>.
+- **Custom presets.** Official firmware loads extra <Term id="preset">presets</Term> from `subghz/assets/setting_user` on the SD card, as Module 2 showed.
+- **External CC1101 modules.** The Sub-GHz app supports external CC1101-based boards. That changes the hardware path, so the result depends on that board and its antenna.
+
+### Your firmware's ID card
+
+<Flip>Settings → About</Flip> steps through several screens. Two of them are your baseline. In official firmware 1.4.3 the source (`about.c`) prints them in this order:
+
+<div class="table-scroll">
+
+| Screen | Line | What it shows |
+| --- | --- | --- |
+| FW Version Info | 1 | release name, then the build date in brackets |
+| FW Version Info | 2 | git commit hash, then the app API as `[major.minor]`, then the Bluetooth radio stack |
+| FW Version Info | 3 | hardware target in brackets (`7` for the current Flipper Zero), then the git branch |
+| HW Version Info | 1 | hardware version, target, body and connector codes, then `R0n:XX`, then the device name |
+
+</div>
+
+On the HW line, `R0n` is the hardware region variant: `R01` is EU and Russia, `R02` US, Canada and Australia, `R03` Japan, `R04` world, `R00` unknown. `XX` is the region the firmware has set (`EU`, `US`, `JP`), or `--` if none. The region is the firmware's transmit list; your regulator decides what is legal where you stand.
+
+On 1.4.3 the API bracket reads `[87.1]`, the value `targets/f7/api_symbols.csv` declares for that release. <Flip>Sub-GHz → Region Information</Flip> shows the same region as a country code (or `N/A`), then the ranges the firmware will transmit on, in kHz.
+
+### Why an app refuses to start
+
+An app is a FAP, a Flipper Application Package: an executable plus metadata and resources. FAPs are tied to an **API version**, the list of firmware functions an app is allowed to call, and not to one firmware release. The developer documentation sets two rules: the major number goes up when there are breaking changes, and the minor number goes up when new features are added.
+
+When you start an app, the loader compares only the **major** numbers. Each outcome has its own header:
+
+- app major lower than firmware major: **Error: Outdated App**, "Update the app";
+- app major higher than firmware major: **Error: Outdated Firmware**, "Update firmware";
+- majors equal, but the app calls a function this firmware does not have: **Error: Missing Imports**, also "Update firmware". The header is the only difference from Outdated Firmware, so read it.
+
+#### Worked example: three firmwares, two apps
+
+The API numbers below come from each release's `api_symbols.csv`, checked 13 October 2026.
+
+<div class="table-scroll">
+
+| Firmware on your Flipper | API | App built for API 87 | App built for API 88 |
+| --- | --- | --- | --- |
+| Official 1.4.3 (release) | 87.1 | loads | Outdated Firmware |
+| Official 1.5.1-rc (release candidate) | 88.2 | Outdated App | loads |
+| Momentum mntm-012 | 87.1 | loads, unless it calls a function only official firmware has | Outdated Firmware |
+
+</div>
+
+So moving from 1.4.3 to a 1.5 release can stop every app built for 87 until you install a rebuild. The reverse also holds for forks: an app that calls functions only Momentum exports shows Missing Imports on official firmware, even with the same major number.
+
+### Forks: what each one claims
+
+A fork is someone else's copy of the official source with their changes on top. Check each feature claim on the release you would install.
+
+<div class="table-scroll">
+
+| Project | What its README says it changes |
+| --- | --- |
+| [Official](https://github.com/flipperdevices/flipperzero-firmware) | The manufacturer's firmware, with Release, Release Candidate and Development channels. Your baseline and your recovery target. |
+| [Momentum](https://github.com/Next-Flip/Momentum-Firmware) | Based on official firmware, a continuation of Xtreme, including most Unleashed features. Asset packs, menu and keybind changes, a settings app, Bad-KB with USB and Bluetooth identity options, and an option to extend Sub-GHz to 281–361, 378–481 and 749–962 MHz. |
+| [Unleashed](https://github.com/DarkFlippers/unleashed-firmware) | "Regional TX restrictions removed", extra Sub-GHz frequencies and protocols, saving and sending for many rolling-code protocols. Its README warns that extending the frequency range "can damage Flipper's hardware". A decoder does not mean a receiver accepts a replay. |
+| [RogueMaster](https://github.com/RogueMaster/flipperzero-firmware-wPlugins) | Merges official, Unleashed and Momentum work with a large bundle of community apps. |
+
+</div>
+
+All four run on the Flipper itself. The Wi-Fi Devboard is a separate ESP32-S2 board whose own firmware ships with Black Magic Debug and CMSIS-DAP; other images such as Marauder are [Module 18](/learn/18-wifi-devboard)'s subject.
+
+<Callout variant="warn" title="Extended frequencies are a hardware and legal risk">
+The CC1101 is specified for three bands. Pushing it outside them can damage the radio, as Unleashed's own README warns, and a wider menu does not change what you may transmit. Keep the official region list for this course. Module 4's ANCOM table still applies to anything you send.
+</Callout>
+
+### Recovery: three routes, one cost
+
+Write your recovery plan before you need it. Flipper's documentation gives these routes:
+
+<div class="table-scroll">
+
+| Situation | Route | What you lose |
+| --- | --- | --- |
+| Device works, an update keeps failing | <Flip>Settings → Power → Reboot → Firmware Upgrade</Flip>, press Right, connect USB, then **Repair** in qFlipper | All internal storage |
+| Same, using the buttons instead of the menu | Hold <kbd>Left</kbd> + <kbd>Back</kbd> for 5 seconds, release Back, keep Left held until the blue LED lights, connect USB, then **Repair** | All internal storage |
+| Screen blank, no buttons respond | Unplug USB, hold <kbd>OK</kbd> + <kbd>Back</kbd> for 30 seconds, connect USB, **Repair** in qFlipper | All internal storage |
+
+</div>
+
+The documentation is specific about the cost: repair erases internal storage, which means the dolphin's level, your settings and your Bluetooth pairings, while "data on the microSD card will be saved". That covers your captures and installed apps, if the card itself is healthy. In recovery mode the computer lists a device called "DFU in FS Mode" on Windows and macOS; on Linux, `lsusb` shows "STM Device in DFU Mode". The same 5 second Left + Back hold is also the plain reboot, so the blue LED is how you tell them apart. To go back to official firmware from a fork, install the **Release** channel in qFlipper. The docs do not say what that keeps, so back up first.
+
+qFlipper's **Advanced controls** tab has Backup and Restore for the layer a repair wipes.
+
+<Callout variant="story" title="The update that ate an evening">
+You flash a fork the night before a project, half your apps say Outdated App, the next update fails, and you repair without a backup. Settings, pairings and the dolphin's level are gone; every capture on the SD card is fine. A backup taken first would have saved the rest.
+</Callout>
+
+### Common misconceptions
+
+- A fork does not add range. Range comes from the radio, the antenna and the setting; firmware changes the menu and leaves the physics alone.
+- Apps and custom presets need no Momentum. Official firmware has both, and supports external CC1101 boards.
+- A fork that decodes a rolling code has only named the protocol. The receiver's counter decides what it accepts.
+- A region list is a firmware rule, not a licence. ANCOM, or your own regulator, sets the legal one.
+
+## Predict and practise
+
+There is no browser tool for this lesson. Both labs run at your desk with the Flipper connected and nothing on the air.
+
+{/* TODO: tool. A firmware-compatibility checker (firmware API vs app API, with the loader's three outcomes) would let learners practise Lab 8.2 predictions in the browser. */}
+
+<Lab kicker="Lab 8.1" title="Write down your baseline" gear="Flipper with microSD card, qFlipper, USB-C data cable, one .sub file from your own remote. Nothing transmits.">
+
+1. **Predict first.** In your notebook, write which of these a repair would erase and which it keeps: the dolphin's level, your `.sub` files, Bluetooth pairings, device settings, installed `.fap` apps. You check this against the recovery section after step 6.
+2. Open <Flip>Settings → About</Flip> and step to **FW Version Info**. Record line 1 (version and build date) and the API number in brackets on line 2. Step on to **HW Version Info** and record the `R0n:XX` region.
+3. Open <Flip>Sub-GHz → Region Information</Flip> and record the country code and the ranges listed. They are in kHz.
+4. Connect to qFlipper. Under **Advanced controls**, run **Backup**. Note the date and where the backup file was saved on your computer.
+5. In qFlipper's **File manager**, copy one `.sub` file from your own remote to your computer and open it in a text editor. Find the `Frequency:` and `Preset:` lines.
+6. **Consistency check:** compare those two lines with your Module 2 record for that remote. If they differ, find out why (another preset, a fork, an edited file, another remote) and note it.
+
+</Lab>
+
+Expected observation: version and API agree wherever they appear, the region agrees in meaning (`R01:EU` on one screen, `EU` on another), and the `.sub` file opens as plain text matching your Module 2 notes. A repair erases level, pairings and settings, and keeps `.sub` files and apps.
+
+<Win>you have a dated baseline (version, API, region), a backup you can name the location of, and one capture you opened outside the Flipper and checked against your earlier notes.</Win>
+
+<Lab kicker="Lab 8.2" title="Predict an app, then write your way back" gear="A browser on lab.flipper.net, your Lab 8.1 record. Installing is optional; nothing transmits.">
+
+1. In the official catalog at lab.flipper.net, pick one harmless app, such as a clock, a calculator or a GPIO tool. Open its page and record its version, category and the link to its source.
+2. **Predict.** Using your API number from Lab 8.1, write what would happen if you loaded a build of this app made for API 87, then one made for API 88. Use the loader headers from the table above.
+3. **Check.** Look in the app's page, build list or release notes for the firmware or API it was built for. Write whether your firmware matches, and whether your prediction holds. If the page names no requirement, write that down.
+4. Optional: install it from Flipper Lab or the Mobile App, start it from <Flip>Apps</Flip>, then remove it under **Installed**. Record both steps.
+5. **Negative case, on paper.** Your firmware is 1.4.3 and someone sends you a `.fap` built for a 1.5 release candidate. Write the exact screen you expect. Do not try it on the device to prove it.
+6. Write your recovery route for the three situations in the recovery table: the menu path or button combination, the qFlipper action, and what each erases. Do not trigger recovery to test it.
+
+</Lab>
+
+<Win>you can say, before anything runs, which of Outdated App, Outdated Firmware or a normal start you will see, you have checked that against the app's published requirement, and you can recite one recovery route with its button combination and its cost.</Win>
+
+If you later switch to a fork, do it after Lab 8.1, then repeat Lab 2.2 with the same remote, frequency and preset. A different result points at the firmware.
+
+## Check yourself
+
+<Quiz id="m08" />
+
+Two questions to answer in a sentence each, without notes:
+
+1. A friend says a fork "gave their Flipper more range". What three things would you ask before believing that the firmware caused it?
+2. Your Flipper shows a blank screen after a failed update. What survives the repair, and what do you restore from your backup?
+
+## Keep evidence
+
+Open your [notebook](/learn/notebook?module=m08) and save an entry for this module. Map each lab step to a field:
+
+- **Setup:** firmware project, version, build date, API number, region, and the date of your qFlipper backup.
+- **Prediction:** what you expected a repair to erase in Lab 8.1, and your Outdated App or Outdated Firmware prediction from Lab 8.2.
+- **Observation:** what each About screen showed, the `Frequency:` and `Preset:` lines from your `.sub` file, and the app requirement you found in the catalog.
+- **Explanation:** why your app prediction follows from the major numbers, and your recovery route with its cost.
+
+Adequate evidence is a baseline someone could check against your device, a backup with a known location, and a recovery route written in advance. An example entry:
+
+> Official 1.4.3, API 87.1, region R01:EU, backup taken 13 Oct to Documents/qFlipper. doorbell.sub: 433920000, FuriHalSubGhzPresetOok650Async, matches Module 2. Catalog app checked: a clock app, source linked, built for API 87, so it loads here. A build for API 88 would show Outdated Firmware because 88 is above 87. Bricked route: OK + Back 30 s, USB, Repair; loses settings, level and pairings, SD kept.
+
+Set a review date one week from today. When you can recite the recovery routes without notes, mark it retrieved.
+
+## Continue
+
+Next is [Module 9: Troubleshooting field guide](/learn/09-troubleshooting). It assumes the baseline you wrote today: when something stops working, the first question is whether the firmware, the file or the radio path changed. Rolling-code receivers, mentioned above, get their own module later in the course.
+
+**Retrieval question for next week:** without looking, what do the two numbers in `[87.1]` mean, and which one decides whether an app starts?
+
+Primary sources, checked 13 October 2026:
+
+- [Flipper Docs: Firmware update](https://docs.flipper.net/zero/basics/firmware-update) and [Firmware recovery](https://docs.flipper.net/zero/basics/firmware-update/firmware-recovery): channels, button combinations, what repair erases.
+- [Flipper Docs: Settings](https://docs.flipper.net/zero/basics/settings) and [qFlipper](https://docs.flipper.net/zero/qflipper): About screens, Backup and Restore.
+- [Flipper Docs: Apps](https://docs.flipper.net/zero/apps) and [Developer Docs: FAP](https://developer.flipper.net/flipperzero/doxygen/apps_on_sd_card.html): installing apps, API versioning.
+- [Flipper Docs: Sub-GHz](https://docs.flipper.net/zero/sub-ghz): CC1101 bands, external modules.
+- Firmware 1.4.3 source: [about.c](https://github.com/flipperdevices/flipperzero-firmware/blob/1.4.3/applications/settings/about/about.c), [application_manifest.c](https://github.com/flipperdevices/flipperzero-firmware/blob/1.4.3/lib/flipper_application/application_manifest.c), [loader.c](https://github.com/flipperdevices/flipperzero-firmware/blob/1.4.3/applications/services/loader/loader.c) and [api_symbols.csv](https://github.com/flipperdevices/flipperzero-firmware/blob/1.4.3/targets/f7/api_symbols.csv), and `api_symbols.csv` in [1.5.1-rc](https://github.com/flipperdevices/flipperzero-firmware/blob/1.5.1-rc/targets/f7/api_symbols.csv) and [Momentum mntm-012](https://github.com/Next-Flip/Momentum-Firmware/blob/mntm-012/targets/f7/api_symbols.csv): API numbers, loader messages.
+- [Developer Docs: Wi-Fi Developer Board](https://developer.flipper.net/flipperzero/doxygen/dev_board.html): the ESP32-S2 and its debugger firmware.
+- READMEs for [Momentum](https://github.com/Next-Flip/Momentum-Firmware), [Unleashed](https://github.com/DarkFlippers/unleashed-firmware) and [RogueMaster](https://github.com/RogueMaster/flipperzero-firmware-wPlugins): each fork's own claims.

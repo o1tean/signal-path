@@ -1,0 +1,347 @@
+---
+id: m06
+number: 6
+slug: 06-rfid
+title: 125 kHz RFID
+description: Read, save and emulate a 125 kHz training tag you own, and learn why LF RFID works by magnetic coupling over centimetres instead of radio over metres.
+stage: atlas
+week: Week 4
+access: paid
+minutes: 75
+gear:
+  - Flipper Zero on official firmware 1.4.3 (menus checked on this version), with a microSD card
+  - two or three T5577 training cards or fobs sold pre-programmed with an EM4100 ID, not enrolled in any access system
+  - one 13.56 MHz NFC tag or card you own, as a control
+  - a ruler marked in millimetres and card offcuts or similar to build 5 mm height spacers
+  - optional, a standalone 125 kHz desk reader you own that shows the ID it reads
+  - a browser for the RF calculator
+transmits: own-device
+outcome: Read, save and emulate an unenrolled 125 kHz training tag, and explain with the coupling falloff why it only works within a few centimetres.
+prerequisites:
+  - m01
+  - m02
+  - m05
+tools:
+  - rf-calc
+scenes:
+  - nearfield
+evidence: A notebook entry with your predicted and measured read distance flat and edge-on, the protocol and hex ID of your training tag, and an NFC control that the 125 kHz app ignored.
+sources:
+  - title: 'Flipper Docs: 125 kHz RFID'
+    url: https://docs.flipper.net/zero/rfid
+  - title: 'Flipper Docs: Reading 125 kHz RFID cards'
+    url: https://docs.flipper.net/zero/rfid/read
+  - title: 'Flipper Docs: Writing data to T5577 cards'
+    url: https://docs.flipper.net/zero/rfid/write-data
+  - title: 'Flipper Developer Docs: LF RFID key file format'
+    url: https://developer.flipper.net/flipperzero/doxygen/lfrfid_file_format.html
+  - title: 'Flipper Zero firmware 1.4.3: LF RFID protocols (EM4100, H10301, Indala26)'
+    url: https://github.com/flipperdevices/flipperzero-firmware/tree/1.4.3/lib/lfrfid/protocols
+  - title: 'Flipper Zero firmware 1.4.3: 125 kHz RFID application'
+    url: https://github.com/flipperdevices/flipperzero-firmware/tree/1.4.3/applications/main/lfrfid
+  - title: 'Microchip ATA5577C datasheet (DS70005357B)'
+    url: https://ww1.microchip.com/downloads/en/DeviceDoc/ATA5577C-Read-Write-LF-RFID-IDIC-100-to-150-kHz-Data-Sheet-DS70005357B.pdf
+  - title: 'Microchip AN710: Antenna Circuit Design for RFID Applications (DS00710C)'
+    url: https://ww1.microchip.com/downloads/en/AppNotes/00710c.pdf
+  - title: 'HID Global: Understanding Card Data Formats'
+    url: https://www.hidglobal.com/sites/default/files/hid-understanding_card_data_formats-wp-en.pdf
+reviewed: '2026-10-13'
+badge: tag-whisperer
+---
+
+## Outcome
+
+You can read, save and emulate an unenrolled 125 kHz training tag on the Flipper, and explain why it only works a few centimetres from the coil.
+
+By the end you can:
+
+- explain how a tag with no battery is powered by the reader and answers by load modulation;
+- read the Flipper's result screen and say which lines come from the tag and which are the Flipper's interpretation;
+- measure your read distance flat and edge-on and explain the difference.
+
+## Before you start
+
+- **Prerequisites:** [Module 1](/learn/01-frequency) for `λ = c / f`, [Module 2](/learn/02-modulation) for ASK, FSK and PSK, and [Module 5](/learn/05-raw-and-rolling) for predicting before you press.
+- **Gear:** your Flipper with its microSD card in, <Term id="t5577">T5577</Term> training tags that already hold an EM4100 ID, one NFC tag or card you own as a control, a ruler and card offcuts for 5 mm spacers. A 125 kHz desk reader you own is optional and makes the emulation step checkable.
+- **Firmware:** official firmware 1.4.3 (December 2025). Menu names below were checked against that release's source.
+- **Time:** about 75 minutes: 25 to read, 10 in the calculator, 40 at the bench.
+- **What transmits:** in Read the Flipper drives a 125 kHz field to power your tag; in Emulate it loads a reader's field. Both reach only centimetres, and both are active, so use them only on your own tags and reader.
+- **Scope:** your own training tags, your own reader, your own space.
+
+<Callout variant="legal" title="Permission covers the system behind the badge">
+Use newly bought training tags that are not enrolled anywhere. A badge issued to you by an employer, landlord or gym belongs to their system: reading, saving or duplicating it involves their data and their access policy, even while it sits in your pocket. Being able to copy a credential does not make copying it allowed. Read the RFID section of the [Romania lab guide](/romania-lab-guide) before this lab.
+</Callout>
+
+## Understand
+
+### A different kind of radio
+
+Low-frequency <Term id="rfid">RFID</Term> at 125 kHz uses the same verbs on the Flipper as <Term id="sub-ghz">Sub-GHz</Term> (read, save, emulate) on different physics. A Sub-GHz remote has a battery and launches a wave that keeps travelling on its own (far-field radio). A 125 kHz tag has no battery and does nothing until a reader's coil powers it through a shared magnetic field, like a loosely coupled transformer. "Which app do I open?" starts with which of these three you are holding.
+
+<div class="table-scroll">
+
+| | Sub-GHz | 125 kHz RFID (LF) | NFC (HF) |
+| --- | --- | --- | --- |
+| Frequency | 315, 433.92, 868 MHz and others | 125 kHz | 13.56 MHz |
+| Wavelength | about 0.35 to 1 m | 2,398 m | 22.1 m |
+| Typical range | metres to tens of metres | a few centimetres | a few centimetres |
+| Power | the transmitter has a battery | passive tag, powered by the reader | passive tag, powered by the reader |
+| Mechanism | far-field radio wave | near-field magnetic coupling | near-field magnetic coupling |
+| Flipper app | Sub-GHz | 125 kHz RFID | NFC |
+
+</div>
+
+### Why the range is centimetres
+
+Run 125 kHz through the formula from Module 1: `λ = 299,792,458 m/s ÷ 125,000 Hz = 2,398 m`. An antenna radiates well when it is a decent fraction of a wavelength, and nobody puts a kilometre of wire in a key fob. So neither side radiates: the reader drives current through a small coil and the tag's coil sits inside its magnetic field. Microchip's antenna note AN710 calls this kind of coil a magnetic dipole and gives the field on the coil's axis:
+
+`B = μ0 · N · I · a² ÷ (2 · (a² + r²)^(3/2))`
+
+where `a` is the coil radius, `r` the distance along the axis, `N` the turns and `I` the current. Once `r` is several times `a`, the field falls with `1/r³`, so each doubling of distance keeps about an eighth. Close to the coil it falls more slowly: the figure below goes from 35% at 2 cm to 9% at 4 cm, a factor of four.
+
+<Figure label="Bar chart of relative magnetic field on the axis of a 2 cm radius coil at 0, 1, 2, 3, 4, 6, 8 and 10 cm: 100, 72, 35, 17, 9, 3, 1.4 and 0.8 percent." caption="Worked example from AN710's equation for an illustrative 2 cm radius reader coil (not a measurement of the Flipper's coil). At 4 cm the field is 9% of its value at the coil face. The tag's induced voltage is proportional to the field, and the power it can draw falls faster still.">
+<svg viewBox="0 0 640 280" width="100%" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+  <text x="0" y="18" class="fill-foreground font-sans" font-size="14" font-weight="700">Field on the axis, relative to the coil face</text>
+  <line x1="40" y1="240" x2="630" y2="240" class="stroke-border" stroke-width="1" />
+  <rect x="60" y="40" width="44" height="200" class="fill-primary" fill-opacity="0.7" />
+  <rect x="130" y="97" width="44" height="143" class="fill-primary" fill-opacity="0.7" />
+  <rect x="200" y="169" width="44" height="71" class="fill-primary" fill-opacity="0.7" />
+  <rect x="270" y="206" width="44" height="34" class="fill-primary" fill-opacity="0.7" />
+  <rect x="340" y="222" width="44" height="18" class="fill-primary" fill-opacity="0.7" />
+  <rect x="410" y="234" width="44" height="6" class="fill-primary" fill-opacity="0.7" />
+  <rect x="480" y="237" width="44" height="3" class="fill-primary" fill-opacity="0.7" />
+  <rect x="550" y="238" width="44" height="2" class="fill-primary" fill-opacity="0.7" />
+  <text x="82" y="34" text-anchor="middle" class="fill-foreground font-mono" font-size="11">100%</text>
+  <text x="152" y="91" text-anchor="middle" class="fill-foreground font-mono" font-size="11">72%</text>
+  <text x="222" y="163" text-anchor="middle" class="fill-foreground font-mono" font-size="11">35%</text>
+  <text x="292" y="200" text-anchor="middle" class="fill-foreground font-mono" font-size="11">17%</text>
+  <text x="362" y="216" text-anchor="middle" class="fill-foreground font-mono" font-size="11">9%</text>
+  <text x="432" y="228" text-anchor="middle" class="fill-foreground font-mono" font-size="11">3%</text>
+  <text x="502" y="231" text-anchor="middle" class="fill-foreground font-mono" font-size="11">1.4%</text>
+  <text x="572" y="232" text-anchor="middle" class="fill-foreground font-mono" font-size="11">0.8%</text>
+  <text x="82" y="258" text-anchor="middle" class="fill-muted-foreground font-mono" font-size="11">0 cm</text>
+  <text x="152" y="258" text-anchor="middle" class="fill-muted-foreground font-mono" font-size="11">1</text>
+  <text x="222" y="258" text-anchor="middle" class="fill-muted-foreground font-mono" font-size="11">2</text>
+  <text x="292" y="258" text-anchor="middle" class="fill-muted-foreground font-mono" font-size="11">3</text>
+  <text x="362" y="258" text-anchor="middle" class="fill-muted-foreground font-mono" font-size="11">4</text>
+  <text x="432" y="258" text-anchor="middle" class="fill-muted-foreground font-mono" font-size="11">6</text>
+  <text x="502" y="258" text-anchor="middle" class="fill-muted-foreground font-mono" font-size="11">8</text>
+  <text x="572" y="258" text-anchor="middle" class="fill-muted-foreground font-mono" font-size="11">10 cm</text>
+  <text x="400" y="80" class="fill-muted-foreground font-sans" font-size="12">coil radius a = 2 cm</text>
+  <text x="400" y="98" class="fill-muted-foreground font-sans" font-size="12">B(r) / B(0) = (a² ÷ (a² + r²))^1.5</text>
+</svg>
+</Figure>
+
+A larger reader coil reaches further, so the short range belongs to small coils. AN710 also gives the tag's induced voltage as proportional to `cos α`, where `α` is the angle between the field and the tag coil's axis. On the coil's axis, an edge-on tag has `α` near 90° and the voltage falls toward zero. Off the axis the field has a radial part, so an edge-on tag need not drop to zero there; Lab 6.2 measures it centred.
+
+### How a tag with no battery answers
+
+<Scene3D name="nearfield" opts={{ kind: 'fob' }} label="3D animation: a reader coil couples with a key fob coil through a near field; out of range, the fob has no power." />
+
+The reader drives its coil at 125 kHz. Inside the field, the tag's coil picks up a voltage, the chip rectifies it and runs on it, and it takes its clock from the same 125 kHz. To answer, the tag switches a load across its own coil on and off. Microchip's ATA5577C datasheet calls this load modulation: a resistive load across the coil terminals damps the field. The reader sees the tiny changes in its own coil and turns them back into bits. The tag never transmits on its own.
+
+<Figure label="A reader coil on the left drives a 125 kHz magnetic field that reaches a passive tag coil a few centimetres away on the right. Arrows show power flowing to the tag and data returning by load changes." caption="Near-field coupling. The reader's coil powers the tag and listens for the pattern the tag makes by loading the field.">
+<svg viewBox="0 0 640 240" width="100%" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+  <g fill="none" class="stroke-primary" stroke-width="2.5">
+    <ellipse cx="120" cy="120" rx="16" ry="52" />
+    <ellipse cx="132" cy="120" rx="16" ry="52" />
+    <ellipse cx="144" cy="120" rx="16" ry="52" />
+  </g>
+  <text x="132" y="200" text-anchor="middle" class="fill-primary font-mono" font-size="13" font-weight="600">Reader coil</text>
+  <text x="132" y="218" text-anchor="middle" class="fill-muted-foreground font-mono" font-size="11">drives 125 kHz, powers the tag</text>
+  <g fill="none" class="stroke-info" stroke-width="1.6">
+    <path d="M160 120 C 260 60, 380 60, 480 120" />
+    <path d="M160 120 C 270 95, 370 95, 480 120" />
+    <path d="M160 120 C 270 145, 370 145, 480 120" />
+    <path d="M160 120 C 260 180, 380 180, 480 120" />
+  </g>
+  <text x="320" y="46" text-anchor="middle" class="fill-info font-mono" font-size="12" font-weight="600">magnetic field (near field)</text>
+  <g fill="none" class="stroke-foreground" stroke-width="2.5">
+    <ellipse cx="496" cy="120" rx="12" ry="44" />
+    <ellipse cx="506" cy="120" rx="12" ry="44" />
+  </g>
+  <text x="506" y="200" text-anchor="middle" class="fill-foreground font-mono" font-size="13" font-weight="600">Tag coil</text>
+  <text x="506" y="218" text-anchor="middle" class="fill-muted-foreground font-mono" font-size="11">no battery, answers by load</text>
+  <line x1="160" y1="120" x2="480" y2="120" class="stroke-border" stroke-width="1" stroke-dasharray="4 4" />
+  <text x="320" y="236" text-anchor="middle" class="fill-muted-foreground font-mono" font-size="11">gap: a few cm</text>
+</svg>
+</Figure>
+
+<Callout variant="note" title="One coil, two jobs">
+The Flipper's 125 kHz antenna sits on the back of the case, on a dual-band board next to the 13.56 MHz NFC antenna. In Read it is the reader: it makes the field and listens. In Emulate it plays the tag: it loads another reader's field the way your fob would.
+</Callout>
+
+### What is on the tag
+
+An access tag stores a short number; the door controller looks it up in its own list. Flipper's reading guide lists 24 protocols the app decodes. Three are worth knowing by structure.
+
+<div class="table-scroll">
+
+| Family | Flipper name | Modulation (Flipper source) | What it carries |
+| --- | --- | --- | --- |
+| **<Term id="em4100">EM4100</Term>** | EM-Micro EM4100 | ASK (amplitude shift keying), Manchester, RF/64 (also RF/32 and RF/16 variants) | 40 data bits, 5 bytes |
+| **<Term id="hid-prox">HID Prox</Term> H10301** | HID H10301 | <Term id="fsk-frequency-shift-keying">FSK</Term>, switching between fc/8 and fc/10 | 26 bits: parity, 8-bit facility code, 16-bit card number, parity |
+| **<Term id="indala">Indala</Term> 26** | Motorola Indala26 | PSK (phase shift keying) | a 26-bit facility and card layout |
+
+</div>
+
+#### EM4100: a 64-bit frame around 40 bits of ID
+
+In firmware 1.4.3's EM4100 decoder the frame is 64 bits: nine 1s as a header, then ten rows of four data bits each followed by an even parity bit (a bit chosen so the row holds an even number of 1s), then four column parity bits and a 0 stop bit. That is 9 + 50 + 4 + 1 = 64.
+
+<Figure label="Grid of the EM4100 frame: a row of nine header ones, ten rows of four data bits plus one row parity bit, then four column parity bits and a stop bit." caption="The EM4100 frame. Parity keeps any run of 1s inside the frame to eight or fewer, so a run of nine always marks the start of a frame.">
+<svg viewBox="0 0 640 380" width="100%" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+  <g class="font-mono" font-size="11" text-anchor="middle">
+    <g class="fill-warning stroke-warning" fill-opacity="0.15" stroke-width="1">
+      <rect x="20" y="20" width="26" height="26" /><rect x="46" y="20" width="26" height="26" /><rect x="72" y="20" width="26" height="26" /><rect x="98" y="20" width="26" height="26" /><rect x="124" y="20" width="26" height="26" /><rect x="150" y="20" width="26" height="26" /><rect x="176" y="20" width="26" height="26" /><rect x="202" y="20" width="26" height="26" /><rect x="228" y="20" width="26" height="26" />
+    </g>
+    <text x="33" y="38" class="fill-foreground">1</text><text x="59" y="38" class="fill-foreground">1</text><text x="85" y="38" class="fill-foreground">1</text><text x="111" y="38" class="fill-foreground">1</text><text x="137" y="38" class="fill-foreground">1</text><text x="163" y="38" class="fill-foreground">1</text><text x="189" y="38" class="fill-foreground">1</text><text x="215" y="38" class="fill-foreground">1</text><text x="241" y="38" class="fill-foreground">1</text>
+    <g class="fill-primary stroke-primary" fill-opacity="0.12" stroke-width="1">
+      <rect x="20" y="60" width="104" height="260" />
+    </g>
+    <g class="fill-info stroke-info" fill-opacity="0.15" stroke-width="1">
+      <rect x="124" y="60" width="26" height="260" />
+      <rect x="20" y="320" width="104" height="26" />
+    </g>
+    <rect x="124" y="320" width="26" height="26" fill="none" class="stroke-border" stroke-width="1" />
+    <g class="stroke-border" stroke-width="1">
+      <line x1="20" y1="86" x2="150" y2="86" /><line x1="20" y1="112" x2="150" y2="112" /><line x1="20" y1="138" x2="150" y2="138" /><line x1="20" y1="164" x2="150" y2="164" /><line x1="20" y1="190" x2="150" y2="190" /><line x1="20" y1="216" x2="150" y2="216" /><line x1="20" y1="242" x2="150" y2="242" /><line x1="20" y1="268" x2="150" y2="268" /><line x1="20" y1="294" x2="150" y2="294" />
+      <line x1="46" y1="60" x2="46" y2="346" /><line x1="72" y1="60" x2="72" y2="346" /><line x1="98" y1="60" x2="98" y2="346" />
+    </g>
+    <text x="72" y="78" class="fill-foreground">D D D D</text>
+    <text x="137" y="78" class="fill-info">P</text>
+    <text x="72" y="312" class="fill-foreground">D D D D</text>
+    <text x="137" y="312" class="fill-info">P</text>
+    <text x="72" y="190" class="fill-muted-foreground">⋮</text>
+    <text x="72" y="338" class="fill-info">C C C C</text>
+    <text x="137" y="338" class="fill-foreground">0</text>
+  </g>
+  <g class="font-sans" font-size="12">
+    <text x="280" y="38" class="fill-warning">header: nine 1s</text>
+    <text x="180" y="150" class="fill-foreground">10 rows × 4 data bits = 40 bits of ID</text>
+    <text x="180" y="170" class="fill-info">P: even parity for each row (10 bits)</text>
+    <text x="180" y="338" class="fill-info">C: column parity (4 bits)</text>
+    <text x="180" y="358" class="fill-muted-foreground">0: stop bit, then the frame starts again</text>
+  </g>
+</svg>
+</Figure>
+
+The data cannot imitate the header. A row ends in at most four 1s (`0111` then parity `1`) and starts with at most four (`1111` then `0`), so two rows back to back give at most eight, and the stop bit is always 0.
+
+**Worked example: how long is one read?** At RF/64 each bit lasts 64 carrier cycles: `125,000 ÷ 64 = 1,953 bit/s`, so one 64-bit frame takes `64 ÷ 1,953 = 32.8 ms`. When Flipper's docs say a read can take up to 10 seconds for some cards, the time goes on finding the right demodulator and a clean signal, not on the frame itself.
+
+#### H10301: facility code and card number
+
+HID describes H10301 as an open 26-bit format: bit 1 is even parity over bits 2 to 13, bits 2 to 9 are an 8-bit facility code (up to 255), bits 10 to 25 are a 16-bit card number (up to 65,535), and bit 26 is odd parity over bits 14 to 25. The facility code names the site or customer, the card number the person. A controller set for facility 42 refuses a valid card from facility 7.
+
+None of these formats is encrypted. The tag recites its number to anything that powers it, and the security lives in the controller's list; Flipper's overview says LF cards do not usually provide high levels of security.
+
+### What the screen is actually showing you
+
+Open <Flip>125 kHz RFID → Read</Flip>. The right side of the screen alternates between `Reading 1/2` with `ASK` and `Reading 2/2` with `PSK`, and the bottom says `Don't move card`. The two passes use different demodulators: in firmware 1.4.3, EM4100 and FSK formats such as H10301 decode in the ASK pass, and Indala 26 needs the PSK pass. Flipper's guide says the switch happens every three seconds (the 1.4.3 source uses a 2-second window plus settling time). To force one pass, use <Flip>Extra Actions → Read ASK (Animal, Ordinary Card)</Flip> or <Flip>Extra Actions → Read PSK (Indala)</Flip>.
+
+After a read the screen shows the manufacturer and protocol (`EM-Micro EM4100`), a `Hex:` line with the decoded bytes (`01 23 45 67 89`), and the Flipper's interpretation of those bytes. For EM4100, firmware 1.4.3 prints `FC: 069` and `Card: 26505 (RF/64)`: it takes the third byte (`0x45` = 69) as a facility code and the last two (`0x6789` = 26,505) as a card number. That split is a display convention borrowed from formats like H10301. The chip holds one flat 40-bit number, so the hex line is the tag and the FC and Card lines are the Flipper's reading of it.
+
+<Flip>More</Flip> offers <Flip>Save</Flip>, <Flip>Emulate</Flip> and <Flip>Write</Flip>. A saved key is a small `.rfid` text file on the microSD card:
+
+```
+Filetype: Flipper RFID key
+Version: 1
+Key type: EM4100
+Data: 01 23 45 67 89
+```
+
+From <Flip>125 kHz RFID → Saved</Flip>, a key offers Emulate, Write, Edit, Rename, Delete and Info. Emulate shows `Emulating` with the key's name and blinks the LED magenta until you press Back. Write shows `Writing`, then reads the tag back to check it. If that keeps failing you see `Still Trying to Write...` with "Make sure this card is writable and not protected".
+
+<Callout variant="warn" title='"Successfully written" is weaker than it sounds'>
+Write needs a T5577, which can be password-protected; ordinary 125 kHz tags are read-only. Do not write to cards of unknown origin. Flipper's write guide warns that the success message can appear on a read-only card that already holds the same data, because the check is a read-back. Use a blank and a different ID to prove a real write.
+</Callout>
+
+### The T5577: one chip, many formats
+
+Training tags sold as T5577 use a chip Microchip documents as the ATA5577C. Its datasheet lists 363 bits of EEPROM in 11 blocks of 33 bits (32 data bits plus a lock bit), including a 32-bit password block, and a configuration register that sets the data rate (RF/2 to RF/128) and the coding: Manchester, biphase, FSK, PSK or NRZ. Set those to match EM4100, fill the data blocks with an EM4100 frame, and a reader cannot tell the difference. A factory blank has no such configuration, so it reads as nothing until you write one. The 1.4.3 source does this in three blocks: block 0 sets Manchester at RF/64, blocks 1 and 2 hold the 64-bit frame.
+
+### Misconceptions
+
+- **"A better antenna would read my fob from across the room."** Bigger coils reach further, but beyond a few coil radii the field still loses about seven eighths per doubling of distance.
+- **"125 kHz tags are encrypted."** EM4100 and H10301 carry a plain number with parity. The security is in the controller's list.
+- **"The FC on an EM4100 read is stored on the tag."** It is the Flipper's display split of the last three bytes.
+- **"No read means a dead tag."** It can mean a bad orientation, a wait too short for the PSK pass, a 13.56 MHz card (try the NFC app) or a T5577 that holds no ID yet.
+
+## Predict and practise
+
+<Lab kicker="Lab 6.1" title="Three wavelengths, one reason" gear="A browser. Nothing transmits.">
+
+1. **Predict first.** Write down roughly how many times longer the wavelength at 125 kHz is than at 433.92 MHz.
+2. In the RF calculator below, enter `433.92` MHz and note the wavelength.
+3. Enter `13.56`, then `0.125`. Note both.
+4. Divide the 125 kHz result by the 433.92 MHz one and compare with your prediction.
+5. **Control:** for 433.92 MHz the calculator's quarter-wave antenna is a length you could fit in a remote. Write the quarter-wave length for 0.125 MHz (about 600 m) and one sentence on why a fob cannot use it.
+
+Expected: about 3,500 times, and the 125 kHz quarter-wave near 600 m.
+
+</Lab>
+
+<Widget name="rf-calc" />
+
+<Win>you can give the ratio from the calculator's numbers and say why it forces coupling through a coil instead of a radiating antenna.</Win>
+
+{/* TODO: tool - a near-field coupling simulator showing field falloff, tag threshold voltage and the cos α orientation effect. */}
+
+<Lab kicker="Lab 6.2" title="Read, measure, save and emulate a training tag" gear="Flipper, two unenrolled T5577 training tags holding an EM4100 ID, one NFC tag you own, a ruler, card spacers, optional desk reader. Own tags only.">
+
+1. **Predict first.** Write down the furthest height in millimetres at which you expect a read with the tag flat, and with it edge-on.
+2. Open <Flip>125 kHz RFID → Read</Flip>. Lay a training tag flat on the back, centred on the antenna, and hold still until the protocol appears. Copy the protocol and `Hex:` lines into your notebook. No read after several passes may mean a factory blank; use the other tag, or see step 8.
+3. Build spacers from your stack, 5 mm per step, and start at 30 mm. Press <Flip>Retry</Flip>, hold the tag flat and centred on the stack, and wait through one ASK and one PSK pass. Remove a spacer and repeat down to contact. Record the greatest height that reads on two tries out of two.
+4. Repeat with the tag edge-on (its face at 90° to the back, still centred over the antenna), held between two fingertips. Record the greatest height that reads, or "no read at contact".
+5. **Control:** hold your NFC tag flat and centred at contact and again at your flat read height, through two full ASK and PSK cycles each. Record what the screen shows.
+6. Read the training tag again, then <Flip>More → Save</Flip> with a clear name such as `training-tag-01`.
+7. Open <Flip>Saved</Flip>, select it and choose <Flip>Emulate</Flip>. With a desk reader, hold the Flipper's back to it and check it shows the same ID. Press Back to stop.
+8. **Optional write:** <Flip>Saved → training-tag-01 → Edit</Flip>, change one byte, save it under a new name, then Write it to your second T5577. Read it and confirm it shows the edited ID, not the original. A bought blank can carry a password and fail to write.
+
+</Lab>
+
+Expected observation: flat, a few centimetres at most; edge-on and centred, much shorter, possibly no read. Your numbers depend on the tag's coil, so the comparison matters more than the figure. The NFC tag never reads in this app.
+
+<Win>you have a measured read height flat and edge-on, you can explain a shorter edge-on range with the falloff and `cos α`, the NFC control stayed silent, and your saved tag emulated to your own reader or read back correctly after a write.</Win>
+
+## Check yourself
+
+<Quiz id="m06" />
+
+Two questions to answer in a sentence each, without notes:
+
+1. If your edge-on range was much shorter than your flat range, which term in AN710's voltage equation explains it?
+2. Your saved EM4100 shows `FC: 012`. A colleague says the building's site code is stored on the tag. What do you tell them?
+
+## Keep evidence
+
+Open your [notebook](/learn/notebook?module=m06) and save an entry for this module:
+
+- **Setup:** firmware version and the tags you used, all unenrolled.
+- **Prediction:** your flat and edge-on distances, written before Lab 6.2.
+- **Observation:** measured heights, the protocol and hex line, the NFC control result, and the emulation or write check.
+- **Explanation:** why the range is centimetres and why orientation matters, with the falloff numbers.
+
+Adequate evidence has a prediction, two measurements, a control that stayed silent and a check that the saved ID round-tripped. Share training tag IDs only. An example entry:
+
+> Official 1.4.3. New T5577 fob, not enrolled. Predicted 30 mm flat, 10 mm edge-on. Measured, two tries each: reads at 15 mm flat, 5 mm edge-on. EM-Micro EM4100, Hex 01 23 45 67 89. NFC sticker: two full cycles, no read. Emulated to my desk reader: same 10 hex digits. Range: falloff from a small coil; edge-on and centred, cos α cuts the voltage.
+
+Set a review date one week from today.
+
+## Continue
+
+Next is [Module 7: NFC at 13.56 MHz](/learn/07-nfc). It keeps the near-field coupling and passive tags, raises the frequency about a hundredfold, and adds cards that can hold keys.
+
+**Retrieval question for next week:** without notes, why can a 125 kHz reader find the start of an EM4100 frame wherever it begins listening?
+
+Primary sources, checked 13 October 2026:
+
+- [Flipper Docs: 125 kHz RFID](https://docs.flipper.net/zero/rfid) for the antenna location, the menu and LF security.
+- [Flipper Docs: Reading 125 kHz RFID cards](https://docs.flipper.net/zero/rfid/read) for the 24 protocols, the ASK and PSK passes and read times.
+- [Flipper Docs: Writing data to T5577 cards](https://docs.flipper.net/zero/rfid/write-data) for blanks, passwords and the success-message caveat.
+- [Flipper Developer Docs: LF RFID key file format](https://developer.flipper.net/flipperzero/doxygen/lfrfid_file_format.html) for the `.rfid` fields.
+- [Firmware 1.4.3: LF RFID protocols](https://github.com/flipperdevices/flipperzero-firmware/tree/1.4.3/lib/lfrfid/protocols) and the [125 kHz RFID app](https://github.com/flipperdevices/flipperzero-firmware/tree/1.4.3/applications/main/lfrfid) for frame layouts, modulation, screen text and the write check.
+- [Microchip ATA5577C datasheet, DS70005357B](https://ww1.microchip.com/downloads/en/DeviceDoc/ATA5577C-Read-Write-LF-RFID-IDIC-100-to-150-kHz-Data-Sheet-DS70005357B.pdf) for load modulation, memory and coding options.
+- [Microchip AN710, DS00710C](https://ww1.microchip.com/downloads/en/AppNotes/00710c.pdf) for the field equation, `1/r³` and `cos α`.
+- [HID Global: Understanding Card Data Formats](https://www.hidglobal.com/sites/default/files/hid-understanding_card_data_formats-wp-en.pdf) for the H10301 layout.

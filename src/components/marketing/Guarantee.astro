@@ -1,0 +1,47 @@
+---
+/** Refund guarantee. Copy: docs/v2/copy/pricing.md#guarantee. `compact` is the one-line version used next to prices. */
+import { need, owner, price } from './site';
+
+interface Props {
+  compact?: boolean;
+}
+const { compact = false } = Astro.props;
+const shield = 'M12 3l7 3v5c0 4.5-3 8.2-7 9.5C8 19.2 5 15.5 5 11V6l7-3z';
+---
+{
+  compact ? (
+    <div class="flex flex-col gap-4 rounded-[1.25rem] border border-success/30 bg-success-soft p-5 sm:flex-row sm:items-center sm:p-6">
+      <svg aria-hidden="true" viewBox="0 0 24 24" class="size-8 shrink-0 text-success" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round">
+        <path d={shield} />
+        <path d="M9 12l2.2 2.2L15.5 10" stroke-linecap="round" />
+      </svg>
+      <div class="flex-1">
+        <p class="font-semibold">Ask for a refund any time in the first 30 days.</p>
+        <p class="mt-0.5 text-sm text-foreground/80">You get the full {price} back. We don't ask why.</p>
+      </div>
+      <a href="/legal/refunds" class="inline-flex min-h-11 items-center text-sm font-medium underline decoration-foreground/30 underline-offset-4 hover:decoration-foreground">Read the refund policy</a>
+    </div>
+  ) : (
+    <div class="grid gap-8 rounded-[1.5rem] border border-success/30 bg-success-soft p-6 sm:p-10 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] lg:gap-14">
+      <div>
+        <svg aria-hidden="true" viewBox="0 0 24 24" class="size-10 text-success" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round">
+          <path d={shield} />
+          <path d="M9 12l2.2 2.2L15.5 10" stroke-linecap="round" />
+        </svg>
+        <p class="eyebrow mt-5 text-success">Refunds</p>
+        <h2 id="guarantee-title" class="mt-3 text-[1.75rem] leading-[1.12] tracking-[-0.025em] md:text-[2.25rem]">Ask for a refund any time in the first 30 days.</h2>
+        <p class="mt-4 text-lg text-foreground/80">You get the full {price} back. We don't ask why.</p>
+        <p class="mt-4 leading-relaxed text-foreground/80">
+          Request it from your account page, or by email to {need(owner.supportEmail, 'support email')}. The money goes back to the card or account you paid with. Thirty days is longer than the 14-day EU right of withdrawal.
+        </p>
+        <a href="/legal/refunds" class="mt-6 inline-flex min-h-11 items-center font-medium underline decoration-foreground/30 underline-offset-4 hover:decoration-foreground">Read the refund policy</a>
+      </div>
+      <div class="self-start rounded-xl border border-success/25 bg-card p-6">
+        <h3 class="text-lg">The Stage 1 promise.</h3>
+        <p class="mt-3 leading-relaxed text-muted-foreground">
+          Finish the four Stage 1 labs (Modules 2 to 5) with a notebook entry for each. The entries should name your capture's frequency, modulation and protocol, and say why your replay worked or failed. If they still can't, send them to us within [NEED: window, e.g. 60 days] of buying. We refund the full price within [NEED: reply time, e.g. 3 working days], and you keep the notebook templates.
+        </p>
+      </div>
+    </div>
+  )
+}

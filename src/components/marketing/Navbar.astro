@@ -1,0 +1,185 @@
+---
+/** Site header. Copy: docs/v2/copy/chrome.md#navbar. Sign-in state comes from html[data-signed-in] (set by Base).
+    No React: the Resources menu is a disclosure button, the phone menu a native <dialog>. */
+import SiteControls from '@/components/SiteControls.astro';
+import { mainNav, resourcesNav } from './nav';
+
+const path = Astro.url.pathname.replace(/\/$/, '') || '/';
+const current = (href: string) => (path === href || path.startsWith(`${href}/`) ? 'page' : undefined);
+const inResources = resourcesNav.some((r) => current(r.href));
+const cta = { href: '/learn/00-setup', label: 'Start free' };
+const chevron = 'M6 9l6 6 6-6';
+const navLink =
+  'whitespace-nowrap min-h-11 items-center rounded-full px-3 text-sm text-muted-foreground transition-colors hover:text-foreground aria-[current=page]:font-medium aria-[current=page]:text-foreground';
+---
+<header class="site-header sticky top-0 z-40 border-b border-border/70 bg-background/85 backdrop-blur-xl backdrop-saturate-150">
+  <div class="mx-auto flex h-16 w-full max-w-[75rem] items-center gap-2 px-4 sm:px-6">
+    <a href="/" class="-ml-1 flex min-h-11 items-center gap-2.5 rounded-md px-1 font-semibold tracking-tight">
+      <img src="/images/signal-path-logo.png" alt="" width="28" height="28" class="size-7" />
+      <span class="whitespace-nowrap">Signal Path</span>
+    </a>
+
+    <nav aria-label="Site" class="ml-2 hidden items-center lg:ml-6 gap-0.5 md:flex">
+      {
+        mainNav.map((l) => (
+          <a href={l.href} aria-current={current(l.href)} class:list={['inline-flex', navLink]}>
+            {l.label}
+          </a>
+        ))
+      }
+      <div class="relative" data-menu>
+        <button type="button" class:list={['inline-flex gap-1 data-[current=true]:font-medium data-[current=true]:text-foreground aria-expanded:bg-muted aria-expanded:text-foreground', navLink]} aria-expanded="false" aria-controls="resources-menu" data-menu-button data-current={inResources ? 'true' : undefined}>
+          Resources
+          <svg aria-hidden="true" viewBox="0 0 24 24" class="size-4 transition-transform duration-200" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d={chevron}></path></svg>
+        </button>
+        <div id="resources-menu" class="resources-panel" hidden data-menu-panel>
+          <ul class="grid gap-0.5 sm:w-[34rem] sm:grid-cols-2">
+            {
+              resourcesNav.map((r) => (
+                <li>
+                  <a href={r.href} aria-current={current(r.href)} class="flex min-h-11 flex-col rounded-lg px-3 py-2.5 hover:bg-muted aria-[current=page]:bg-accent">
+                    <span class="text-sm font-medium">{r.label}</span>
+                    <span class="mt-0.5 text-[0.8125rem] leading-snug text-muted-foreground">{r.description}</span>
+                  </a>
+                </li>
+              ))
+            }
+          </ul>
+        </div>
+      </div>
+    </nav>
+
+    <div class="ml-auto flex items-center gap-0.5">
+      <a href="/login" class:list={['signed-out hidden lg:inline-flex', navLink]}>Sign in</a>
+      <a href="/learn" class:list={['signed-in hidden lg:inline-flex', navLink]}>My course</a>
+      <a href="/account" class:list={['signed-in hidden xl:inline-flex', navLink]}>Account</a>
+      <SiteControls />
+      <a href={cta.href} class="cta-start ml-1 hidden h-10 items-center whitespace-nowrap rounded-full bg-primary px-4 text-sm font-medium text-primary-foreground hover:bg-primary/90 sm:inline-flex">{cta.label}</a>
+      <button type="button" class="inline-flex size-11 items-center justify-center rounded-full hover:bg-muted lg:hidden" aria-label="Open menu" aria-haspopup="dialog" aria-controls="site-menu" data-sheet-open>
+        <svg aria-hidden="true" viewBox="0 0 24 24" class="size-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"></path></svg>
+      </button>
+    </div>
+  </div>
+
+  <dialog id="site-menu" class="site-sheet" aria-label="Site menu">
+    <div class="flex h-16 items-center justify-between border-b border-border px-4">
+      <span class="font-semibold">Signal Path</span>
+      <button type="button" class="inline-flex size-11 items-center justify-center rounded-full hover:bg-muted" aria-label="Close menu" data-sheet-close>
+        <svg aria-hidden="true" viewBox="0 0 24 24" class="size-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"></path></svg>
+      </button>
+    </div>
+    <nav aria-label="Site" class="flex flex-col gap-6 overflow-y-auto px-4 py-5">
+      <ul class="grid gap-0.5">
+        {
+          mainNav.map((l) => (
+            <li>
+              <a href={l.href} aria-current={current(l.href)} class="flex min-h-12 items-center rounded-lg px-3 text-lg font-medium hover:bg-muted aria-[current=page]:text-primary">
+                {l.label}
+              </a>
+            </li>
+          ))
+        }
+      </ul>
+      <div>
+        <p class="px-3 text-xs font-semibold tracking-wide text-muted-foreground uppercase">Resources</p>
+        <ul class="mt-2 grid gap-0.5">
+          {
+            resourcesNav.map((r) => (
+              <li>
+                <a href={r.href} aria-current={current(r.href)} class="flex min-h-11 flex-col justify-center rounded-lg px-3 py-2 hover:bg-muted aria-[current=page]:bg-accent">
+                  <span class="font-medium">{r.label}</span>
+                  <span class="text-sm text-muted-foreground">{r.description}</span>
+                </a>
+              </li>
+            ))
+          }
+        </ul>
+      </div>
+      <div class="grid gap-2 border-t border-border pt-5">
+        <a href="/login" class="signed-out flex min-h-11 items-center rounded-lg px-3 font-medium hover:bg-muted">Sign in</a>
+        <a href="/learn" class="signed-in flex min-h-11 items-center rounded-lg px-3 font-medium hover:bg-muted">My course</a>
+        <a href="/account" class="signed-in flex min-h-11 items-center rounded-lg px-3 font-medium hover:bg-muted">Account</a>
+        <a href={cta.href} class="cta-start mt-2 inline-flex h-12 items-center justify-center rounded-full bg-primary px-6 font-medium text-primary-foreground hover:bg-primary/90">{cta.label}</a>
+      </div>
+    </nav>
+  </dialog>
+</header>
+
+<style>
+  @reference "../../styles/global.css";
+  [data-menu-button][aria-expanded='true'] svg {
+    transform: rotate(180deg);
+  }
+  .resources-panel {
+    @apply absolute top-[calc(100%+0.5rem)] left-0 z-50 rounded-xl border border-border bg-popover p-2 text-popover-foreground;
+    box-shadow: 0 18px 40px -16px oklch(0 0 0 / 0.28), 0 2px 6px -2px oklch(0 0 0 / 0.08);
+    animation: menu-in 160ms var(--motion-ease);
+  }
+  @keyframes menu-in {
+    from {
+      opacity: 0;
+      transform: translateY(-4px);
+    }
+  }
+  /* sign-in state: Base sets data-signed-in on <html> for on-demand pages */
+  :global(html:not([data-signed-in='true'])) .signed-in,
+  :global(html[data-signed-in='true']) .signed-out {
+    display: none !important;
+  }
+  :global(html[data-owner='true']) .cta-start {
+    display: none !important;
+  }
+  .site-sheet {
+    @apply m-0 ml-auto h-dvh max-h-none w-[min(22rem,88vw)] max-w-none border-0 border-l border-border bg-background p-0 text-foreground;
+  }
+  .site-sheet[open] {
+    display: flex;
+    flex-direction: column;
+    animation: sheet-in 220ms var(--motion-ease);
+  }
+  .site-sheet::backdrop {
+    background: oklch(0 0 0 / 0.45);
+  }
+  @keyframes sheet-in {
+    from {
+      transform: translateX(24px);
+      opacity: 0;
+    }
+  }
+</style>
+
+<script>
+  // Resources disclosure: click toggles, Escape and outside clicks close and return focus.
+  for (const menu of document.querySelectorAll<HTMLElement>('[data-menu]')) {
+    const button = menu.querySelector<HTMLButtonElement>('[data-menu-button]')!;
+    const panel = menu.querySelector<HTMLElement>('[data-menu-panel]')!;
+    const set = (open: boolean) => {
+      button.setAttribute('aria-expanded', String(open));
+      panel.hidden = !open;
+    };
+    button.addEventListener('click', () => set(button.getAttribute('aria-expanded') !== 'true'));
+    menu.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && !panel.hidden) {
+        set(false);
+        button.focus();
+      }
+    });
+    document.addEventListener('click', (e) => {
+      if (!menu.contains(e.target as Node)) set(false);
+    });
+    menu.addEventListener('focusout', (e) => {
+      if (e.relatedTarget && !menu.contains(e.relatedTarget as Node)) set(false);
+    });
+  }
+
+  // Phone menu: native modal dialog (focus trap and Escape for free); closes on backdrop click.
+  const sheet = document.getElementById('site-menu') as HTMLDialogElement | null;
+  const opener = document.querySelector<HTMLButtonElement>('[data-sheet-open]');
+  opener?.addEventListener('click', () => sheet?.showModal());
+  sheet?.querySelector('[data-sheet-close]')?.addEventListener('click', () => sheet.close());
+  sheet?.addEventListener('click', (e) => {
+    if (e.target === sheet) sheet.close();
+  });
+  sheet?.addEventListener('close', () => opener?.focus());
+  matchMedia('(min-width: 1024px)').addEventListener('change', (e) => e.matches && sheet?.close());
+</script>

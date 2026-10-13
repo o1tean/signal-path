@@ -1,0 +1,93 @@
+---
+/** Pricing tiers (#buy). Copy: docs/v2/copy/pricing.md tier-starter, tier-complete, tier-mentored, instalments.
+    Visible tiers come from src/data/offer.ts; Mentored renders only while `available` is true. */
+import { formatPrice, visibleTiers } from '@/data/offer';
+import BuyButton from './BuyButton.astro';
+import LinkButton from './LinkButton.astro';
+import { facts, founding, freeToolNames, need, owner, price, priceZero } from './site';
+
+const tiers = visibleTiers();
+const check = 'M5 12.5l4.5 4.5L19 7.5';
+const starterItems = [
+  'Modules 0 and 1',
+  'The primer, the glossary and the reference tables',
+  `${freeToolNames} in the browser`,
+  'The starter quiz',
+  'With a free account: progress saved across devices, and the Preset & Frequency Cheat Sheet',
+];
+const completeItems = [
+  `All ${facts.lessons} lessons in ${facts.stages} stages, including the Wi-Fi Devboard extension`,
+  `All ${facts.tools} browser tools`,
+  `${facts.questions} quiz questions with explanations`,
+  'Field Troubleshooting Trees (printable)',
+  'The Lab Notebook System: templates, an evidence rubric and a review schedule',
+  'Lab Companion app source and a uFBT build guide',
+  'The Permission & Scope Checklist',
+  'The Preset & Frequency Cheat Sheet',
+  'Updates to the course, included',
+];
+const mentored = tiers.find((t) => t.key === 'mentored');
+---
+<div id="buy" class:list={['grid scroll-mt-24 items-stretch gap-4', mentored ? 'lg:grid-cols-3' : 'md:grid-cols-[minmax(0,5fr)_minmax(0,6fr)]']}>
+  <article id="tier-starter" data-section="tier-starter" aria-labelledby="tier-starter-title" class="flex flex-col rounded-[1.25rem] border border-border bg-card p-6 sm:p-8">
+    <p id="tier-starter-title" class="text-sm font-semibold">Signal Path Starter</p>
+    <p class="mt-3 text-5xl font-semibold tracking-[-0.035em] tabular-nums">{priceZero}</p>
+    <p class="mt-3 text-muted-foreground">Modules 0 and 1 in full, up to your first real capture.</p>
+    <ul class="mt-6 grid flex-1 content-start gap-2.5 border-t border-border pt-6 text-[0.9375rem]">
+      {starterItems.map((x) => (
+        <li class="flex gap-3">
+          <svg aria-hidden="true" viewBox="0 0 24 24" class="mt-1 size-4 shrink-0 text-muted-foreground" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d={check} /></svg>
+          {x}
+        </li>
+      ))}
+    </ul>
+    <LinkButton href="/learn/00-setup" variant="secondary" class="mt-8 w-full">Start the free starter</LinkButton>
+    <p class="mt-2 text-center text-sm text-muted-foreground">No card required.</p>
+  </article>
+
+  <article id="tier-complete" data-section="tier-complete" aria-labelledby="tier-complete-title" class="relative flex flex-col rounded-[1.25rem] border-2 border-primary/60 bg-card p-6 sm:p-8">
+    <p id="tier-complete-title" class="text-sm font-semibold">Signal Path Complete · <span class="text-primary">Full course</span></p>
+    <p class="mt-3 flex flex-wrap items-baseline gap-x-2">
+      <span class="text-5xl font-semibold tracking-[-0.035em] tabular-nums">{founding ? founding.price : price}</span>
+      <span class="text-lg text-muted-foreground">paid once</span>
+    </p>
+    {founding?.ends && <p class="mt-1 text-sm text-muted-foreground">{founding.price} until {founding.ends}, then {price}</p>}
+    <p class="mt-3 text-muted-foreground">The 12-week Flipper Zero course, from first setup to your own authorised experiments.</p>
+    <ul class="mt-6 grid flex-1 content-start gap-2.5 border-t border-border pt-6 text-[0.9375rem]">
+      {completeItems.map((x) => (
+        <li class="flex gap-3">
+          <svg aria-hidden="true" viewBox="0 0 24 24" class="mt-1 size-4 shrink-0 text-primary" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d={check} /></svg>
+          {x}
+        </li>
+      ))}
+    </ul>
+    <BuyButton class="mt-8" explain />
+  </article>
+
+
+  {
+    mentored && (
+      <article id="tier-mentored" data-section="tier-mentored" aria-labelledby="tier-mentored-title" class="flex h-full flex-col rounded-[1.25rem] border border-border bg-card p-6 sm:p-8">
+        <p id="tier-mentored-title" class="text-sm font-semibold">Signal Path Mentored · [NEED: seats] places per quarter</p>
+        <p class="mt-3 text-5xl font-semibold tracking-[-0.035em] tabular-nums">{formatPrice(mentored.price, mentored.currency)}</p>
+        <p class="mt-3 text-muted-foreground">Complete, plus a written review of your final portfolio and two 45-minute sessions.</p>
+        <ul class="mt-6 grid flex-1 content-start gap-2.5 border-t border-border pt-6 text-[0.9375rem]">
+          {['Everything in Signal Path Complete', 'A written review of your Stage 4 portfolio', 'Two 45-minute video sessions, booked when you choose [NEED: booking method and session window]'].map((x) => (
+            <li class="flex gap-3">
+              <svg aria-hidden="true" viewBox="0 0 24 24" class="mt-1 size-4 shrink-0 text-muted-foreground" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d={check} /></svg>
+              {x}
+            </li>
+          ))}
+        </ul>
+        <LinkButton href={owner.supportEmail ? `mailto:${owner.supportEmail}` : mentored.cta.href} variant="secondary" class="mt-8 w-full">Apply for a Mentored place</LinkButton>
+        <p class="mt-2 text-center text-sm font-medium">30-day refund, no reason needed.</p>
+      </article>
+    )
+  }
+
+  <div class:list={['grid gap-x-6 gap-y-2 px-1 pt-2 text-sm leading-relaxed text-muted-foreground md:grid-cols-3', mentored ? 'lg:col-span-3' : 'md:col-span-2']}>
+      <p>After day 30, the <a href="/legal/refunds#stage-1-promise" class="font-medium text-foreground underline decoration-border underline-offset-4 hover:decoration-primary">Stage 1 promise</a> still refunds you if Stage 1 doesn't let you explain your first capture.</p>
+      <p id="instalments" data-section="instalments">Pay {price} today, or split it into instalments at checkout where your country and card allow it.</p>
+      <p>Every purchase gets a receipt by email from Stripe; to buy as a business, enter your company name and VAT number at checkout. {need(null, 'VAT status of the selling entity')}</p>
+  </div>
+</div>

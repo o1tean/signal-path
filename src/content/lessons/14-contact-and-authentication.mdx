@@ -1,0 +1,327 @@
+---
+id: m14
+number: 14
+slug: 14-contact-and-authentication
+title: 'iButton and U2F: identity is not authentication'
+description: Read a training iButton's 8-byte ROM, register the Flipper as a U2F key on a test account, and explain why a number that names a key is not proof of holding it.
+stage: build
+week: Week 9
+access: paid
+minutes: 60
+gear:
+  - Flipper Zero on official firmware 1.4.3 or later, with its microSD card inserted
+  - a DS1990-type training iButton you bought new and never enrolled in any building or workplace system
+  - a USB-C data cable and a computer with a current browser
+  - a disposable test account on a service that accepts security keys, with a second recovery method you can test
+  - optional, a standalone iButton training reader you own
+transmits: none
+outcome: Read a training iButton and point to its family code, serial number and CRC, register the Flipper as a U2F key on a test account, and explain with the message fields why the first can be presented by any copy and the second cannot be replayed.
+prerequisites:
+  - m06
+  - m13
+tools: []
+scenes: []
+evidence: Three matching reads of one training iButton with its bytes labelled, and a U2F test sign-in with a no-press control, a recovery sign-in without the Flipper, and the registration removed afterwards.
+sources:
+  - title: 'Flipper Docs: iButton'
+    url: https://docs.flipper.net/zero/ibutton
+  - title: 'Flipper Docs: Reading iButton keys'
+    url: https://docs.flipper.net/zero/ibutton/read
+  - title: 'Flipper Docs: Writing data to iButton keys'
+    url: https://docs.flipper.net/zero/ibutton/write
+  - title: 'Flipper Docs: U2F'
+    url: https://docs.flipper.net/zero/u2f
+  - title: 'Flipper Developer Docs: iButton file format'
+    url: https://developer.flipper.net/flipperzero/doxygen/ibutton_file_format.html
+  - title: 'Flipper Zero firmware 1.4.3: Dallas ROM read and CRC check (dallas_common.c)'
+    url: https://github.com/flipperdevices/flipperzero-firmware/blob/1.4.3/lib/ibutton/protocols/dallas/dallas_common.c
+  - title: 'Flipper Zero firmware 1.4.3: DS1990 protocol (protocol_ds1990.c)'
+    url: https://github.com/flipperdevices/flipperzero-firmware/blob/1.4.3/lib/ibutton/protocols/dallas/protocol_ds1990.c
+  - title: 'Flipper Zero firmware 1.4.3: U2F messages (u2f.c)'
+    url: https://github.com/flipperdevices/flipperzero-firmware/blob/1.4.3/applications/main/u2f/u2f.c
+  - title: 'Flipper Zero firmware 1.4.3: U2F key and counter files (u2f_data.c)'
+    url: https://github.com/flipperdevices/flipperzero-firmware/blob/1.4.3/applications/main/u2f/u2f_data.c
+  - title: 'Flipper Zero firmware 1.4.3: U2F USB transport (u2f_hid.c)'
+    url: https://github.com/flipperdevices/flipperzero-firmware/blob/1.4.3/applications/main/u2f/u2f_hid.c
+  - title: 'FIDO Alliance: U2F Raw Message Formats v1.2'
+    url: https://fidoalliance.org/specs/fido-u2f-v1.2-ps-20170411/fido-u2f-raw-message-formats-v1.2-ps-20170411.html
+  - title: 'FIDO Alliance: Client to Authenticator Protocol (CTAP) 2.1'
+    url: https://fidoalliance.org/specs/fido-v2.1-ps-20210615/fido-client-to-authenticator-protocol-v2.1-ps-20210615.html
+reviewed: '2026-10-13'
+badge: contact-and-authentication
+---
+
+## Outcome
+
+You can read a training iButton, label every byte it gave you, and explain why a reader that trusts those bytes is checking a name, while a U2F sign-in checks proof.
+
+By the end you can:
+
+- split a DS1990 ROM into its family code, 48-bit serial number and CRC, and say what each one is for;
+- register the Flipper as a U2F security key on a test account and name what it sends at registration and at every sign-in;
+- explain, using the challenge and the signature, why a recording of yesterday's U2F sign-in fails today while a copied iButton number works every time.
+
+## Before you start
+
+- **Prerequisites:** [Module 6](/learn/06-rfid) for a tag's public number versus its secrets, and [Module 13](/learn/13-usb-bluetooth) for the Flipper as a USB device.
+- **Gear:** your Flipper with its microSD card, a new training iButton, a USB-C data cable, a computer, and a test account you can afford to lose. A training reader is optional.
+- **Firmware:** official firmware 1.4.3 (December 2025). Menu names and file paths here come from that release.
+- **Time:** about 60 minutes: 20 to read, 15 for the iButton lab, 25 for the U2F lab.
+- **Transmits:** nothing by radio. iButton works by touch, and U2F runs over the USB cable.
+- **Scope:** your own training key, your own reader, your own test account.
+
+<Callout variant="legal" title="Permission covers the system behind the key">
+An iButton issued for a building, a lift or an intercom belongs to that operator's system, even on your key ring. Reading, saving, emulating or writing it involves their access policy. Use a training key that was never enrolled anywhere, and read the badge-permission section of the [Romania lab guide](/romania-lab-guide) before the lab.
+</Callout>
+
+<Callout variant="warn" title="Do not make the Flipper your only way in">
+Before you register the Flipper on any account, set up and test a second way to sign in that does not depend on the Flipper. A wiped or swapped microSD card ends every U2F registration the Flipper holds.
+</Callout>
+
+## Understand
+
+### Two questions a door can ask
+
+An **identifier** answers "which one are you?". A serial number, a card <Term id="uid">UID</Term> and a username are identifiers. Anyone who has seen one can repeat it.
+
+**Authentication** answers "prove you are allowed to act as that one". An observer must not be able to reproduce the proof, which in practice means a secret that never leaves the device, answering a question that changes every time.
+
+This lesson puts one of each in your hand. A DS1990 iButton is a pure identifier. The Flipper's U2F app is a small authenticator.
+
+### The iButton: a number in a steel can
+
+An iButton is a chip in a steel can about the size of a coin. The lid is the data contact and the rim is ground. The Dallas types talk the **1-Wire** protocol: one data line plus a ground return, with the reader as the master. Nothing is radiated; the key has to touch the reader.
+
+Flipper's iButton pad has three spring-loaded pins: the middle one is ground and the two outer ones both connect to GPIO pin 17 as data. You read and write on the flat part of the pad and emulate on the protruding part.
+
+Flipper's documentation lists what each supported type gives up:
+
+<div class="table-scroll">
+
+| Key type | Signalling | What Flipper reads | Saved as `Protocol:` |
+| --- | --- | --- | --- |
+| Dallas DS1990 | 1-Wire | UID only, no memory | `DS1990` |
+| Dallas DS1992, DS1996 | 1-Wire | UID and SRAM contents | `DS1992`, `DS1996` |
+| Dallas DS1971 | 1-Wire | UID and EEPROM contents | `DS1971` |
+| other Dallas family codes | 1-Wire | UID only | `DSGeneric` |
+| Cyfral | Cyfral protocol | a 2-byte ID | `Cyfral` |
+| Metakom | Metakom protocol | an ID | `Metakom` |
+
+</div>
+
+So "iButton" names a form factor and a family of protocols, and keys differ in what they hold. Flipper detects only access-control keys.
+
+### Inside a DS1990 ROM
+
+A DS1990 holds eight bytes, written at the factory and never changed. To read them, the Flipper resets the bus, sends the Read ROM command `0x33`, and clocks in eight bytes. The firmware's `dallas_common.c` names the three fields: a family code, a six-byte serial number and a checksum.
+
+<Figure label="Eight boxes in a row, one per byte of a DS1990 ROM: byte 0 is the family code 01, bytes 1 to 6 are the serial number 4E 2A 9C 10 00 00, and byte 7 is the CRC A7. An arrow shows the bytes leave the key in that order, family code first." caption="One DS1990 ROM, as the Flipper reads it and saves it. The serial number is an invented example; the CRC is the real CRC-8 of the first seven bytes. Every reader that sends Read ROM gets exactly these eight bytes, every time.">
+<svg viewBox="0 0 640 190" width="100%" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+  <text x="20" y="20" class="fill-muted-foreground font-mono" font-size="11">on the wire, first byte first →</text>
+  <rect x="20" y="40" width="70" height="56" class="fill-primary stroke-primary" fill-opacity="0.12" stroke-width="1.5" />
+  <rect x="90" y="40" width="70" height="56" class="fill-info stroke-info" fill-opacity="0.10" stroke-width="1.5" />
+  <rect x="160" y="40" width="70" height="56" class="fill-info stroke-info" fill-opacity="0.10" stroke-width="1.5" />
+  <rect x="230" y="40" width="70" height="56" class="fill-info stroke-info" fill-opacity="0.10" stroke-width="1.5" />
+  <rect x="300" y="40" width="70" height="56" class="fill-info stroke-info" fill-opacity="0.10" stroke-width="1.5" />
+  <rect x="370" y="40" width="70" height="56" class="fill-info stroke-info" fill-opacity="0.10" stroke-width="1.5" />
+  <rect x="440" y="40" width="70" height="56" class="fill-info stroke-info" fill-opacity="0.10" stroke-width="1.5" />
+  <rect x="510" y="40" width="70" height="56" class="fill-warning stroke-warning" fill-opacity="0.15" stroke-width="1.5" />
+  <text x="55" y="74" text-anchor="middle" class="fill-foreground font-mono" font-size="18" font-weight="700">01</text>
+  <text x="125" y="74" text-anchor="middle" class="fill-foreground font-mono" font-size="18">4E</text>
+  <text x="195" y="74" text-anchor="middle" class="fill-foreground font-mono" font-size="18">2A</text>
+  <text x="265" y="74" text-anchor="middle" class="fill-foreground font-mono" font-size="18">9C</text>
+  <text x="335" y="74" text-anchor="middle" class="fill-foreground font-mono" font-size="18">10</text>
+  <text x="405" y="74" text-anchor="middle" class="fill-foreground font-mono" font-size="18">00</text>
+  <text x="475" y="74" text-anchor="middle" class="fill-foreground font-mono" font-size="18">00</text>
+  <text x="545" y="74" text-anchor="middle" class="fill-foreground font-mono" font-size="18" font-weight="700">A7</text>
+  <text x="55" y="112" text-anchor="middle" class="fill-muted-foreground font-mono" font-size="11">byte 0</text>
+  <text x="300" y="112" text-anchor="middle" class="fill-muted-foreground font-mono" font-size="11">bytes 1 to 6</text>
+  <text x="545" y="112" text-anchor="middle" class="fill-muted-foreground font-mono" font-size="11">byte 7</text>
+  <path d="M92 124 L92 132 L508 132 L508 124" fill="none" class="stroke-info" stroke-width="1.5" />
+  <text x="55" y="152" text-anchor="middle" class="fill-primary font-sans" font-size="13" font-weight="700">family code</text>
+  <text x="55" y="170" text-anchor="middle" class="fill-muted-foreground font-sans" font-size="11">0x01 = DS1990</text>
+  <text x="300" y="152" text-anchor="middle" class="fill-info font-sans" font-size="13" font-weight="700">serial number, 48 bits</text>
+  <text x="300" y="170" text-anchor="middle" class="fill-muted-foreground font-sans" font-size="11">unique per chip, readable by anyone</text>
+  <text x="545" y="152" text-anchor="middle" class="fill-warning font-sans" font-size="13" font-weight="700">CRC-8</text>
+  <text x="545" y="170" text-anchor="middle" class="fill-muted-foreground font-sans" font-size="11">of bytes 0 to 6</text>
+</svg>
+</Figure>
+
+#### Worked example: what the CRC is for
+
+The last byte is a CRC-8 computed over the first seven, with the Dallas polynomial x⁸ + x⁵ + x⁴ + 1 (the firmware's `maxim_crc8`, constant `0x8C`). For `01 4E 2A 9C 10 00 00` the result is `A7`. Change only the last serial byte to `01` and the CRC becomes `F9`.
+
+The CRC catches a bad contact: a key that wobbled mid-read gives bytes whose CRC does not match, and the firmware rejects the read. Anyone can compute it, so it proves nothing about who made the bytes.
+
+### Why a copy works
+
+A reader that opens for `01 4E 2A 9C 10 00 00 A7` is checking a name against a list, and the exchange never changes. Whoever presents those eight bytes gets in: the original key, the Flipper in <Flip>Emulate</Flip>, or a writable blank.
+
+Flipper's write guide lists the blanks: RW1990, TM1990 and TM08v2 for DS1990 keys, and RW2004 for DS1990 and DS1992 keys. Every one receives the UID only. For memory keys the Flipper can write memory to another key of the same type, but not to a blank.
+
+The DS1990 does what it was built to do: supply a unique, factory-set number. Treating that number as permission to open a door is the system designer's decision.
+
+### U2F: a key that never leaves the device
+
+U2F (Universal 2nd Factor) is a FIDO Alliance standard for USB security keys. The Flipper's <Flip>U2F</Flip> app makes it act as one, and you press OK to approve each request.
+
+There are two exchanges: registration, once per account, and authentication, at every sign-in. Field sizes come from the FIDO raw message format, version 1.2.
+
+<div class="table-scroll">
+
+| Message | Fields | What it achieves |
+| --- | --- | --- |
+| Registration request | challenge (32 bytes), application parameter (32 bytes: SHA-256 of the site's app ID) | asks for a new key pair for this site |
+| Registration response | `0x05`, public key (65 bytes, P-256), key handle, attestation certificate, signature | the site stores the public key and the key handle |
+| Authentication request | control byte, challenge (32 bytes, fresh), application parameter, key handle | "prove you hold the private key for this handle" |
+| Authentication response | user-presence byte, counter (4 bytes), ECDSA signature | the site checks the signature with the stored public key |
+
+</div>
+
+The sign-in signature covers, in this order, the application parameter, the user-presence byte, the counter and the challenge. The site picks a new random challenge each time, so a recording of Monday's response fails Tuesday's check. A look-alike domain has a different app ID, so the Flipper refuses to sign for it.
+
+<Figure label="Two sequence diagrams. Top: a reader sends Read ROM to an iButton and gets the same eight bytes back in two separate sessions. Bottom: a website sends a fresh challenge, the app ID hash and a key handle to the Flipper; the user presses OK; the Flipper returns a presence flag, a counter and a signature that the website checks with the stored public key." caption="The top exchange never changes, so any copy passes. In the bottom one, the question changes every time and only the holder of the private key can answer it. The private key never crosses the cable.">
+<svg viewBox="0 0 640 380" width="100%" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+  <text x="0" y="18" class="fill-foreground font-sans" font-size="14" font-weight="700">Identifier: DS1990 and a reader</text>
+  <rect x="20" y="32" width="110" height="34" rx="4" fill="none" class="stroke-border" stroke-width="1.5" />
+  <text x="75" y="54" text-anchor="middle" class="fill-foreground font-sans" font-size="13">reader</text>
+  <rect x="510" y="32" width="110" height="34" rx="4" fill="none" class="stroke-border" stroke-width="1.5" />
+  <text x="565" y="54" text-anchor="middle" class="fill-foreground font-sans" font-size="13">iButton</text>
+  <line x1="75" y1="66" x2="75" y2="170" class="stroke-border" stroke-width="1" stroke-dasharray="3 4" />
+  <line x1="565" y1="66" x2="565" y2="170" class="stroke-border" stroke-width="1" stroke-dasharray="3 4" />
+  <line x1="75" y1="88" x2="557" y2="88" class="stroke-primary" stroke-width="1.5" />
+  <path d="M557 83 L565 88 L557 93 Z" class="fill-primary" />
+  <text x="320" y="82" text-anchor="middle" class="fill-primary font-mono" font-size="11">reset, Read ROM 0x33</text>
+  <line x1="83" y1="114" x2="565" y2="114" class="stroke-warning" stroke-width="1.5" />
+  <path d="M83 109 L75 114 L83 119 Z" class="fill-warning" />
+  <text x="320" y="108" text-anchor="middle" class="fill-warning font-mono" font-size="11">01 4E 2A 9C 10 00 00 A7</text>
+  <line x1="83" y1="150" x2="565" y2="150" class="stroke-warning" stroke-width="1.5" />
+  <path d="M83 145 L75 150 L83 155 Z" class="fill-warning" />
+  <text x="320" y="144" text-anchor="middle" class="fill-warning font-mono" font-size="11">next touch: 01 4E 2A 9C 10 00 00 A7</text>
+  <text x="0" y="200" class="fill-foreground font-sans" font-size="14" font-weight="700">Authentication: U2F on the Flipper</text>
+  <rect x="20" y="214" width="110" height="34" rx="4" fill="none" class="stroke-border" stroke-width="1.5" />
+  <text x="75" y="236" text-anchor="middle" class="fill-foreground font-sans" font-size="13">website</text>
+  <rect x="510" y="214" width="110" height="34" rx="4" fill="none" class="stroke-border" stroke-width="1.5" />
+  <text x="565" y="236" text-anchor="middle" class="fill-foreground font-sans" font-size="13">Flipper</text>
+  <line x1="75" y1="248" x2="75" y2="372" class="stroke-border" stroke-width="1" stroke-dasharray="3 4" />
+  <line x1="565" y1="248" x2="565" y2="372" class="stroke-border" stroke-width="1" stroke-dasharray="3 4" />
+  <line x1="75" y1="272" x2="557" y2="272" class="stroke-primary" stroke-width="1.5" />
+  <path d="M557 267 L565 272 L557 277 Z" class="fill-primary" />
+  <text x="320" y="266" text-anchor="middle" class="fill-primary font-mono" font-size="11">fresh challenge + app ID hash + key handle</text>
+  <rect x="520" y="290" width="90" height="24" rx="4" class="fill-info stroke-info" fill-opacity="0.12" stroke-width="1.2" />
+  <text x="565" y="306" text-anchor="middle" class="fill-info font-sans" font-size="11">you press OK</text>
+  <line x1="83" y1="338" x2="565" y2="338" class="stroke-info" stroke-width="1.5" />
+  <path d="M83 333 L75 338 L83 343 Z" class="fill-info" />
+  <text x="320" y="332" text-anchor="middle" class="fill-info font-mono" font-size="11">presence flag + counter + signature</text>
+  <text x="20" y="364" class="fill-muted-foreground font-sans" font-size="11">checks the signature with the public key it stored at registration</text>
+</svg>
+</Figure>
+
+### How the Flipper builds and protects its keys
+
+The firmware stores no per-site keys. At registration it draws a random 32-byte nonce and derives the site's private key as HMAC-SHA256 of the app ID and nonce, keyed with a device secret. The nonce travels inside the 64-byte key handle, so at sign-in the Flipper derives the same key again. The handle also carries a check value over the app ID; a mismatch makes the Flipper refuse.
+
+The device secret lives in `key.u2f` on the microSD card, encrypted with a key unique to your Flipper's processor. The counter lives in `cnt.u2f`, encrypted the same way. Flipper's U2F page spells out the consequences:
+
+<div class="table-scroll">
+
+| What happens | Result |
+| --- | --- |
+| you move the microSD card to another Flipper | that Flipper cannot sign in to your accounts |
+| you delete or edit the U2F files, or insert a different card | new files are generated, and every account needs registering again |
+| you delete the `u2f` or `u2f/assets` folder | the app stops working until a firmware update restores the certificate |
+
+</div>
+
+Flipper also says its U2F function is implemented only in software, and recommends certified hardware keys for financial and other sensitive accounts.
+
+### What the screen is actually showing you
+
+After <Flip>iButton → Read</Flip>, the Flipper shows the key type and the bytes it read. <Flip>More → Save</Flip> writes a `.ibtn` file: for a DS1990, `Filetype: Flipper iButton key`, `Version: 2`, `Protocol: DS1990` and a `Rom Data:` line with the eight bytes. Memory keys add `Sram Data:` or `Eeprom Data:`; Cyfral and Metakom use `Data:`.
+
+The read screen does **not** tell you which exact chip answered (other parts also use family code `01`), or whether any reader checks more than these bytes.
+
+In the U2F app, the screen must show **Connected**; Flipper's guide says to close qFlipper first. When a site sends a request, the screen changes to a registration or sign-in prompt. Until you press OK, the Flipper answers "user presence required", and the browser keeps asking until you press or it gives up.
+
+### Misconceptions
+
+- **"iButton is a kind of RFID."** It is a contact key with no antenna and no field.
+- **"The UID is secret."** The DS1990 answers Read ROM to any reader that touches it. There is no password and no key.
+- **"A valid CRC means a genuine key."** The CRC is public arithmetic. A copy carries a valid CRC too.
+- **"Pressing OK proves who I am."** It proves someone physically approved this request. U2F has no PIN or fingerprint; your password is the other factor.
+- **"U2F on the Flipper gives me passkeys."** Firmware 1.4.3 answers only U2F messages (version string `U2F_V2`) and advertises no CTAP2 support. Passkeys need CTAP2.
+- **"Copying the SD card copies my security key."** The U2F files only work on the Flipper that made them. Losing the card still ends every registration.
+
+{/* TODO: tool. A 1-Wire ROM and CRC-8 checker (type seven bytes, see the CRC bit by bit) and a U2F challenge-response stepper that shows a replayed response failing would let both labs start in the browser. */}
+
+## Predict and practise
+
+<Lab kicker="Lab 14.1" title="Read a training key and label every byte" gear="Flipper and one training DS1990 that was never enrolled anywhere. Nothing transmits.">
+
+1. **Predict first.** Write down: how many bytes will the Flipper show, which byte will be `01`, and will three reads in a row match exactly?
+2. Open <Flip>iButton → Read</Flip>. Press the centre of the key's lid against the data pin on the flat part of the pad, with the rim on the middle ground pin, until the Flipper reports a key.
+3. Record the key type and all eight bytes. Save it with <Flip>More → Save</Flip> under a lab alias such as `lab-key-a`.
+4. Read the same key twice more. Compare all three results byte by byte.
+5. Label the bytes in your notes: family code, serial, CRC. If your key is not a DS1990, record which type the Flipper reported and which fields it read.
+6. **Control:** touch only the rim to the ground pin, lid away from the data pin. Nothing should read. Then lift the key mid-read and note whether a broken read is ever reported.
+7. **Optional, own reader only:** open <Flip>iButton → Saved → lab-key-a → Emulate</Flip>. Put the edge pin on the reader's centre and the middle pin on its rim. Does it respond as it did to the original? With no reader, write "emulation untested".
+
+</Lab>
+
+Expected observation: eight bytes, the first `01`, identical on every read. A half-touched key almost always gives no result, because the CRC rejects it.
+
+<Win>you can point to the family code, the serial number and the CRC in your own read, explain why all three reads matched, and say in one sentence why a reader that checks only those bytes cannot tell the key from an emulation.</Win>
+
+<Lab kicker="Lab 14.2" title="Register U2F on a test account and try to break it" gear="Flipper with its microSD card, USB-C data cable, computer, a disposable test account. Nothing transmits by radio.">
+
+1. **Predict first.** Write down: at sign-in, does the Flipper send the same bytes as last time? What happens if you never press OK? What do you do if the Flipper is not available?
+2. On the test account, set up a second sign-in method that does not use the Flipper, such as recovery codes kept on paper. Test it once. Write down where it is.
+3. Close qFlipper. Connect the Flipper by USB, open <Flip>U2F</Flip> and wait for **Connected**.
+4. In the account's security settings, add a security key. When the Flipper shows the registration request, press OK. Name the key "Flipper lab".
+5. Sign out. Sign in with your password, and press OK when the security-key prompt appears.
+6. **Control 1:** sign out and start signing in again, but do not press OK. Record what the browser and the site show when it gives up. Then repeat and press OK.
+7. **Control 2:** exit the U2F app and sign in once with your recovery method from step 2.
+8. **Clean up:** remove "Flipper lab" from the account. Confirm the recovery method is still listed.
+
+</Lab>
+
+Expected observation: sign-in works only with the app open and OK pressed. Without the press the site waits, then reports that the key did not respond.
+
+<Win>you can explain why your second sign-in could not have been built from a recording of the first, you watched the no-press control fail, and you signed in once without the Flipper.</Win>
+
+## Check yourself
+
+<Quiz id="m14" />
+
+Two questions to answer in a sentence each, without notes:
+
+1. A building reader opens for any key whose eight ROM bytes are on its list. What would have to change in the reader, not the key, before an emulated copy failed?
+2. Name two events that would stop the Flipper working as your test account's security key, and what you would do after each.
+
+## Keep evidence
+
+Open your [notebook](/learn/notebook?module=m14) and save an entry for this module:
+
+- **Setup:** firmware version, key model as sold, test account service (not the password), recovery method and where it is kept.
+- **Prediction:** your three answers from each lab's step 1.
+- **Observation:** the three reads with bytes labelled, both controls in Lab 14.1, the sign-in, both controls in Lab 14.2, and the cleanup.
+- **Explanation:** one paragraph comparing what each device presented, what a copy of it would achieve, and what losing it would mean.
+
+Adequate evidence has a real read or a documented failure, each control as it happened, and optional steps marked tested or untested. Keep credential numbers out of anything you share. An example entry:
+
+> Official 1.4.3, new training DS1990A. Predicted 8 bytes, 01 first, identical. Got DS1990, 01 4E 2A 9C 10 00 00 A7 three times. Rim only: nothing. Emulation untested, no reader. U2F on a test mail account, recovery codes on paper. OK pressed: signed in. No press: browser gave up. Recovery code: signed in. Key removed. The iButton gives anyone the same 8 bytes; U2F signs a new challenge each time.
+
+Set a review date one week from today. Mark it retrieved when you can draw both exchanges from the second figure without looking.
+
+## Continue
+
+Next is [Module 15: Build your first Flipper app](/learn/15-app-development). You move from using the firmware's apps to building a small one of your own with uFBT.
+
+**Retrieval question for next week:** without looking, which four things does a U2F sign-in signature cover, and which one stops a replay?
+
+Primary sources, checked 13 October 2026:
+
+- Flipper Docs: [iButton](https://docs.flipper.net/zero/ibutton), [Reading](https://docs.flipper.net/zero/ibutton/read), [Writing](https://docs.flipper.net/zero/ibutton/write) and [U2F](https://docs.flipper.net/zero/u2f).
+- [Flipper Developer Docs: iButton file format](https://developer.flipper.net/flipperzero/doxygen/ibutton_file_format.html).
+- Firmware 1.4.3: [dallas_common.c](https://github.com/flipperdevices/flipperzero-firmware/blob/1.4.3/lib/ibutton/protocols/dallas/dallas_common.c), [protocol_ds1990.c](https://github.com/flipperdevices/flipperzero-firmware/blob/1.4.3/lib/ibutton/protocols/dallas/protocol_ds1990.c), [u2f.c](https://github.com/flipperdevices/flipperzero-firmware/blob/1.4.3/applications/main/u2f/u2f.c), [u2f_data.c](https://github.com/flipperdevices/flipperzero-firmware/blob/1.4.3/applications/main/u2f/u2f_data.c) and [u2f_hid.c](https://github.com/flipperdevices/flipperzero-firmware/blob/1.4.3/applications/main/u2f/u2f_hid.c).
+- FIDO Alliance: [U2F Raw Message Formats v1.2](https://fidoalliance.org/specs/fido-u2f-v1.2-ps-20170411/fido-u2f-raw-message-formats-v1.2-ps-20170411.html) and [CTAP 2.1](https://fidoalliance.org/specs/fido-v2.1-ps-20210615/fido-client-to-authenticator-protocol-v2.1-ps-20210615.html).

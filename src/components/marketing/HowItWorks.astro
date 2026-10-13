@@ -1,0 +1,108 @@
+---
+/** Home "method": how each lesson works, as a three-tile bento with drawn art. Copy: docs/v2/copy/home.md#method. */
+import Section from './Section.astro';
+
+// OOK: carrier bursts for 1 bits, flat for 0 bits (bits 1 0 1 1 0 1)
+const bits = [1, 0, 1, 1, 0, 1];
+const cyc = 6;
+const w = 480 / bits.length;
+let carrier = '';
+bits.forEach((b, i) => {
+  const x0 = i * w;
+  if (!b) {
+    carrier += `M${x0} 60H${x0 + w}`;
+    return;
+  }
+  carrier += `M${x0} 60`;
+  for (let k = 0; k < cyc; k++) {
+    const x = x0 + (k * w) / cyc;
+    const s = w / cyc / 4;
+    carrier += `Q${x + s} 34 ${x + 2 * s} 60T${x + 4 * s} 60`;
+  }
+});
+const tile = 'rounded-[1.25rem] border border-border bg-card p-5 sm:p-7';
+const k = (t: string) => `<span class="text-scope-peak">${t}</span>`;
+const str = (t: string) => `<span class="text-scope-trace">${t}</span>`;
+const code = [
+  `${k('int32_t')} lab_companion_app(${k('void')}* p) {`,
+  `  UNUSED(p);`,
+  `  ${str('// your first Flipper app, built with uFBT')}`,
+  `  FURI_LOG_I(${str('"lab"')}, ${str('"hello"')});`,
+  `  ${k('return')} 0;`,
+  `}`,
+].join('\n');
+---
+<Section id="method" eyebrow="How each lesson works" title="Write the prediction before you press Read." intro="Each lab asks you to write your prediction, then what the Flipper showed.">
+  <div class="grid grid-cols-1 gap-4 lg:grid-cols-5">
+    <article class={`${tile} flex flex-col lg:col-span-3`}>
+      <div class="art" aria-hidden="true">
+        <div class="scope">
+          <div class="flex flex-wrap justify-between gap-x-4 font-mono text-[0.6875rem] tracking-wide text-scope-text uppercase">
+            <span>Wave Lab · OOK</span><span>bits {bits.join(' ')}</span>
+          </div>
+          <svg viewBox="0 0 480 100" class="mt-3 h-auto w-full" fill="none">
+            {bits.map((b, i) => <text x={i * w + w / 2} y="98" text-anchor="middle" class="fill-scope-text font-mono text-[11px]">{b}</text>)}
+            <path d="M0 60H480" stroke="var(--scope-grid)" />
+            <path d={carrier} stroke="var(--scope-trace)" stroke-width="2" stroke-linecap="round" />
+          </svg>
+        </div>
+      </div>
+      <h3 class="tile-title">See the mechanism.</h3>
+      <p class="tile-body">Each mechanism comes with a figure or a tool. Wave Lab turns the bits you type into an OOK or FSK waveform. The Rolling Code Sim shows a receiver rejecting a counter it has already seen.</p>
+    </article>
+
+    <article class={`${tile} flex flex-col lg:col-span-2`}>
+      <div class="art" aria-hidden="true">
+        <dl class="grid gap-2 rounded-xl border border-border bg-background p-4 text-sm">
+          <div class="grid grid-cols-[6.5rem_1fr] gap-3">
+            <dt class="text-muted-foreground">Prediction</dt>
+            <dd class="font-medium">Peak near 433.92 MHz</dd>
+          </div>
+          <div class="grid grid-cols-[6.5rem_1fr] gap-3 border-t border-dashed border-border pt-2">
+            <dt class="text-muted-foreground">Observation</dt>
+            <dd class="font-medium"><span class="font-mono tabular-nums">433.92</span> MHz, AM650</dd>
+          </div>
+          <div class="grid grid-cols-[6.5rem_1fr] items-center gap-3 border-t border-dashed border-border pt-2">
+            <dt class="text-muted-foreground">Check</dt>
+            <dd class="inline-flex items-center gap-1.5 font-medium text-success">
+              <svg viewBox="0 0 24 24" class="size-4" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"></path></svg>
+              You've got it
+            </dd>
+          </div>
+        </dl>
+      </div>
+      <h3 class="tile-title">Test your prediction.</h3>
+      <p class="tile-body">You change one thing at a time and compare the result with what you wrote down. Every lab ends with a "you've got it when" check. In Module 1 the check is stating the frequency of one device you own and how you measured it. When a lab fails, Module 9's decision trees start from the symptom you saw, such as "nothing decodes".</p>
+    </article>
+
+    <article class={`${tile} flex flex-col lg:col-span-5 lg:grid lg:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)] lg:items-center lg:gap-12`}>
+      <div class="art order-last mb-0 mt-7 lg:order-none lg:mt-0" aria-hidden="true">
+        <pre class="overflow-x-auto rounded-xl bg-scope-bg p-5 font-mono text-[0.8125rem] leading-relaxed text-scope-text"><code set:html={code} /></pre>
+        <p class="mt-2 font-mono text-[0.6875rem] text-muted-foreground">$ ufbt launch</p>
+      </div>
+      <div>
+        <h3 class="tile-title mt-0">Compile your own app.</h3>
+        <p class="tile-body">In week 10 you build a small Flipper app in C with uFBT. Your notebook records the toolchain and firmware versions that built it.</p>
+      </div>
+    </article>
+  </div>
+  <p class="mt-8">
+    <a href="/course#lesson-shape" class="inline-flex min-h-11 items-center gap-1.5 font-medium text-primary underline decoration-primary/30 underline-offset-4 hover:decoration-primary">How a lesson is laid out <span aria-hidden="true">→</span></a>
+  </p>
+</Section>
+
+<style>
+  @reference "../../styles/global.css";
+  .art {
+    @apply mb-7;
+  }
+  .scope {
+    @apply rounded-xl bg-scope-bg px-5 pt-4 pb-3;
+  }
+  .tile-title {
+    @apply mt-auto text-xl tracking-[-0.015em];
+  }
+  .tile-body {
+    @apply mt-2 max-w-[60ch] leading-relaxed text-muted-foreground;
+  }
+</style>

@@ -1,0 +1,326 @@
+---
+id: m17
+number: 17
+slug: 17-mastery
+title: 'Mastery project: explain, measure, teach'
+description: Run one bounded experiment on your own lab, state what five out of five really proves, and assemble a four-part portfolio that someone else can reproduce.
+stage: research
+week: Week 11–12
+access: paid
+minutes: 240
+gear:
+  - Flipper Zero on the current official firmware, with a microSD card
+  - your own TV and its infrared remote, with the button you learned in Module 11
+  - one unenrolled 125 kHz training tag and one 13.56 MHz practice card or NTAG sticker you own
+  - the LED circuit from Module 12 or the app you built in Module 15
+  - a tape measure and a strip of masking tape to mark positions on the floor
+  - one person willing to read your report and argue with one conclusion
+  - a browser for the flashcards
+transmits: own-device
+outcome: Plan, run and report one bounded experiment on equipment you own, state the limits of its evidence with numbers, and package four interface records that another learner can reproduce.
+prerequisites:
+  - m06
+  - m07
+  - m10
+  - m11
+  - m12
+  - m15
+  - m16
+tools:
+  - flashcards
+scenes: []
+evidence: A redacted four-part portfolio whose comparison records every trial including failures, a control, a stated confidence bound, a delayed explanation and one revision made after a peer challenge.
+sources:
+  - title: 'Flipper Docs: Reading signals (Frequency Analyzer)'
+    url: https://docs.flipper.net/zero/sub-ghz/read
+  - title: 'Flipper Docs: Reading RAW signals'
+    url: https://docs.flipper.net/zero/sub-ghz/read-raw
+  - title: 'Flipper Developer Docs: Sub-GHz file format'
+    url: https://developer.flipper.net/flipperzero/doxygen/subghz_file_format.html
+  - title: 'Flipper Docs: Infrared'
+    url: https://docs.flipper.net/zero/infrared
+  - title: 'Flipper Developer Docs: Infrared file format'
+    url: https://developer.flipper.net/flipperzero/doxygen/infrared_file_format.html
+  - title: 'Flipper Blog: Taking over TVs with Flipper Zero Infrared Port'
+    url: https://blog.flipper.net/infrared/
+  - title: 'Flipper Docs: GPIO and modules'
+    url: https://docs.flipper.net/zero/gpio-and-modules
+  - title: 'Flipper Docs: Settings (About)'
+    url: https://docs.flipper.net/zero/basics/settings
+  - title: 'Flipper Developer Docs: Applications'
+    url: https://developer.flipper.net/flipperzero/doxygen/applications.html
+  - title: 'Hanley and Lippman-Hand (1983), If nothing goes wrong, is everything all right? Interpreting zero numerators. JAMA 249(13):1743-1745'
+    url: https://jamanetwork.com/journals/jama/article-abstract/389714
+  - title: 'Roediger and Karpicke (2006), Test-enhanced learning, Psychological Science 17(3):249-255'
+    url: https://doi.org/10.1111/j.1467-9280.2006.01693.x
+reviewed: '2026-10-13'
+badge: mastery
+---
+
+## Outcome
+
+You can take a question about your own lab, test it with a fair comparison, and report the answer with its limits stated in numbers.
+
+By the end you can:
+
+- design an experiment that changes one factor and includes a control that should fail;
+- say what a run of successes proves, for example that five out of five still allows a failure rate of up to about 45 %;
+- assemble a redacted four-part portfolio another learner can repeat.
+
+## Before you start
+
+- **Prerequisites:** [Module 6](/learn/06-rfid) and [Module 7](/learn/07-nfc) (reading your own tags), [Module 10](/learn/10-capstone) (the atlas routine), [Module 11](/learn/11-infrared) (one learned infrared button), [Module 12](/learn/12-gpio) (the LED circuit), [Module 15](/learn/15-app-development) (the app) and [Module 16](/learn/16-security-lab) (testing a bounded claim). The one new idea here is the limit of a small sample.
+- **Gear:** the list above, all used in earlier modules.
+- **Time:** three to five sessions, about four hours.
+- **Transmits:** infrared at your own TV, one harmless button, plus the short reader field when you read your own tags. No Sub-GHz transmission is required; if you include one, repeat only a test you cleared in [Module 4](/learn/04-transmit).
+- **Scope:** your own devices, in your own space, with no identifiers that belong to anyone in the report.
+
+<Callout variant="legal" title="A portfolio is a published document">
+Your report is evidence from equipment **you own or have written permission to test**. Before sharing it, remove UIDs, keys, addresses and anything that identifies a person or a site. If your comparison involves radio transmission, run the three checks in the [Romania lab guide](/romania-lab-guide) first. Infrared at your own TV needs none of them.
+</Callout>
+
+## Understand
+
+### What mastery means in this course
+
+A badge in your browser is self-reported progress. The skill this course is after: choose the right tool, predict what it will show, test inside your scope, diagnose a failure without guessing, and explain what your evidence does and does not establish.
+
+### Observation, inference, untested claim
+
+Every sentence in a lab report is an observation, an inference or an untested claim. Label them.
+
+<div class="table-scroll">
+
+| Kind | What it is | Example from your own lab |
+| --- | --- | --- |
+| **Observation** | What a screen, meter or device showed, with the conditions | "Read listed Princeton 24-bit at 433.92 MHz, AM650, three presses, same Key." |
+| **Inference** | A conclusion you draw from observations, with the reasoning | "The Key did not change, so this remote probably sends a fixed code." |
+| **Untested claim** | Something plausible you did not check | "It would also work through the front door." |
+
+</div>
+
+Most mistakes hide in the second row. Write the reasoning down so the reader can check it.
+
+### Every instrument has limits
+
+Each Flipper app answers a narrow question. Never claim more than the screen showed.
+
+<div class="table-scroll">
+
+| Tool | What it measures | What it cannot tell you |
+| --- | --- | --- |
+| **Frequency Analyzer** | The listed frequency with the highest <Term id="rssi">RSSI</Term>, shown above −90 dBm; Flipper calls the results approximate | The exact carrier or bandwidth. It is not a calibrated spectrum analyzer. |
+| **Read RAW** | Demodulated pulse timings in microseconds, using the preset you chose | The waveform. It stores no I/Q samples, so a wrong preset records the wrong thing. |
+| **Infrared learn** | The pulse envelope after the built-in 38 kHz receiver has demodulated it, decoded or saved as timings in microseconds | The remote's real carrier. A raw file stores a carrier value, usually 38,000 Hz, not a measurement. Sending proves the Flipper transmitted, not that anything received. |
+| **125 kHz and NFC read** | What the tag answered: protocol, <Term id="uid">UID</Term>, readable pages | What any reader grants it, or that a failed read means the tag is secure. Access rights live in the reader's system. |
+| **GPIO and a multimeter** | Voltage or current at the point you probe | Anything about a part of the circuit you did not probe. |
+
+</div>
+
+### A fair comparison changes one thing
+
+If two things differ between conditions, you cannot say which caused the change. Hold every other factor still and write it down.
+
+<Figure label="A row of five boxes joined by arrows: baseline with five or more trials, change one factor, repeat the same number of trials, run a control that should fail, then compare. Below the row, a list of factors to hold constant: distance, height and aim, battery level, room lighting, firmware version, and the button used." caption="The shape of every comparison in this lesson. The control is not optional: it proves the result depends on the thing you think it depends on.">
+<svg viewBox="0 0 640 180" width="100%" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+  <defs>
+    <marker id="m17-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+      <path d="M0 0 L10 5 L0 10 z" class="fill-muted-foreground" />
+    </marker>
+  </defs>
+  <rect x="0" y="20" width="112" height="70" rx="6" fill="none" class="stroke-primary" stroke-width="1.5" />
+  <text x="56" y="48" text-anchor="middle" class="fill-foreground font-sans" font-size="13" font-weight="700">Baseline</text>
+  <text x="56" y="68" text-anchor="middle" class="fill-muted-foreground font-mono" font-size="11">n ≥ 5 trials</text>
+  <rect x="128" y="20" width="112" height="70" rx="6" fill="none" class="stroke-primary" stroke-width="1.5" />
+  <text x="184" y="48" text-anchor="middle" class="fill-foreground font-sans" font-size="13" font-weight="700">Change one</text>
+  <text x="184" y="68" text-anchor="middle" class="fill-muted-foreground font-mono" font-size="11">factor only</text>
+  <rect x="256" y="20" width="112" height="70" rx="6" fill="none" class="stroke-primary" stroke-width="1.5" />
+  <text x="312" y="48" text-anchor="middle" class="fill-foreground font-sans" font-size="13" font-weight="700">Repeat</text>
+  <text x="312" y="68" text-anchor="middle" class="fill-muted-foreground font-mono" font-size="11">same n</text>
+  <rect x="384" y="20" width="112" height="70" rx="6" fill="none" class="stroke-warning" stroke-width="1.5" />
+  <text x="440" y="48" text-anchor="middle" class="fill-foreground font-sans" font-size="13" font-weight="700">Control</text>
+  <text x="440" y="68" text-anchor="middle" class="fill-muted-foreground font-mono" font-size="11">should fail</text>
+  <rect x="512" y="20" width="112" height="70" rx="6" fill="none" class="stroke-info" stroke-width="1.5" />
+  <text x="568" y="48" text-anchor="middle" class="fill-foreground font-sans" font-size="13" font-weight="700">Compare</text>
+  <text x="568" y="68" text-anchor="middle" class="fill-muted-foreground font-mono" font-size="11">k of n, bound</text>
+  <line x1="112" y1="55" x2="126" y2="55" class="stroke-muted-foreground" stroke-width="1.5" marker-end="url(#m17-arrow)" />
+  <line x1="240" y1="55" x2="254" y2="55" class="stroke-muted-foreground" stroke-width="1.5" marker-end="url(#m17-arrow)" />
+  <line x1="368" y1="55" x2="382" y2="55" class="stroke-muted-foreground" stroke-width="1.5" marker-end="url(#m17-arrow)" />
+  <line x1="496" y1="55" x2="510" y2="55" class="stroke-muted-foreground" stroke-width="1.5" marker-end="url(#m17-arrow)" />
+  <line x1="0" y1="118" x2="624" y2="118" class="stroke-border" stroke-width="1" stroke-dasharray="3 4" />
+  <text x="0" y="144" class="fill-foreground font-sans" font-size="13" font-weight="700">Hold constant and record:</text>
+  <text x="0" y="166" class="fill-muted-foreground font-mono" font-size="11">distance · height and aim · battery · room light · firmware version · button</text>
+</svg>
+</Figure>
+
+Record every trial. A failure left out turns an honest 8 out of 10 into a dishonest 8 out of 8.
+
+### Worked example: what five out of five proves
+
+Suppose your Flipper changes the TV volume on 5 of 5 sends at 3 m. How bad could the true failure rate be and still give five clean successes?
+
+If each send fails with probability `p`, the chance of five successes in a row is `(1 − p)^5`. Find the `p` at which that chance drops to 5 %:
+
+- `(1 − p)^5 = 0.05`, so `1 − p = 0.05^(1/5) = 0.549`, so `p = 0.451`.
+- In words: five out of five is consistent, at 95 % confidence, with a failure rate as high as **45 %**.
+
+Hanley and Lippman-Hand (JAMA, 1983) gave the shortcut: after zero failures in `n` trials, the 95 % upper bound is roughly `3 ÷ n`, the **rule of three**. It is good above about 30 trials. For home-lab samples, use the exact figure.
+
+<div class="table-scroll">
+
+| Trials, all successful | Exact 95 % upper bound on failure rate | Rule of three, `3 ÷ n` |
+| --- | --- | --- |
+| 5 | 45.1 % | 60 % |
+| 10 | 25.9 % | 30 % |
+| 20 | 13.9 % | 15 % |
+| 30 | 9.5 % | 10 % |
+
+</div>
+
+<Figure label="Horizontal bar chart of the exact 95 percent upper bound on failure rate after zero failures: 45.1 percent at 5 trials, 25.9 at 10, 13.9 at 20 and 9.5 at 30. A tick on each bar marks the rule-of-three value: 60, 30, 15 and 10 percent." caption="Bars: the exact bound, 1 − 0.05^(1/n). Ticks: the rule of three. Twenty clean trials buy a far stronger sentence than five, and the shortcut overstates the bound at small n.">
+<svg viewBox="0 0 640 200" width="100%" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+  <text x="0" y="16" class="fill-foreground font-sans" font-size="13" font-weight="700">Worst failure rate still consistent with n clean trials (95 %)</text>
+  <text x="110" y="52" text-anchor="end" class="fill-muted-foreground font-mono" font-size="12">n = 5</text>
+  <rect x="120" y="38" width="361" height="20" class="fill-primary" fill-opacity="0.75" />
+  <line x1="600" y1="34" x2="600" y2="62" class="stroke-warning" stroke-width="2" />
+  <text x="487" y="53" class="fill-foreground font-mono" font-size="11">45.1 %</text>
+  <text x="110" y="86" text-anchor="end" class="fill-muted-foreground font-mono" font-size="12">n = 10</text>
+  <rect x="120" y="72" width="207" height="20" class="fill-primary" fill-opacity="0.75" />
+  <line x1="360" y1="68" x2="360" y2="96" class="stroke-warning" stroke-width="2" />
+  <text x="333" y="87" class="fill-foreground font-mono" font-size="11">25.9 %</text>
+  <text x="110" y="120" text-anchor="end" class="fill-muted-foreground font-mono" font-size="12">n = 20</text>
+  <rect x="120" y="106" width="111" height="20" class="fill-primary" fill-opacity="0.75" />
+  <line x1="240" y1="102" x2="240" y2="130" class="stroke-warning" stroke-width="2" />
+  <text x="248" y="121" class="fill-foreground font-mono" font-size="11">13.9 %</text>
+  <text x="110" y="154" text-anchor="end" class="fill-muted-foreground font-mono" font-size="12">n = 30</text>
+  <rect x="120" y="140" width="76" height="20" class="fill-primary" fill-opacity="0.75" />
+  <line x1="200" y1="136" x2="200" y2="164" class="stroke-warning" stroke-width="2" />
+  <text x="208" y="155" class="fill-foreground font-mono" font-size="11">9.5 %</text>
+  <line x1="120" y1="172" x2="600" y2="172" class="stroke-border" stroke-width="1" />
+  <text x="120" y="190" text-anchor="middle" class="fill-muted-foreground font-mono" font-size="11">0 %</text>
+  <text x="360" y="190" text-anchor="middle" class="fill-muted-foreground font-mono" font-size="11">30 %</text>
+  <text x="600" y="190" text-anchor="middle" class="fill-muted-foreground font-mono" font-size="11">60 %</text>
+</svg>
+</Figure>
+
+The honest sentence is "5 of 5 at 3 m, on axis, volume-down, fresh batteries". For a stronger claim, run more trials.
+
+### A changing value is not a security property
+
+A payload that changes between presses may carry a sensor value, a battery byte, a <Term id="counter-cnt">counter</Term>, a checksum or a <Term id="rolling-code">rolling code</Term>. To call it rolling, identify the protocol and show a counter that advances with each press.
+
+### The four-part portfolio
+
+Each part needs a claim, its evidence and one stated limit.
+
+<div class="table-scroll">
+
+| Part | Interface | Minimum evidence |
+| --- | --- | --- |
+| **1. Comparison** | Infrared (default) or a Sub-GHz receive test | Lab 17.1: question, prediction, k of n per condition, control, bound |
+| **2. Classification** | 125 kHz and 13.56 MHz training tags | Protocol and readable data per tag, what you could not read, UID redacted |
+| **3. Build** | GPIO LED circuit or your own app | Drawing or source, version, one test that should pass and one that should fail. For the LED: series resistor, under 20 mA per pin, and output pins are not 5 V tolerant |
+| **4. Scope and recovery** | All of the above | What you were allowed to do, what you changed, how you put it back |
+
+</div>
+
+Example records for parts 2 to 4, one line each:
+
+- **Classification:** "TAG-A, 125 kHz, protocol EM4100, ID redacted. TAG-B, 13.56 MHz, NTAG, UID redacted; pages 0 to 3 read, password-protected pages not read."
+- **Build:** "LED on pin 4 through a 330 ohm resistor, app v0.2. Pass: LED lights on OK. Fail on purpose: LED stays off with the app closed."
+- **Scope and recovery:** "Own TV and own tags only. Added one saved remote, deleted after the lab. Firmware unchanged."
+
+Label browser-tool results as simulated. They show understanding, not a measurement of your hardware.
+
+### How the portfolio is judged
+
+Score your own report before anyone else sees it. It is complete when:
+
+- **Question:** one question with a predicted answer, ideally with a number and a reason.
+- **Method:** one factor changed and the rest listed, so someone else could repeat it.
+- **Results:** every trial, k of n per condition, a control.
+- **Interpretation:** observations, inferences and untested claims labelled.
+- **Limits and cleanup:** versions, scope, redaction, what you reset.
+
+### What the screen is actually showing you
+
+<Flip>Settings → About</Flip> shows the firmware information; copy the version exactly, because another release may have different menus or numbers. In <Flip>Infrared → Saved Remotes</Flip>, pressing a button makes the Flipper send. Nothing on the Flipper's screen tells you the TV received it. Your observation is the TV's volume bar.
+
+### Misconceptions
+
+- **"Five out of five means it always works."** It allows a failure rate of up to 45 % at 95 % confidence.
+- **"Failed trials are noise."** They are the data. Removing them hides the effect you are measuring.
+
+## Predict and practise
+
+Spend ten minutes on the flashcards for RSSI, RAW, UID, duty cycle and counter. Cards you cannot explain aloud go on a revisit list for Lab 17.2.
+
+<Widget name="flashcards" />
+
+<Callout variant="warn" title="One button, one TV, one room">
+Send volume or mute only, never power, and only at your own TV. If any other device reacts, stop and move the test. Do not use Universal Remotes for this lab, and do not add an external emitter or extra power to improve a result. The lab measures the setup you already have.
+</Callout>
+
+<Lab kicker="Lab 17.1" title="Measure one factor on your own infrared link" gear="Flipper with the button you learned in Module 11, your own TV, tape measure, masking tape, black electrical tape. Infrared at your TV only.">
+
+1. **Write the question and prediction first.** Default: "Does distance change how often my learned volume-down works?" Predict k of 10 at 1 m, 3 m and 5 m, with a reason. Another single factor, such as angle, is fine.
+2. Record the constants: room, lighting, battery level, firmware version (Settings → About), TV model, button, the height you hold the Flipper at. Start every block at the same TV volume, around the middle of the scale.
+3. Mark 1 m, 3 m and 5 m from the TV's front on the floor with tape.
+4. **Run in interleaved blocks** so battery drain and daylight drift do not line up with distance: five sends at 1 m, five at 3 m, five at 5 m, then repeat the cycle once. Send on axis with a few seconds between sends. Alternate your learned volume-down with volume-up (or restore the volume between blocks) so the TV never sits at its minimum, and count only the volume-down sends. A success is the volume bar moving one step down. Write the clock time beside every trial.
+5. **Control:** make the Flipper's infrared window opaque with several layers of black electrical tape. First check the cover: hold the covered Flipper 20 cm from the TV and send once. Nothing should happen. Then send ten times at 1 m. Every one should fail. If any succeed, something else is changing the volume (or the cover leaks); find out which before trusting the results.
+6. Compute k of n for each distance. For a condition with no failures, read its bound from the table above. For a condition with failures, report k of n only and compare conditions by eye, because the zero-failure bound does not apply to them.
+
+</Lab>
+
+Expected observation: 10 of 10 at short range, with success possibly dropping at the longest mark. Note wall reflections or daylight as alternative explanations. The control should fail ten times out of ten. Even then, a control of 0 of 10 still allows a per-send success rate of up to 26 %, which is the lesson's own point.
+
+<Win>your notebook shows every trial for three conditions and the control, a k of n for each, a bound for any condition with no failures, and a sentence that says what you established and under which conditions.</Win>
+
+<Lab kicker="Lab 17.2" title="Write it up, wait a day, explain it, and take one challenge" gear="Your notebook, the other three portfolio records, one reader. Nothing transmits.">
+
+1. **Predict first.** Before you write, list the conclusion you expect your reader to challenge and the answer you will give. Compare it with the real challenge in the last step.
+2. Write the report under eight headings: question, scope, equipment and versions, method, results, alternative explanations, limitations, cleanup.
+3. Add the other three records, using the example lines under the portfolio table. For the classification, open the 125 kHz app and the NFC app on your own training tags and copy the protocol, the readable data and a note of what would not read; redact the ID. Use the minimum-evidence column as your checklist.
+4. **Redact** the shared copy: replace UIDs, keys, addresses and names with aliases such as `TAG-A`. Keep the originals in your private notebook only.
+5. Score the report against the judging list. Fix anything missing.
+6. **Wait a day.** Then, without notes, explain how infrared sending works and why your control proves what it proves. Compare with your notes and list what you missed.
+7. **Negative case:** find one sentence in your report that is an untested claim. Either label it as untested or test it.
+8. Give the report to your reader and ask them to challenge one conclusion. Log the challenge, your answer and anything you revised.
+
+</Lab>
+
+The delay is deliberate. Roediger and Karpicke (2006) found that students who practised recall remembered more a week later than students who reread, though the rereaders felt more confident.
+
+<Win>your report meets every point of the judging list, your delayed explanation needed no notes for the mechanism, and your log shows one challenge with the revision it caused.</Win>
+
+## Check yourself
+
+<Quiz id="m17" />
+
+Two questions to answer in a sentence each, without notes:
+
+1. Your TV remote's volume-down worked on 20 of 20 presses at 4 m. What is the strongest sentence you can write about its failure rate, and what would you need to make it stronger?
+2. A friend's report says "the tag is secure because the Flipper could not read its sectors". Which row of the instrument table would you point them to, and which limit does the claim ignore?
+
+## Keep evidence
+
+Open your [notebook](/learn/notebook?module=m17) and save an entry for this module. Map each lab step to a field:
+
+- **Setup:** firmware version, TV model, room, lighting, battery, button, and the portfolio aliases.
+- **Prediction:** your k of 10 per distance and the reason, written before Lab 17.1.
+- **Observation:** every trial with its clock time, the control, and the bound for any condition with no failures.
+- **Explanation:** what you established and under which conditions, one alternative explanation, the delayed-explanation gaps, the challenge and your revision.
+
+Adequate evidence is every trial, a control that failed on purpose, a numeric bound, and a redacted report with labelled claims. Example entry:
+
+> Official firmware as shown in Settings → About, lounge TV, lamps on, evening, battery 80 %. Predicted 10/10 at 1 m and 3 m, 7/10 at 5 m, interleaved blocks. Results: 1 m 10/10, 3 m 10/10, 5 m 6/10. Taped window at 1 m: 0/10, cover checked at 20 cm. Clean conditions: failure rate under 25.9 % at 95 %; the 5 m condition is reported as 6/10 only. Alternative, untested: side-wall reflection at 5 m. Next day: explained the 38 kHz envelope without notes, forgot gain control. Reviewer asked about standby between trials; added it to the constants.
+
+Set a review date one week from today.
+
+## Continue
+
+This is the last lesson of the core path. The optional [Module 18: Wi-Fi Devboard](/learn/18-wifi-devboard) repeats the method on your own router under the same eight headings. The [reference page](/reference) keeps documentation links current.
+
+**Retrieval question for next week:** without looking, how many clean trials do you need before the 95 % bound on the failure rate falls below 10 %, and why is a covered-window control part of the test?
+
+Primary sources, checked 13 October 2026, are in this page's metadata.

@@ -1,0 +1,321 @@
+---
+id: m05
+number: 5
+slug: 05-raw-and-rolling
+title: Raw signals and rolling codes
+description: Read a RAW capture value by value, learn when Read RAW is the right tool and when it is not, and see from the counter rule why a used rolling code is refused.
+stage: signals
+week: Week 3
+access: paid
+minutes: 60
+gear:
+  - Flipper Zero on official firmware 1.4.3 or later, updated once so its region is set
+  - a fixed-code remote you own and identified in Module 3, for the optional bench lab
+  - a browser for the Rolling Code Sim and the tool picker
+transmits: none
+outcome: Read the sign pattern of a RAW capture, choose between Read and Read RAW for a device you own, and explain from the counter rule why a used rolling code is refused.
+prerequisites:
+  - m02
+  - m04
+tools:
+  - rolling-sim
+  - tool-picker
+scenes:
+  - rolling
+evidence: A notebook entry with six annotated RAW_Data values, your Read versus Read RAW choice for one device, and the simulator counter values before and after a refused replay.
+sources:
+  - title: 'Flipper Docs: Reading RAW signals'
+    url: https://docs.flipper.net/zero/sub-ghz/read-raw
+  - title: 'Flipper Docs: Supported vendors'
+    url: https://docs.flipper.net/zero/sub-ghz/supported-vendors
+  - title: 'Flipper Developer Docs: Sub-GHz file format'
+    url: https://developer.flipper.net/flipperzero/doxygen/subghz_file_format.html
+  - title: 'Flipper Zero firmware 1.4.3: Read RAW screen (subghz_read_raw.c)'
+    url: https://github.com/flipperdevices/flipperzero-firmware/blob/1.4.3/applications/main/subghz/views/subghz_read_raw.c
+  - title: 'Flipper Zero firmware 1.4.3: Nice FloR-S decoder (nice_flor_s.c)'
+    url: https://github.com/flipperdevices/flipperzero-firmware/blob/1.4.3/lib/subghz/protocols/nice_flor_s.c
+  - title: 'Flipper Zero firmware 1.4.3: KeeLoq decoder (keeloq.c)'
+    url: https://github.com/flipperdevices/flipperzero-firmware/blob/1.4.3/lib/subghz/protocols/keeloq.c
+  - title: 'Flipper Zero firmware 1.4.3: Security+ 2.0 decoder (secplus_v2.c)'
+    url: https://github.com/flipperdevices/flipperzero-firmware/blob/1.4.3/lib/subghz/protocols/secplus_v2.c
+  - title: 'Microchip HCS301 KeeLoq code hopping encoder datasheet (DS21143C)'
+    url: https://ww1.microchip.com/downloads/aemDocuments/documents/MCU08/ProductDocuments/DataSheets/21143C.pdf
+reviewed: '2026-10-13'
+badge: code-breaker
+---
+
+## Outcome
+
+You can read a RAW capture, say whether Read or Read RAW suits a device you own, and explain why a used rolling code is refused.
+
+By the end you can:
+
+- read the sign pattern in a `RAW_Data` line as demodulator output high and low;
+- set frequency and modulation before recording, and say why the Flipper needs them;
+- predict from a stored counter and a window which captured values a receiver accepts, and which it ignores.
+
+## Before you start
+
+- **Prerequisite:** [Module 4](/learn/04-transmit). You have saved a decoded fixed-code file and seen what Send does. [Module 2](/learn/02-modulation) gave you the presets.
+- **Gear:** your Flipper Zero on official firmware 1.4.3 or later. Menu paths here follow the official firmware, not a fork. A fixed-code remote you own is needed for the optional bench lab only.
+- **Time:** about 60 minutes: 25 to read, 15 in the simulator and the tool picker, 20 at the bench or on the sample line.
+- **Transmits:** no. Both labs only receive and read. Nothing here asks you to press Send.
+- **Scope:** your own equipment, your own space, and the simulator for everything that guards a door, a gate or a car.
+
+<Callout variant="legal" title="Own equipment only, and Send transmits">
+Reading a capture is receiving. The moment you press Send on a saved file, you transmit, and that is allowed only on frequencies your region permits and only to devices you own. Do not point a replay at a car, a gate, a garage or any shared access system. Flipper's Read RAW page warns against using it with a car key fob: replaying a captured signal can de-sync the original key and leave it unusable. The [Romanian lab guide](/romania-lab-guide) sets out the three checks this course uses before any radio exercise.
+</Callout>
+
+## Understand
+
+### When Read has no name for a signal
+
+In Module 3, Read matched your remote to a known protocol and gave you a key. Sometimes Read stays blank while the Frequency Analyzer still shows a burst. The firmware has no decoder that fits the signal. <Flip>Sub-GHz → Read RAW</Flip> records the demodulated timings instead: every high and low stretch, with no interpretation. Flipper's documentation calls these "demodulated signals" recorded "in a RAW format".
+
+One setting comes first. The Flipper's <Term id="cc1101">CC1101</Term> is a single-channel receiver, not a software-defined radio, so it hears only what it is tuned and demodulating for. Press <Flip>Config</Flip> on the Read RAW screen and choose the <Term id="frequency">frequency</Term> and the modulation before you press REC. On firmware 1.4.3 the modulation list is AM270, AM650 (the default), FM238 and FM476, the same presets you met in Module 2. A wrong choice records noise, and the saved file looks like a signal anyway.
+
+Config also holds an <Term id="rssi">RSSI</Term> threshold in dBm. With a threshold set, recording pauses about one second after the signal drops below it and resumes when the signal rises again. That keeps long silences out of the file.
+
+### What the screen is actually showing you
+
+The Read RAW screen looks like a waveform. It is a signal-strength history. The firmware's drawing code (`subghz_read_raw.c` in 1.4.3) plots one bar per RSSI reading: something was loud, and when. It does not show pulses and gaps at microsecond scale. Those only exist in the saved file.
+
+<div class="table-scroll">
+
+| On the screen | What it is | What it is not |
+| --- | --- | --- |
+| Top line, left: `433.92` and `AM` | the frequency, and the first two letters of the preset (`AM` or `FM`) | proof that the remote uses them |
+| Top line, right: `1234 spl.` | samples written to the file so far | a bit count or a key |
+| Bars across the middle, labelled `RSSI` | received strength over time, with your threshold drawn as a line | the demodulated pulses |
+| Buttons `Config`, `REC`, then `Stop` | set up, start, end the recording | |
+| After Stop: `Erase`, `Send`, `Save` | discard, transmit once, keep | Send is the only one that transmits |
+
+</div>
+
+### What a RAW file holds
+
+A saved RAW capture is a text <Term id="sub-file">.sub file</Term>. The header looks like the one from Module 4. The body is different. Here is an illustrative capture of a fixed-code remote:
+
+```
+Filetype: Flipper SubGhz RAW File
+Version: 1
+Frequency: 433920000
+Preset: FuriHalSubGhzPresetOok650Async
+Protocol: RAW
+RAW_Data: 328 -456 320 -1348 980 -452 336 -444 972 -1360 340 -448
+```
+
+Flipper's file-format page defines `RAW_Data` as timings in microseconds. Values are non-zero, the line starts with a positive number, and the sign changes with every value. A line holds up to 512 values, and a long capture simply repeats the `RAW_Data:` line. There is no key and no bit count, because nothing was decoded.
+
+A positive value is a stretch where the receiver's demodulator output was high. With an AM (OOK) preset, that means the carrier was present. A negative value is a stretch where the output was low, meaning no carrier. With an FM preset, high and low stand for the two tones. The file stores what the receiver concluded. It never stores the radio wave itself.
+
+<Figure label="The RAW_Data values 328, -456, 320, -1348, 980, -452 drawn as a waveform: high for 328 microseconds, low for 456, high for 320, low for 1348, high for 980, low for 452." caption="Positive values are demodulator output high (carrier on for OOK), negative values are output low. The short and long highs are where a decoder would later find bits.">
+<svg viewBox="0 0 640 130" width="100%" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+  <path d="M10 100 H10 V40 H59 V100 H128 V40 H176 V100 H378 V40 H525 V100 H593" fill="none" class="stroke-primary" stroke-width="2" />
+  <text x="35" y="28" text-anchor="middle" class="fill-foreground font-mono" font-size="11">328</text>
+  <text x="94" y="118" text-anchor="middle" class="fill-muted-foreground font-mono" font-size="11">-456</text>
+  <text x="152" y="28" text-anchor="middle" class="fill-foreground font-mono" font-size="11">320</text>
+  <text x="277" y="118" text-anchor="middle" class="fill-muted-foreground font-mono" font-size="11">-1348</text>
+  <text x="451" y="28" text-anchor="middle" class="fill-foreground font-mono" font-size="11">980</text>
+  <text x="559" y="118" text-anchor="middle" class="fill-muted-foreground font-mono" font-size="11">-452</text>
+</svg>
+</Figure>
+
+#### Worked example: finding the bits by hand
+
+Take all twelve values in the sample line and sort the highs by size. Two clusters appear: 320 to 340 microseconds, about 330, and 972 to 980, about 975. The lows split the same way: 444 to 456, and 1348 to 1360. In both cases the long value is close to three times the short one. A 1:3 ratio is common in simple OOK remotes. Flipper's Princeton decoder, for example, expects a short of 390 and a long of 1170 microseconds in firmware 1.4.3. That short duration is the <Term id="te-timing-element">TE</Term> you saw in Module 4's decoded file. Read does this sorting against every protocol it knows. In a RAW file you see the raw material and do the sorting yourself. The sample here is illustrative, so do not expect it to decode.
+
+### Read or Read RAW
+
+The two files trade understanding for coverage.
+
+<div class="table-scroll">
+
+| | Decoded file (Read) | RAW file (Read RAW) |
+| --- | --- | --- |
+| `Protocol:` line | a name, such as `Princeton` | `RAW` |
+| Content | `Bit`, `Key`, `TE` | `RAW_Data` timings |
+| Size | a few lines | hundreds or thousands of values |
+| Noise and gaps | gone, the decoder regenerated a clean signal | kept, a messy capture stays messy |
+| Editable meaning | yes, you can read the key | no, you only see timings |
+| Works for unknown protocols | no | yes, if the preset and frequency fit |
+
+</div>
+
+Reach for Read first. If it names the protocol, you get a compact key. Use Read RAW when Read stays blank, the Frequency Analyzer confirms a real signal, and the device is a simple one that you own. A car key fob is the wrong target.
+
+### Fixed code and rolling code
+
+A <Term id="fixed-code">fixed code</Term> sends the same message on every press. A copy stays valid until someone re-codes the receiver. A <Term id="rolling-code">rolling code</Term> adds a counter and a cipher. The counter goes up on each press and is encrypted, so the transmitted block changes completely every time.
+
+<div class="table-scroll">
+
+| | Fixed code | Rolling code |
+| --- | --- | --- |
+| Same message on every press | yes | no |
+| A copy of one press | works until the receiver is re-coded | is spent once the receiver accepts that counter or a later one |
+| What Read shows on two presses | the same `Key` | a `Cnt` value one step higher |
+| Flipper's vendor table calls it | static: decode, save, play back | dynamic: decode only, save disabled |
+| Examples | Princeton, Holtek, Nice FLO | KeeLoq, Nice FloR-S, Security+ 2.0 |
+
+</div>
+
+<Scene3D name="rolling" />
+
+The Microchip HCS301 is the classic documented example of <Term id="keeloq">KeeLoq</Term>. Its datasheet describes a 66-bit code word. Thirty-two bits are encrypted with a 64-bit key: a 16-bit synchronisation counter, discrimination bits that let the receiver check the decryption, and the button bits. The other 34 bits travel in the clear: the 28-bit serial number, the button bits again and two status bits.
+
+<Figure label="An HCS301 code word as two blocks. The fixed portion, 34 bits sent in the clear: repeat 1 bit, low battery 1 bit, buttons 4 bits, serial number 28 bits. The encrypted portion, 32 bits: buttons 4 bits, overflow 2 bits, discrimination 10 bits, sync counter 16 bits." caption="One HCS301 transmission, after DS21143C figure 4-2. Only the right-hand block changes from press to press. The serial number is the same every time, so a receiver knows which remote is speaking before it decrypts.">
+<svg viewBox="0 0 640 150" width="100%" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+  <text x="20" y="22" class="fill-muted-foreground font-sans" font-size="12">fixed, sent in the clear (34 bits)</text>
+  <text x="620" y="22" text-anchor="end" class="fill-primary font-sans" font-size="12" font-weight="700">encrypted, changes every press (32 bits)</text>
+  <rect x="20" y="34" width="296" height="54" fill="none" class="stroke-muted-foreground" stroke-width="1.5" />
+  <rect x="316" y="34" width="304" height="54" class="fill-primary" fill-opacity="0.12" />
+  <rect x="316" y="34" width="304" height="54" fill="none" class="stroke-primary" stroke-width="1.5" />
+  <line x1="40" y1="34" x2="40" y2="88" class="stroke-muted-foreground" stroke-width="1" />
+  <line x1="60" y1="34" x2="60" y2="88" class="stroke-muted-foreground" stroke-width="1" />
+  <line x1="104" y1="34" x2="104" y2="88" class="stroke-muted-foreground" stroke-width="1" />
+  <line x1="360" y1="34" x2="360" y2="88" class="stroke-primary" stroke-width="1" />
+  <line x1="384" y1="34" x2="384" y2="88" class="stroke-primary" stroke-width="1" />
+  <line x1="474" y1="34" x2="474" y2="88" class="stroke-primary" stroke-width="1" />
+  <text x="30" y="66" text-anchor="middle" class="fill-foreground font-mono" font-size="10">R</text>
+  <text x="50" y="66" text-anchor="middle" class="fill-foreground font-mono" font-size="10">V</text>
+  <text x="82" y="66" text-anchor="middle" class="fill-foreground font-mono" font-size="10">btn</text>
+  <text x="210" y="66" text-anchor="middle" class="fill-foreground font-mono" font-size="12">serial number</text>
+  <text x="338" y="66" text-anchor="middle" class="fill-foreground font-mono" font-size="10">btn</text>
+  <text x="372" y="66" text-anchor="middle" class="fill-foreground font-mono" font-size="9">ovr</text>
+  <text x="429" y="66" text-anchor="middle" class="fill-foreground font-mono" font-size="11">disc</text>
+  <text x="547" y="66" text-anchor="middle" class="fill-primary font-mono" font-size="12" font-weight="700">sync counter</text>
+  <text x="30" y="106" text-anchor="middle" class="fill-muted-foreground font-mono" font-size="10">1</text>
+  <text x="50" y="106" text-anchor="middle" class="fill-muted-foreground font-mono" font-size="10">1</text>
+  <text x="82" y="106" text-anchor="middle" class="fill-muted-foreground font-mono" font-size="10">4</text>
+  <text x="210" y="106" text-anchor="middle" class="fill-muted-foreground font-mono" font-size="10">28</text>
+  <text x="338" y="106" text-anchor="middle" class="fill-muted-foreground font-mono" font-size="10">4</text>
+  <text x="372" y="106" text-anchor="middle" class="fill-muted-foreground font-mono" font-size="10">2</text>
+  <text x="429" y="106" text-anchor="middle" class="fill-muted-foreground font-mono" font-size="10">10</text>
+  <text x="547" y="106" text-anchor="middle" class="fill-muted-foreground font-mono" font-size="10">16</text>
+  <text x="320" y="136" text-anchor="middle" class="fill-muted-foreground font-sans" font-size="11">bit counts; R = repeat, V = low battery, ovr = counter overflow, disc = discrimination</text>
+</svg>
+</Figure>
+
+A 16-bit counter gives 65,536 values. Microchip's arithmetic: at 10 presses a day, that is nearly 18 years before a value repeats.
+
+Flipper's supported-vendors page lists Nice FloR-S as a dynamic protocol: the remote is decoded, and "for security reasons, the save function is disabled". The firmware source agrees. In 1.4.3 the FloR-S, KeeLoq and Security+ 2.0 decoders carry no save flag, so there is no saved rolling-code file to replay. What you can see is the counter. Open a decoded FloR-S, KeeLoq or Security+ 2.0 entry in Read and its text includes a <Term id="counter-cnt">`Cnt`</Term> line, printed in hexadecimal. Press again and `Cnt` goes up. That climbing number is the clearest on-screen sign of a rolling code. A fixed code shows the same key every time, with no counter. The vendor page itself names vendors rather than ciphers. It lists Chamberlain remotes as dynamic, and the firmware's <Term id="security-2-0">Security+ 2.0</Term> decoder listens at 315 MHz.
+
+### The acceptance window
+
+The receiver stores the last counter it accepted. A new message is accepted only if its counter is ahead of that value and inside a forward window. Values at or behind it count as used. The HCS301 datasheet gives the typical numbers.
+
+<Figure label="A number line of counter values. Values up to the stored value 20 are refused as used. Values 21 to 36 form the single-press window and are accepted. Values further ahead, up to 32K, need a second sequential press to resynchronise." caption="A receiver that last accepted counter 20, using the HCS301's typical windows: 16 codes for a single press, then up to 32K codes ahead that need two sequential presses. Everything behind is blocked.">
+<svg viewBox="0 0 640 140" width="100%" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+  <rect x="20" y="50" width="190" height="40" class="fill-danger" fill-opacity="0.12" />
+  <rect x="210" y="50" width="220" height="40" class="fill-primary" fill-opacity="0.14" />
+  <rect x="430" y="50" width="190" height="40" class="fill-warning" fill-opacity="0.12" />
+  <line x1="20" y1="90" x2="620" y2="90" class="stroke-foreground" stroke-width="1.5" />
+  <text x="115" y="68" text-anchor="middle" class="fill-danger font-sans" font-size="13" font-weight="700">blocked</text>
+  <text x="115" y="84" text-anchor="middle" class="fill-danger font-mono" font-size="11">20 and below</text>
+  <text x="320" y="68" text-anchor="middle" class="fill-primary font-sans" font-size="13" font-weight="700">accepted, one press</text>
+  <text x="320" y="84" text-anchor="middle" class="fill-primary font-mono" font-size="11">21 to 36</text>
+  <text x="525" y="68" text-anchor="middle" class="fill-warning font-sans" font-size="13" font-weight="700">two presses to resync</text>
+  <text x="525" y="84" text-anchor="middle" class="fill-warning font-mono" font-size="11">37 up to 32K ahead</text>
+  <line x1="210" y1="90" x2="210" y2="104" class="stroke-foreground" stroke-width="1.5" />
+  <text x="210" y="120" text-anchor="middle" class="fill-foreground font-mono" font-size="11">20 stored</text>
+</svg>
+</Figure>
+
+The single-press window exists so you can press the remote out of range and still be accepted later. Your counter climbed while the receiver's did not. When you come back, your value is ahead and inside 16, so the receiver accepts it and stores it. Storing it moves the whole window forward.
+
+If the gap is bigger, the HCS301 decoder holds the value in a temporary slot and waits for the next sequential counter. Two presses in a row then realign it. The datasheet points out that this happens without the user noticing, because people press again when the first press fails. Anything behind the stored value falls in the blocked window and is ignored. Microchip says this window "excludes previously used, perhaps code-grabbed transmissions". The datasheet also notes that the method is a typical implementation in decoder firmware and can be changed per product, so other receivers may use other sizes.
+
+Here is the consequence, and it is the whole lesson. The instant the receiver accepts counter 42, it stores 42. A copy of 42 is now behind the stored value and is refused. The copy is a perfect copy. It is refused because it is old.
+
+<Callout variant="note" title="Why a replay can look like it works once">
+A press the receiver never heard still has a counter ahead of the stored value. Inside a simulator that message is accepted once, and the second copy is refused. This is a model, not a method for your own gate. A real remote that has been pressed since may already have moved the counter past it, and if a copy seems to work twice, look for a second frame in the file or a receiver that changed state before you conclude anything.
+</Callout>
+
+<Callout variant="legal" title="Attacks on rolling codes stay concepts here">
+Published attacks on rolling codes, the best known called jam-and-replay, try to record an unused press while stopping it from reaching the receiver. This course names them so you understand what the window is defending against. <Term id="jamming">Jamming</Term> a band is an offence in itself, and using any of this on property that is not yours is illegal. On your own gate the answer is always the same: enrol another genuine remote through the manufacturer's process.
+</Callout>
+
+### Misconceptions
+
+- **"Read RAW records everything."** It records what the receiver demodulates at one frequency with one preset. A wrong preset gives a file full of noise.
+- **"The screen shows the waveform."** It shows RSSI over time. The timings are only in the file.
+- **"A blank Read means rolling code."** Flipper decodes many rolling-code remotes and shows their `Cnt`. Blank usually means an unknown protocol, the wrong preset or a weak signal.
+- **"The serial number is secret."** On the HCS301 it is sent in the clear in every press. The counter is what is encrypted.
+- **"A wide window revives old codes."** Every window points forward. A used value stays blocked.
+- **"A refused replay advances the receiver."** Only an accepted counter is stored. A refused one changes nothing.
+
+## Predict and practise
+
+Start in the browser, where you can watch the counter that the radio hides. Then read a real capture.
+
+<Lab kicker="Lab 5.1 · simulation" title="Predict the receiver" gear="A browser. Nothing transmits.">
+
+1. **Predict first.** The sim starts with the remote and the receiver both at counter 5 and a window of 16. Write down: after the receiver accepts 8, will a capture of 7 be accepted? Will a capture of 6 that the receiver never heard be accepted on an otherwise fresh receiver, and what happens on a second try?
+2. In the sim below, press **Press real remote** once. Note the receiver's last accepted value (6).
+3. Press **Capture next press**, then **Press real remote**. The Flipper stores 7 and the gate hears nothing. Press **Press real remote** again so the receiver accepts 8.
+4. Press **Replay capture** and record the result and the last accepted value.
+5. **Control:** press **Reset**, press **Capture next press** and **Press real remote**, then **Replay capture** twice without touching the real remote. Record both results.
+
+</Lab>
+
+<Widget name="rolling-sim" />
+
+Expected observation: in step 4 the replay of 7 is refused and the last accepted value stays at 8. In the control, the unheard capture of 6 is accepted once, the receiver stores 6, and the second replay is refused.
+
+<Win>you predicted the refusal in step 4 before you pressed it and explained it with the words "counter" and "behind".</Win>
+
+Then reason through which tool fits a device. Each round names a device you own. Answer before you reveal.
+
+<Widget name="tool-picker" />
+
+<Lab kicker="Lab 5.2 · bench or sample line" title="Annotate a RAW capture" gear="Your Flipper and a fixed-code remote you own, or the sample line in this lesson. Receive only.">
+
+1. Write your scope note: the device, that it is yours, the frequency and your region.
+2. **Predict:** from the protocol Read gave you in Module 3, write down how many distinct durations you expect and roughly how long the short one is. The `TE` value in your decoded file is your hint.
+3. Open <Flip>Sub-GHz → Read RAW</Flip>. In <Flip>Config</Flip>, set the frequency and modulation you found in Modules 1 and 2.
+4. Press REC, press the remote once, then press Stop. Watch the RSSI bars while you do. Save the capture under a lab name.
+5. Open the file in qFlipper or on the SD card. Copy the first six `RAW_Data` values after the first long gap.
+6. Mark each value as high or low and sort them into short and long. Compare the short duration with your `TE`.
+7. **Control:** record a second capture with the wrong family of preset (FM476 for an OOK remote) and compare the first values. Do not press Send on either file.
+
+</Lab>
+
+Expected observation: with the right preset, the signs alternate and durations cluster around two values, the shorter one close to your `TE`. With the wrong preset, durations scatter with no clusters, even if the RSSI bars looked the same. If you have no remote, do steps 5 and 6 on the sample line and skip the control.
+
+<Win>you labelled six values as high or low, named the short and long durations, and explained why the file contains no key.</Win>
+
+## Check yourself
+
+<Quiz id="m05" />
+
+Answer in a sentence each, without notes:
+
+1. Why can a Read RAW file look like a signal when the preset was wrong?
+2. A receiver stored counter 100. Which of 99, 100, 110 and 5000 does an HCS301-style decoder accept on one press, and what does it do with the others?
+
+## Keep evidence
+
+Open your [notebook](/learn/notebook?module=m05) and save an entry:
+
+- **Setup:** firmware version, region, device, scope note, frequency and preset.
+- **Prediction:** your answers to step 1 of Lab 5.1 and step 2 of Lab 5.2.
+- **Observation:** the six annotated values, the control comparison, and the simulator counter values before and after the refused replay.
+- **Explanation:** why a used counter is refused, and when you would choose Read over Read RAW.
+
+Adequate evidence has numbers, not adjectives. An example entry: "433.92 MHz, AM650, own doorbell. Values 328 high, -456 low, 320 high, -1348 low, 980 high, -452 low. Short about 330 µs, long about 980 µs, TE 330. FM476 control: no clusters. Sim: last accepted 8, replay of 7 refused, last still 8."
+
+Come back to this entry in a week, before you start Module 7, and re-explain it from the numbers alone.
+
+## Continue
+
+Next is [Module 6: 125 kHz RFID](/learn/06-rfid). You leave Sub-GHz for low-frequency tags, where the fixed-or-changing question returns.
+
+**Retrieval question for next week:** without looking, what do the signs in `RAW_Data` mean, and why does a window that points forward never revive a used counter?
+
+Primary sources, checked 13 October 2026:
+
+- Flipper Docs: [Reading RAW](https://docs.flipper.net/zero/sub-ghz/read-raw) and [Supported vendors](https://docs.flipper.net/zero/sub-ghz/supported-vendors).
+- Flipper Developer Docs: [Sub-GHz file format](https://developer.flipper.net/flipperzero/doxygen/subghz_file_format.html).
+- Flipper Zero firmware 1.4.3 source: [Read RAW screen](https://github.com/flipperdevices/flipperzero-firmware/blob/1.4.3/applications/main/subghz/views/subghz_read_raw.c), [Nice FloR-S](https://github.com/flipperdevices/flipperzero-firmware/blob/1.4.3/lib/subghz/protocols/nice_flor_s.c), [KeeLoq](https://github.com/flipperdevices/flipperzero-firmware/blob/1.4.3/lib/subghz/protocols/keeloq.c) and [Security+ 2.0](https://github.com/flipperdevices/flipperzero-firmware/blob/1.4.3/lib/subghz/protocols/secplus_v2.c) decoders.
+- [Microchip HCS301 datasheet, DS21143C](https://ww1.microchip.com/downloads/aemDocuments/documents/MCU08/ProductDocuments/DataSheets/21143C.pdf), sections 4.1 and 7.3.

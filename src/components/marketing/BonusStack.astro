@@ -1,0 +1,40 @@
+---
+/** What Complete includes, with standalone value anchors and the computed total.
+    Copy: docs/v2/copy/pricing.md#bonus-stack; values and total from src/data/offer.ts. */
+import { bonusTotal, bonuses, formatPrice } from '@/data/offer';
+import { facts, price } from './site';
+
+const named = (name: string) => name.replace('{tools}', String(facts.tools)).replace('{questions}', String(facts.questions));
+---
+<div class="overflow-hidden rounded-[1.25rem] border border-border bg-card">
+  <ul class="divide-y divide-border">
+    <li class="grid gap-1 bg-accent/60 p-5 sm:grid-cols-[minmax(0,1fr)_7rem] sm:gap-6 sm:px-7">
+      <div>
+        <p class="font-semibold">The 12-week Signal Path.</p>
+        <p class="mt-1 text-sm leading-relaxed text-muted-foreground">{facts.lessons} lessons in {facts.stages} stages. This is the course, and everything below comes with it.</p>
+      </div>
+      <p class="text-sm text-muted-foreground sm:text-right">Not counted</p>
+    </li>
+    {
+      bonuses.map((b) => (
+        <li class="grid gap-1 p-5 sm:grid-cols-[minmax(0,1fr)_7rem] sm:gap-6 sm:px-7">
+          <div>
+            <p class="font-semibold">{named(b.name)}.</p>
+            <p class="mt-1 text-sm leading-relaxed text-muted-foreground">{b.solves}</p>
+          </div>
+          <p class="text-sm sm:text-right">
+            <span class="text-muted-foreground">Value </span>
+            <span class="font-mono font-semibold tabular-nums">{formatPrice(b.value)}</span>
+          </p>
+        </li>
+      ))
+    }
+  </ul>
+  <div class="border-t border-border bg-muted/60 p-5 sm:px-7">
+    <p class="text-sm leading-relaxed text-muted-foreground">The Preset & Frequency Cheat Sheet comes with Complete too. It is free with any account, so it isn't in the total.</p>
+    <p class="mt-3 flex flex-wrap items-baseline justify-between gap-x-6 gap-y-1 text-lg">
+      <span>Listed value <span class="font-mono tabular-nums">{formatPrice(bonusTotal)}</span>.</span>
+      <span class="font-semibold">You pay <span class="font-mono tabular-nums">{price}</span>.</span>
+    </p>
+  </div>
+</div>

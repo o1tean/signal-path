@@ -1,0 +1,62 @@
+---
+/* Dev-only gallery of every 3D scene and option. Returns 404 outside `astro dev`. */
+import Base from '@/layouts/Base.astro';
+import SiteControls from '@/components/SiteControls.astro';
+import Scene3D from '@/components/mdx/Scene3D.astro';
+
+export const prerender = false;
+if (!import.meta.env.DEV) return new Response(null, { status: 404 });
+
+const items: { id: string; name: string; opts?: Record<string, unknown>; label: string }[] = [
+  { id: 'flipper', name: 'flipper', opts: { mode: 'subghz' }, label: '3D model of the Flipper Zero body.' },
+  { id: 'flipper-nfc', name: 'flipper', opts: { mode: 'nfc' }, label: 'Flipper Zero with the NFC screen.' },
+  { id: 'devboard', name: 'devboard', label: 'The ESP32-S2 Wi-Fi Devboard.' },
+  { id: 'devboard-attach', name: 'devboard', opts: { attach: true }, label: 'Devboard standing on the GPIO edge of the Flipper Zero.' },
+  { id: 'carrier', name: 'carrier', label: 'Two carriers at 315 and 433.92 MHz.' },
+  { id: 'carrier-bands', name: 'carrier', opts: { bands: [[868, '868 MHZ'], [915, '915 MHZ'], [433.92, '433.92 MHZ']] }, label: 'Three custom carrier bands.' },
+  { id: 'modulation', name: 'modulation', label: 'OOK and FSK driven by the same bits.' },
+  { id: 'pulses', name: 'pulses', label: 'A pulse train with long and short highs.' },
+  { id: 'rolling', name: 'rolling', label: 'Rolling-code counter accepting fresh codes and rejecting a replay.' },
+  { id: 'nearfield', name: 'nearfield', label: '125 kHz reader coil and key fob.' },
+  { id: 'nearfield-card', name: 'nearfield', opts: { kind: 'card' }, label: '13.56 MHz reader coil and card.' },
+  { id: 'infrared', name: 'infrared', label: 'IR LED sending 38 kHz bursts to a receiver.' },
+  { id: 'gpio', name: 'gpio', label: 'PA7 driving an LED through 1 kOhm.' },
+];
+---
+<Base title="Scene gallery" description="Dev-only gallery of the 3D scenes." index={false}>
+  <main id="main-content" class="mx-auto max-w-6xl px-4 py-10 sm:px-6">
+    <div class="flex flex-wrap items-center justify-between gap-4">
+      <h1 class="m-0 text-2xl font-semibold">Scene gallery (dev only)</h1>
+      <SiteControls />
+    </div>
+
+    <section class="mt-8" aria-labelledby="hero-title">
+      <h2 id="hero-title" class="text-lg font-semibold">Hero mode</h2>
+      <div data-signal-stage data-mode="subghz" data-testid="hero-stage" class="mt-4 rounded-card border border-border bg-card p-4">
+        <div class="flex gap-2" role="group" aria-label="Device mode">
+          {['subghz', 'nfc', 'wifi'].map((m) => (
+            <button type="button" data-set-mode={m} class="min-h-11 rounded-full border border-border px-4 text-sm">{m}</button>
+          ))}
+        </div>
+        <Scene3D name="flipper" opts={{ hero: true, mode: 'subghz' }} caption="Drag to rotate" label="3D model of the Flipper Zero. The buttons change the screen and add the Wi-Fi Devboard." />
+      </div>
+    </section>
+
+    <div class="mt-10 grid gap-x-6 md:grid-cols-2">
+      {items.map((s) => (
+        <section data-testid={`scene-${s.id}`}>
+          <h2 class="m-0 mt-6 font-mono text-sm">{s.id} {s.opts ? JSON.stringify(s.opts) : ''}</h2>
+          <Scene3D name={s.name} opts={s.opts} label={s.label} caption={`${s.id} · drag to rotate`} />
+        </section>
+      ))}
+    </div>
+  </main>
+</Base>
+<script>
+  document.querySelectorAll<HTMLButtonElement>('[data-set-mode]').forEach((b) =>
+    b.addEventListener('click', () => {
+      const stage = b.closest<HTMLElement>('[data-signal-stage]');
+      if (stage) stage.dataset.mode = b.dataset.setMode;
+    }),
+  );
+</script>

@@ -1,0 +1,131 @@
+---
+/* Sign in with an emailed link (Supabase OTP, PKCE). Copy: docs/v2/copy/auth.md (login, login-before-purchase,
+   login-errors, magic-link-sent, signed-out). Works without JavaScript: the form posts back to this page. */
+import Marketing from '@/layouts/Marketing.astro';
+import LinkButton from '@/components/marketing/LinkButton.astro';
+import { buttonClass } from '@/components/marketing/button';
+import { need, owner } from '@/components/marketing/site';
+import { appOrigin } from '@/lib/supabase/server';
+import { afterLogin, loginError, type LoginError } from '@/lib/supabase/auth';
+
+const { url, locals, request } = Astro;
+Astro.response.headers.set('Cache-Control', 'private, no-store');
+const google = import.meta.env.PUBLIC_AUTH_GOOGLE === '1';
+
+let next = url.searchParams.get('next');
+let error = url.searchParams.get('error') as LoginError | null;
+let sentTo: string | null = null;
+let email = '';
+
+if (request.method === 'POST' && locals.supabase) {
+  const form = await request.formData();
+  next = String(form.get('next') ?? '') || null;
+  email = String(form.get('email') ?? '').trim();
+  const callback = `${appOrigin(url)}/auth/callback?next=${encodeURIComponent(afterLogin(next))}`;
+  if (form.get('provider') === 'google' && google) {
+    const { data, error: err } = await locals.supabase.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: callback } });
+    if (data?.url) return Astro.redirect(data.url, 303);
+    error = loginError(err);
+  } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    error = 'invalid-email';
+  } else {
+    const { error: err } = await locals.supabase.auth.signInWithOtp({ email, options: { emailRedirectTo: callback } });
+    if (err) error = loginError(err);
+    else sentTo = email;
+  }
+} else if (locals.user && !url.searchParams.has('signed_out')) {
+  return Astro.redirect(afterLogin(next), 303);
+}
+
+const buying = afterLogin(next) === '/checkout';
+const signedOut = url.searchParams.has('signed_out');
+const errors: Record<LoginError, string> = {
+  'invalid-email': 'Enter an email address in the form name@example.com.',
+  'rate-limit': "You've asked for several links in a row. Wait a minute and try again.",
+  expired: "That link has expired or you've already used it. Enter your email and we'll send a new one.",
+  'other-browser': 'You opened this link in a different browser from the one that asked for it. Open the original link in that browser, or request a new one here.',
+  failed: `We couldn't send the link. Check your connection and try again. If it keeps happening, email ${need(owner.supportEmail, 'support email')}.`,
+};
+const unconfigured = !locals.supabase;
+const input = 'h-11 w-full rounded-md border border-input bg-background px-3 text-base outline-none focus-visible:ring-2 focus-visible:ring-ring';
+const primary = `${buttonClass('primary', 'md')} w-full`;
+const secondary = `${buttonClass('secondary', 'md')} w-full`;
+---
+<Marketing title="Sign in" description="Sign in to Signal Path with a link sent to your email address." index={false}>
+  <div class="mx-auto max-w-md px-4 py-16 sm:py-24">
+    {
+      sentTo ? (
+        <section aria-labelledby="sent-title">
+          <h1 id="sent-title" class="text-3xl sm:text-4xl">Check your inbox.</h1>
+          <p class="lede mt-4">We sent a sign-in link to {sentTo}.</p>
+          <p class="mt-4 text-muted-foreground">The link works once and expires after an hour. If it hasn't arrived within a minute, check your spam folder or send another.</p>
+          <form method="post" class="mt-8 grid gap-3">
+            <input type="hidden" name="email" value={sentTo} />
+            {next && <input type="hidden" name="next" value={next} />}
+            <button type="submit" class={primary} data-resend disabled>Send another link</button>
+            <p class="m-0 text-center text-sm text-muted-foreground" aria-live="polite" data-resend-note>Available in 60 s</p>
+          </form>
+          <a href={`/login${next ? `?next=${encodeURIComponent(next)}` : ''}`} class="mt-4 inline-flex min-h-11 items-center text-sm text-primary hover:underline">Use a different email</a>
+        </section>
+      ) : signedOut ? (
+        <section aria-labelledby="out-title">
+          <h1 id="out-title" class="text-3xl sm:text-4xl">You're signed out.</h1>
+          <p class="lede mt-4">Free lessons still work without an account.</p>
+          <div class="mt-8 grid gap-3 sm:grid-cols-2">
+            <LinkButton href="/login" size="md">Sign in again</LinkButton>
+            <LinkButton href="/learn" variant="secondary" size="md">Go to the free lessons</LinkButton>
+          </div>
+        </section>
+      ) : (
+        <section aria-labelledby="login-title">
+          {buying && <p class="eyebrow">One step before checkout</p>}
+          <h1 id="login-title" class:list={['text-3xl sm:text-4xl', buying && 'mt-3']}>{buying ? 'Sign in to buy Signal Path Complete.' : 'Sign in with your email.'}</h1>
+          <p class="lede mt-4">
+            {buying ? 'The course is tied to your email, so you can open it on any device.' : "We'll send you a link. Open it on this device and you're signed in."}
+          </p>
+          {unconfigured && <p class="mt-6 rounded-md border border-border bg-muted p-3 text-sm" role="status">Sign-in is not configured yet. [NEED: Supabase environment variables]</p>}
+          <form method="post" class="mt-8 grid gap-2" novalidate>
+            {next && <input type="hidden" name="next" value={next} />}
+            <label for="email" class="text-sm font-medium">Email address</label>
+            <input id="email" name="email" type="email" autocomplete="email" required placeholder="you@example.com" value={email} class={input} aria-describedby={error ? 'login-error email-help' : 'email-help'} aria-invalid={error === 'invalid-email' ? 'true' : undefined} />
+            <p id="email-help" class="m-0 text-sm text-muted-foreground">New here? The same link creates your free account.</p>
+            {error && errors[error] && <p id="login-error" class="m-0 text-sm text-destructive" role="alert">{errors[error]}</p>}
+            <button type="submit" class:list={[primary, 'mt-4']} disabled={unconfigured}>Email me a sign-in link</button>
+          </form>
+          {
+            google && (
+              <form method="post" class="mt-3">
+                {next && <input type="hidden" name="next" value={next} />}
+                <input type="hidden" name="provider" value="google" />
+                <button type="submit" class={secondary} disabled={unconfigured}>Continue with Google</button>
+              </form>
+            )
+          }
+          {buying && <p class="mt-4 text-sm font-medium">Signal Path Complete comes with a 30-day refund, no reason needed.</p>}
+          <p class="mt-4 text-sm text-muted-foreground">
+            By continuing you agree to the <a href="/legal/terms" class="text-primary underline underline-offset-2">terms of use</a> and the <a href="/legal/privacy" class="text-primary underline underline-offset-2">privacy notice</a>.
+          </p>
+        </section>
+      )
+    }
+  </div>
+</Marketing>
+
+<script>
+  // Resend cooldown: Supabase refuses a second email to the same address within about 60 s.
+  const btn = document.querySelector<HTMLButtonElement>('[data-resend]');
+  const note = document.querySelector<HTMLElement>('[data-resend-note]');
+  if (btn && note) {
+    let left = 60;
+    const tick = setInterval(() => {
+      left -= 1;
+      if (left > 0) {
+        note.textContent = `Available in ${left} s`;
+        return;
+      }
+      clearInterval(tick);
+      btn.disabled = false;
+      note.textContent = '';
+    }, 1000);
+  }
+</script>

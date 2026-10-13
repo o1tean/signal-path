@@ -1,0 +1,7 @@
+---
+/** Sign in / Account link for the learner header. On-demand pages only (prerendered pages have no session). */
+const user = (Astro.locals as Partial<App.Locals>).user;
+const next = encodeURIComponent(Astro.url.pathname);
+const cls = 'min-h-11 content-center whitespace-nowrap rounded-full px-2 text-muted-foreground hover:text-foreground sm:px-3';
+---
+{user ? <a href="/account" class={cls} data-auth="account">Account</a> : <a href={`/login?next=${next}`} class={cls} data-auth="sign-in">Sign in</a>}

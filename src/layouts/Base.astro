@@ -1,0 +1,102 @@
+---
+import '@/styles/global.css';
+import SiteToaster from '@/components/SiteToaster';
+// Same files the @fontsource CSS points at, so Vite emits one hashed asset and the preload matches it.
+import interLatin from '@fontsource-variable/inter/files/inter-latin-wght-normal.woff2?url';
+import monoLatin from '@fontsource-variable/jetbrains-mono/files/jetbrains-mono-latin-wght-normal.woff2?url';
+
+export interface BaseProps {
+  title: string;
+  description: string;
+  /** set false for pages that must not be indexed (learner pages, paywalls) */
+  index?: boolean;
+  ogType?: 'website' | 'article';
+  /** absolute or root-relative image; defaults to the 1200×630 site card */
+  ogImage?: string;
+  /** structured data, serialised into a JSON-LD script */
+  jsonLd?: Record<string, unknown>;
+}
+type Props = BaseProps;
+
+const { title, description, index = true, ogType = 'website', ogImage = '/og.png', jsonLd } = Astro.props;
+const fullTitle = title === 'Signal Path' ? title : `${title} · Signal Path`;
+const canonical = new URL(Astro.url.pathname, Astro.site);
+const image = new URL(ogImage, Astro.site);
+// Prerendered pages have no locals.user, so they render signed out; on-demand pages know the session.
+const user = (Astro.locals as Partial<App.Locals>).user;
+const owner = (Astro.locals as Partial<App.Locals>).entitlements?.includes('course-complete');
+---
+<!doctype html>
+<html lang="en" data-signed-in={user ? 'true' : 'false'} data-owner={owner ? 'true' : undefined}>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <script is:inline>
+      (function () {
+        try {
+          var d = document.documentElement;
+          var t = localStorage.getItem('signalpath.theme');
+          if (t === 'light' || t === 'dark') d.setAttribute('data-theme', t);
+          var reduce = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+          if (reduce || localStorage.getItem('signalpath.motion') === 'paused') d.classList.add('motion-off');
+        } catch (e) {}
+      })();
+    </script>
+    <link rel="preload" as="font" type="font/woff2" href={interLatin} crossorigin />
+    <link rel="preload" as="font" type="font/woff2" href={monoLatin} crossorigin />
+    <title>{fullTitle}</title>
+    <meta name="description" content={description} />
+    <link rel="canonical" href={canonical} />
+    {!index && <meta name="robots" content="noindex" />}
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="theme-color" content="#f5f5f7" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#080809" media="(prefers-color-scheme: dark)" />
+    <meta property="og:site_name" content="Signal Path" />
+    <meta property="og:type" content={ogType} />
+    <meta property="og:title" content={fullTitle} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content={canonical} />
+    <meta property="og:image" content={image} />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="Signal Path: a 12-week Flipper Zero course" />
+    <meta property="og:locale" content="en_GB" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content={fullTitle} />
+    <meta name="twitter:description" content={description} />
+    <meta name="twitter:image" content={image} />
+    {jsonLd && <script type="application/ld+json" is:inline set:html={JSON.stringify(jsonLd).replace(/</g, '\\u003c')} />}
+    <meta name="generator" content={Astro.generator} />
+    <slot name="head" />
+  </head>
+  <body class="min-h-dvh">
+    <a class="skip-link" href="#main-content">Skip to content</a>
+    <slot />
+    <SiteToaster client:idle />
+    <script>
+      // pause decorative animation while the tab is hidden (legacy motion-suspended)
+      document.addEventListener('visibilitychange', () =>
+        document.documentElement.classList.toggle('motion-suspended', document.hidden),
+      );
+
+      // Sideways-scrolling tables and code blocks hold nothing focusable, so keyboard users could not scroll them.
+      // Every such region becomes a labelled, focusable region (WCAG 2.1.1); lessons and resource pages share this.
+      const SCROLLERS = '.table-scroll, .overflow-x-auto, .lesson-prose pre, .lesson-prose figure, main table';
+      function labelScrollers() {
+        document.querySelectorAll<HTMLElement>(SCROLLERS).forEach((el) => {
+          if (el.hasAttribute('tabindex') || el.closest('[aria-hidden="true"]') || el.scrollWidth <= el.clientWidth + 1) return;
+          const caption = el.querySelector('caption, figcaption')?.textContent?.trim();
+          el.tabIndex = 0;
+          el.setAttribute('role', 'region');
+          el.setAttribute('aria-label', caption ? `${caption} (scrolls sideways)` : 'Scrollable content');
+        });
+      }
+      labelScrollers();
+      let resizeTimer = 0;
+      addEventListener('resize', () => {
+        clearTimeout(resizeTimer);
+        resizeTimer = window.setTimeout(labelScrollers, 200);
+      });
+    </script>
+  </body>
+</html>

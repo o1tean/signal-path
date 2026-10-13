@@ -1,0 +1,397 @@
+---
+id: m01
+number: 1
+slug: 01-frequency
+title: Find the frequency
+description: Read a real frequency off your Flipper Zero, learn where 315, 433.92, 868 and 915 MHz are used, and see how the Frequency Analyzer finds the strongest signal.
+stage: starter
+week: Week 1
+access: free
+minutes: 80
+gear:
+  - Flipper Zero on official firmware with a region set
+  - two or three RF remotes you own (wireless doorbell button, gate or garage remote, car fob, weather-station sensor)
+  - one infrared TV remote as a control
+  - spare coin cells for the remotes
+transmits: none
+outcome: Measure the frequency of at least two of your own remotes with the Frequency Analyzer, run an infrared control, and explain what each reading tells you and what it leaves open.
+prerequisites:
+  - m00
+tools:
+  - spectrum-scope
+  - tune-in
+  - rf-calc
+scenes:
+  - carrier
+evidence: A frequency map of at least two of your own remotes with three repeat readings each, the RSSI bar fill at 1 cm and at 1 m, the infrared control and one explained blank.
+sources:
+  - title: 'Flipper: Sub-GHz frequencies and regional transmit bands'
+    url: https://docs.flipper.net/zero/sub-ghz/frequencies
+  - title: 'Flipper: reading signals and the Frequency Analyzer'
+    url: https://docs.flipper.net/zero/sub-ghz/read
+  - title: 'Flipper: Sub-GHz hardware'
+    url: https://docs.flipper.net/zero/sub-ghz
+  - title: 'Flipper firmware: Frequency Analyzer worker source'
+    url: https://github.com/flipperdevices/flipperzero-firmware/blob/dev/applications/main/subghz/helpers/subghz_frequency_analyzer_worker.c
+  - title: 'Flipper firmware: Frequency Analyzer threshold constant'
+    url: https://github.com/flipperdevices/flipperzero-firmware/blob/dev/applications/main/subghz/helpers/subghz_frequency_analyzer_worker.h
+  - title: 'Flipper developer docs: Sub-GHz file format'
+    url: https://developer.flipper.net/flipperzero/doxygen/subghz_file_format.html
+  - title: 'Texas Instruments: CC1101 product page'
+    url: https://www.ti.com/product/CC1101
+  - title: 'ComReg: ITU Radio Regulations footnote 5.138 (ISM bands)'
+    url: https://rfpi.comreg.ie/content-item/628,5138
+  - title: '47 CFR 15.231: periodic operation above 70 MHz (US)'
+    url: https://www.law.cornell.edu/cfr/text/47/15.231
+  - title: '47 CFR 15.247: operation in 902-928 MHz (US)'
+    url: https://www.law.cornell.edu/cfr/text/47/15.247
+  - title: 'CEPT: ERC Recommendation 70-03, short range devices'
+    url: https://docdb.cept.org/document/845
+reviewed: '2026-10-13'
+badge: frequency-finder
+---
+
+## Outcome
+
+You will point one of your own remotes at the Flipper, read a number such as **433.920** off the screen, and explain what that number means and how far you can trust it.
+
+By the end you can:
+
+- convert between hertz, kilohertz and megahertz, and say why a 433.92 MHz remote needs an antenna about 17 cm long;
+- name the five frequencies most consumer remotes use and the region each belongs to;
+- run the Frequency Analyzer on at least two of your remotes, record three readings each with the signal bar, and explain a blank result in one sentence.
+
+## Before you start
+
+- **Finish first:** [Module 0](/learn/00-setup), Lab 0.1. You should already have watched the analyzer react to a remote once.
+- **Gear:** your Flipper Zero on official firmware, updated once so its region is set (hold <kbd>Down</kbd> on the desktop to see the region code). Two or three RF remotes you own, such as a wireless doorbell button, a gate or garage remote, a car fob or a weather-station sensor. A cheap 433 MHz doorbell is the most reliable choice. Many LED-strip and fan remotes are infrared or 2.4 GHz, so check the label for 315, 433, 868 or 915 MHz. One infrared TV remote as a control, and spare coin cells.
+- **Time:** about 80 minutes. Twenty for reading and the browser tools, forty for the labs, twenty for the notebook.
+- **What transmits:** the Flipper transmits nothing in this module. Your remotes transmit while you hold their buttons.
+- **Scope:** your own devices, in your own space. Leave neighbours' doorbells and the shared garage gate alone. Your own gate or garage remote still moves the real door when you press it, so keep the door or gate clear, or stand out of range of its receiver.
+
+<Callout variant="legal" title="Receiving still has rules">
+Listening to your own remotes is low risk. Collecting other people's signals is a separate matter. Read the [Romania lab guide](/romania-lab-guide) once before your first hardware lab if you have not already.
+</Callout>
+
+## Understand
+
+### A frequency is a count per second
+
+A radio remote sends a <Term id="carrier">carrier</Term>, a steady wave of radio energy at one frequency, and switches or shapes that wave in a pattern. <Term id="frequency">Frequency</Term> is how many complete cycles that wave makes each second. The unit is the <Term id="hz">hertz (Hz)</Term>: one cycle per second.
+
+Radio frequencies are large numbers, so you use prefixes. A remote at 433.92 MHz completes about 434 million cycles every second.
+
+<div class="table-scroll">
+
+| Unit | Cycles per second | 433.92 MHz written in this unit |
+| --- | --- | --- |
+| hertz (Hz) | 1 | 433,920,000 Hz |
+| kilohertz (kHz) | 1,000 | 433,920 kHz |
+| <Term id="mhz">megahertz (MHz)</Term> | 1,000,000 | 433.92 MHz |
+| gigahertz (GHz) | 1,000,000,000 | 0.43392 GHz |
+
+</div>
+
+A `.sub` file stores `Frequency: 433920000`, in hertz, as Module 3 shows.
+
+The wave travels at the speed of light whatever its frequency, so a faster wave fits more cycles into the same distance and each cycle is shorter. That length is the <Term id="wavelength">wavelength</Term>.
+
+<Figure label="Two carriers drawn over the same distance. The upper one, at frequency f, completes two cycles. The lower one, at twice the frequency, completes four cycles, so its wavelength is half as long." caption="Same speed, same distance. Double the frequency and each cycle, the wavelength λ, is half as long.">
+<svg viewBox="0 0 640 250" width="100%" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+  <text x="0" y="22" class="fill-foreground font-sans" font-size="14" font-weight="700">frequency f</text>
+  <line x1="40" y1="70" x2="600" y2="70" class="stroke-border" stroke-width="1" stroke-dasharray="3 4" />
+  <path d="M40 70 q70 -60 140 0 q70 60 140 0 q70 -60 140 0 q70 60 140 0" fill="none" class="stroke-primary" stroke-width="2.5" />
+  <line x1="40" y1="118" x2="320" y2="118" class="stroke-muted-foreground" stroke-width="1.5" />
+  <line x1="40" y1="112" x2="40" y2="124" class="stroke-muted-foreground" stroke-width="1.5" />
+  <line x1="320" y1="112" x2="320" y2="124" class="stroke-muted-foreground" stroke-width="1.5" />
+  <text x="180" y="112" text-anchor="middle" class="fill-muted-foreground font-mono" font-size="13">λ (one cycle)</text>
+  <text x="0" y="150" class="fill-foreground font-sans" font-size="14" font-weight="700">frequency 2f</text>
+  <line x1="40" y1="190" x2="600" y2="190" class="stroke-border" stroke-width="1" stroke-dasharray="3 4" />
+  <path d="M40 190 q35 -60 70 0 q35 60 70 0 q35 -60 70 0 q35 60 70 0 q35 -60 70 0 q35 60 70 0 q35 -60 70 0 q35 60 70 0" fill="none" class="stroke-info" stroke-width="2.5" />
+  <line x1="40" y1="238" x2="180" y2="238" class="stroke-muted-foreground" stroke-width="1.5" />
+  <line x1="40" y1="232" x2="40" y2="244" class="stroke-muted-foreground" stroke-width="1.5" />
+  <line x1="180" y1="232" x2="180" y2="244" class="stroke-muted-foreground" stroke-width="1.5" />
+  <text x="110" y="232" text-anchor="middle" class="fill-muted-foreground font-mono" font-size="13">λ / 2</text>
+</svg>
+</Figure>
+
+### Seeing a signal: noise floor and peaks
+
+A receiver never hears perfect silence. Electronics, motors and distant transmitters add a restless background called the <Term id="noise-floor">noise floor</Term>. A real signal is the part that rises clearly above it, as a **peak** at the transmitter's frequency.
+
+The browser scope below is a synthetic stand-in for that picture. Choose a band, move the distance slider and press the sample remotes.
+
+<Widget name="spectrum-scope" />
+
+The readout gives the peak's strength as <Term id="rssi">RSSI</Term>, the received signal strength indicator, in <Term id="dbm">dBm</Term>. dBm compares power with one milliwatt on a logarithmic scale, so the numbers are negative for the tiny powers a receiver picks up, and closer to zero means stronger. Every 10 dB is a factor of ten in power:
+
+<div class="table-scroll">
+
+| RSSI | Power at the receiver | Read it as |
+| --- | --- | --- |
+| −40 dBm | 0.1 microwatt | very strong |
+| −60 dBm | 1 nanowatt | 100 times weaker than −40 dBm |
+| −90 dBm | 1 picowatt | about where the Frequency Analyzer stops reporting (documented threshold) |
+
+</div>
+
+The real analyzer draws a bar, not a dBm number. Battery and hand position change how full it gets, so treat one reading as one observation.
+
+### Where consumer remotes live
+
+The Flipper's Sub-GHz radio is a Texas Instruments <Term id="cc1101">CC1101</Term>. Flipper's documentation gives three receive windows: **300–348 MHz, 387–464 MHz and 779–928 MHz**. Consumer remotes crowd onto a few frequencies that regulators allow low-power devices to use without an individual licence.
+
+<Figure label="A frequency axis from 300 to 930 MHz. Three shaded blocks show the CC1101 receive windows: 300 to 348, 387 to 464 and 779 to 928 MHz. Markers show common remote frequencies at 315, 390, 433.92, 868.35 and 915 MHz, all inside the shaded windows." caption="The three CC1101 receive windows and the frequencies you will meet most often. Everything common sits inside a window.">
+<svg viewBox="0 0 640 200" width="100%" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+  <rect x="37.9" y="80" width="43" height="50" class="fill-info-soft stroke-info" stroke-width="1" />
+  <rect x="115.8" y="80" width="69" height="50" class="fill-info-soft stroke-info" stroke-width="1" />
+  <rect x="466.9" y="80" width="133.4" height="50" class="fill-info-soft stroke-info" stroke-width="1" />
+  <line x1="20" y1="140" x2="620" y2="140" class="stroke-foreground" stroke-width="1.5" />
+  <g class="stroke-muted-foreground" stroke-width="1">
+    <line x1="37.9" y1="140" x2="37.9" y2="146" />
+    <line x1="127.5" y1="140" x2="127.5" y2="146" />
+    <line x1="217" y1="140" x2="217" y2="146" />
+    <line x1="306.6" y1="140" x2="306.6" y2="146" />
+    <line x1="396.1" y1="140" x2="396.1" y2="146" />
+    <line x1="485.7" y1="140" x2="485.7" y2="146" />
+    <line x1="575.2" y1="140" x2="575.2" y2="146" />
+  </g>
+  <g class="fill-muted-foreground font-mono" font-size="11" text-anchor="middle">
+    <text x="37.9" y="160">300</text>
+    <text x="127.5" y="160">400</text>
+    <text x="217" y="160">500</text>
+    <text x="306.6" y="160">600</text>
+    <text x="396.1" y="160">700</text>
+    <text x="485.7" y="160">800</text>
+    <text x="575.2" y="160">900 MHz</text>
+  </g>
+  <g class="fill-info font-mono" font-size="11" text-anchor="middle">
+    <text x="59.4" y="186">300–348</text>
+    <text x="150.3" y="186">387–464</text>
+    <text x="533.6" y="186">779–928</text>
+  </g>
+  <g class="stroke-primary" stroke-width="2">
+    <line x1="51.3" y1="36" x2="51.3" y2="130" />
+    <line x1="118.5" y1="52" x2="118.5" y2="130" />
+    <line x1="157.8" y1="36" x2="157.8" y2="130" />
+    <line x1="546.9" y1="36" x2="546.9" y2="130" />
+    <line x1="588.6" y1="52" x2="588.6" y2="130" />
+  </g>
+  <g class="fill-foreground font-mono" font-size="12" font-weight="700" text-anchor="middle">
+    <text x="51.3" y="28">315</text>
+    <text x="118.5" y="46">390</text>
+    <text x="157.8" y="28">433.92</text>
+    <text x="546.9" y="28">868.35</text>
+    <text x="588.6" y="46">915</text>
+  </g>
+</svg>
+</Figure>
+
+<div class="table-scroll">
+
+| Frequency | Where | Rule behind it | Typical devices |
+| --- | --- | --- | --- |
+| **315 MHz** | USA, Canada | US: FCC Part 15.231, periodic operation above 70 MHz. Not an ISM band. | older car key fobs, some garage remotes |
+| **390 MHz** | USA | US: FCC Part 15.231, the same rule as 315 MHz. | some garage and gate remotes |
+| **433.92 MHz** <span class="pill green">start here in Europe</span> | Europe, and widely elsewhere | Centre of 433.05–434.79 MHz, an ISM band in ITU Region 1 (Europe, Africa, the Middle East and northern Asia). In Europe remotes use it under the CEPT short-range device rules (ERC Recommendation 70-03). In the US the same frequency falls under Part 15.231. | doorbells, LED remotes, weather stations, gates |
+| **868 MHz** (868.35 typical) | Europe | The European short-range device band, 863–870 MHz (ERC Recommendation 70-03). Flipper's EU transmit list allows 868.15–868.55 MHz (Flipper frequencies page). | alarm sensors, smart-home gear |
+| **915 MHz** | the Americas | Centre of the 902–928 MHz ISM band of ITU Region 2, the Americas (US rules in 47 CFR 15.247). Some Region 3 countries, such as Australia, also allow 915 MHz devices. | sensors, industrial and IoT remotes |
+
+</div>
+
+<Callout variant="note" title="What an ISM band is, exactly">
+<Term id="ism-band">ISM</Term> stands for Industrial, Scientific and Medical. The ITU sets these bands aside for equipment such as microwave ovens, and remotes are short-range devices that share ISM bands under their own rules: ERC Recommendation 70-03 in Europe, FCC Part 15 in the US. The designation is regional. ITU footnote 5.138 makes 433.05–434.79 MHz an ISM band in Region 1 subject to special authorisation, except in a named group of countries where it is designated outright. A remote is not legal everywhere just because it sits on 433.92 MHz.
+</Callout>
+
+The same doorbell model can ship on 315 MHz in the US and 433.92 MHz in Europe to fit local <Term id="region-regulatory">rules</Term>, so you measure the unit in your hand. In Europe start at 433.92 MHz, which is also the Flipper's default for Read. In North America try 315 MHz alongside it.
+
+On a busy frequency like 433.92 MHz your doorbell and a neighbour's weather station share an address. Frequency tells you the neighbourhood; the <Term id="protocol">protocol</Term> and code (Module 3) tell you which house.
+
+### How the Frequency Analyzer finds a number
+
+<Flip>Sub-GHz → Frequency Analyzer</Flip> measures signal strength across a list of frequencies and shows the strongest one, as long as it is stronger than about −90 dBm (Flipper's documentation; the firmware constant is −93 dBm). In the firmware's dev branch, checked 13 October 2026, each sweep works in two passes. Stable firmware and your region's list may differ.
+
+<div class="table-scroll">
+
+| Pass | What it checks | Receive bandwidth | Result |
+| --- | --- | --- | --- |
+| Coarse | every frequency in the Sub-GHz frequency list (17 by default, 300 to 925 MHz) | 650 kHz | the loudest list entry |
+| Fine | ±300 kHz around that entry, in 20 kHz steps | about 58 kHz | the loudest step, usually shown as the reading |
+
+</div>
+
+Three consequences show up in the lab:
+
+- It reports the loudest thing in range. Across the room that may be someone else's sensor. With your remote a centimetre away, your remote wins, which is why the documentation says to hold it "very close".
+- The reading is approximate. The fine pass steps in 20 kHz, so 433.900 or 433.940 means "the 433.92 MHz remote you expected".
+- It only looks where the list points. A remote far from every list entry, or outside the CC1101's windows, never shows.
+
+#### What the screen is actually showing you
+
+<div class="table-scroll">
+
+| On the screen | What it means |
+| --- | --- |
+| Large number, e.g. `433.920` | the detected frequency in MHz |
+| RSSI bar | the signal strength; longer is stronger |
+| Three small lines on the right | the last three frequencies it locked onto (`---.---` when empty), not the current reading |
+| <kbd>Left</kbd> / <kbd>Right</kbd> | opens a log of measured frequencies with a count and strongest RSSI each; <kbd>OK</kbd> changes the sort order |
+
+</div>
+
+The analyzer holds the number briefly after the signal stops and then clears. Remotes stop soon after you release the button (15.231(a) requires a manually operated US transmitter to stop within 5 seconds), so a reading that vanishes when you let go is normal.
+
+<Flip>Sub-GHz → Read</Flip> defaults to 433.92 MHz (firmware source) and has a hopping mode that cycles a short list. It may miss signals while it hops, so the analyzer is the better tool when the remote is in your hand.
+
+### The gentle maths: frequency and wavelength
+
+<Scene3D name="carrier" caption="Concept animation · drag to rotate" label="3D animation: two carriers travel at the same speed; the higher frequency has the shorter wavelength." />
+
+A radio wave travels at the speed of light, exactly 299,792,458 metres per second. Divide that speed by the frequency and you get the wavelength:
+
+<Figure label="The wavelength formula: lambda equals c divided by f, where c is the speed of light and f is the frequency." caption="Wavelength in metres equals the speed of light divided by the frequency in hertz.">
+<svg viewBox="0 0 640 110" width="100%" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+  <text x="40" y="66" class="fill-foreground font-mono" font-size="40">λ</text>
+  <text x="90" y="64" class="fill-muted-foreground font-mono" font-size="32">=</text>
+  <line x1="145" y1="54" x2="205" y2="54" class="stroke-foreground" stroke-width="2" />
+  <text x="175" y="42" text-anchor="middle" class="fill-info font-mono" font-size="26">c</text>
+  <text x="175" y="84" text-anchor="middle" class="fill-primary font-mono" font-size="26">f</text>
+  <text x="250" y="44" class="fill-muted-foreground font-mono" font-size="14">c = 299,792,458 m/s</text>
+  <text x="250" y="66" class="fill-muted-foreground font-mono" font-size="14">f = frequency in Hz</text>
+  <text x="250" y="88" class="fill-muted-foreground font-mono" font-size="14">λ = length of one cycle in metres</text>
+</svg>
+</Figure>
+
+Worked example: 299,792,458 ÷ 433,920,000 = 0.691 m, so a 433.92 MHz wave is about **69 cm** long. A common simple antenna is a quarter of that, about **17.3 cm**. The same sum for the other frequencies:
+
+<div class="table-scroll">
+
+| Frequency | Wavelength λ | Quarter-wave λ/4 |
+| --- | --- | --- |
+| 315 MHz | 95.2 cm | 23.8 cm |
+| 390 MHz | 76.9 cm | 19.2 cm |
+| 433.92 MHz | 69.1 cm | 17.3 cm |
+| 868.35 MHz | 34.5 cm | 8.6 cm |
+| 915 MHz | 32.8 cm | 8.2 cm |
+
+</div>
+
+An 868 MHz antenna is about half the length of a 433.92 MHz one. Try a few values yourself, and use the second panel to convert between dBm and milliwatts:
+
+<Widget name="rf-calc" />
+
+These are free-space values; real whips are cut a few percent shorter, which Module 4 covers. If a reading implies an antenna the size of a room or a grain of rice, check the reading.
+
+### Misconceptions to drop now
+
+- "The analyzer tells me what the device is." It reports a frequency and a strength. Identifying the protocol is Read's job, in Module 3.
+- "A rolling-code fob hides from the analyzer." Held close, it shows a frequency like any other remote. Rolling codes matter for replay, in Module 5.
+- "433.92 MHz is licence-free everywhere." Its ISM designation covers ITU Region 1, and even there a remote must meet the short-range device rules. Other regions set their own.
+
+## Predict and practise
+
+<Lab kicker="Lab 1.1" title="Read peaks in the browser first" gear="This page. Nothing transmits.">
+
+1. **Predict:** write one line. When you drag the scope's distance slider from near to far, what happens to the peak's height and to the RSSI number?
+2. In the spectrum scope above, set the band to 387–464 MHz, keep the distance short and press **Garage**. Note the frequency and RSSI in the readout.
+3. Press **Garage** again at three distances: near, middle and the far end of the slider. Note the RSSI each time.
+4. **Control:** press nothing for ten seconds and watch the trace. That restless line is the noise floor with no remote present.
+5. Press **Fob** and **Sensor**. Note which band each one needs. The Sensor sits at 868.0 MHz in the scope, close to the 868.35 centre in the text.
+6. Predict, then use the rf-calc panel to find the quarter-wave length for the Garage frequency from step 2. Note it.
+7. Play the Tune In game below until you name the right frequency five times in a row.
+
+</Lab>
+
+<Widget name="tune-in" />
+
+Expected observation: the RSSI falls from about −38 dBm near to about −95 dBm at the far end, weaker than the real analyzer's −90 dBm threshold, so a real Flipper would show a blank there. Tune In awards the **Tuned In** badge for five correct in a row.
+
+<Win>your note for step 3 shows RSSI falling with distance, you can say why the far reading would be a blank on the real analyzer, you can point to the noise floor you saw with nothing pressed, and you have a quarter-wave length for the Garage frequency.</Win>
+
+<Lab kicker="Lab 1.2" title="Measure three of your own remotes" gear="Flipper, two or three RF remotes you own, one infrared TV remote, spare coin cells">
+
+<Callout variant="warn" title="Before you press anything">
+A gate or garage remote still moves the real door at 1 cm, so keep the door or gate clear or stay out of range of its receiver. Prefer the doorbell or an LED remote. If you use a car fob, do the lab with the car out of its range, skip the 1 m step and press it no more than five times, because presses out of range can desynchronise some rolling-code systems. Keep loose coin cells away from small children.
+</Callout>
+
+1. **Predict:** write the frequency you expect for each remote, how full you expect the RSSI bar to be at 1 cm and at 1 m, and what you expect from the infrared remote.
+2. Open <Flip>Sub-GHz → Frequency Analyzer</Flip>. Watch it for ten seconds with no remote pressed and note what it shows. This is your baseline.
+3. Hold your first remote **almost touching** the Flipper. Press and hold its button for about two seconds, then release. Record the frequency and how full the RSSI bar is (a quarter, half, three quarters or full).
+4. Release, wait for the reading to clear, and repeat twice more. Record all three readings. If they differ by tens of kilohertz, that is the approximation from the table above, not a fault.
+5. Move the same remote to about one metre away and press again. Record the bar fill and whether the reading holds.
+6. Repeat steps 3 and 4 for your second remote, and for a third if you have one.
+7. **Control:** hold the infrared TV remote just as close and press a button. Record the result.
+8. Compare each reading with the remote's label, manual or FCC ID listing if it has one. Write down whether they agree.
+
+</Lab>
+
+Expected observation: close-up readings land within a few tens of kilohertz of a standard frequency and repeat. At one metre the bar shrinks and the reading may wander or vanish. The infrared remote shows nothing, because the Sub-GHz radio cannot receive infrared light, so a blank can be a correct answer. If none of your remotes reads, use a doorbell and record the explained blank.
+
+<Callout variant="note" title="Got a blank on a real RF remote?">
+Work down this list, changing one thing at a time:
+
+1. Too weak. A tired coin cell or a remote held too far away can fall below the roughly −90 dBm threshold. Fit a fresh cell and hold it closer.
+2. Too short. Some remotes send a single short burst. Hold the button down rather than tapping it.
+3. Not in the list. The remote may use a frequency far from every entry in the analyzer's list, or a band the CC1101 cannot receive at all, such as 2.4 GHz. Check the label or FCC ID.
+4. Not radio. Some "remotes" are infrared, like your control.
+
+A rolling-code fob still transmits a carrier, and the analyzer measures that carrier, so the code never causes a blank.
+</Callout>
+
+<Win>you can name the frequency of at least two of your own remotes from your notes, each backed by three matching readings, and you can explain your infrared blank and any other blank in one sentence.</Win>
+
+## Check yourself
+
+<Quiz id="m01" />
+
+Answer these two in a sentence each:
+
+1. Your doorbell reads 433.940 MHz today and 433.900 MHz tomorrow. Has it changed frequency? What would convince you either way?
+2. A friend's remote shows nothing at 1 cm with a fresh battery. Name two causes you would check first and what you would look at to tell them apart.
+
+A good answer to 1 says a 20 kHz spread is normal and looks for a repeated shift of hundreds of kilohertz. A good answer to 2 names two of: infrared or 2.4 GHz remote (check the label), a frequency outside the analyzer's list, a button tapped too briefly (hold it down).
+
+## Keep evidence
+
+Save a [notebook entry](/learn/notebook?module=m01) for this module. This is the first page of your frequency map, which grows into your signal atlas in Module 10.
+
+- Setup: firmware version, region code, the remotes by name.
+- Prediction: expected frequency per remote, bar fill at 1 cm and 1 m, the infrared result.
+- Observation: three close-up readings and the bar fill per remote, what changed at one metre, the baseline and the infrared result.
+- Explanation: why readings vary slightly, and the reason for every blank.
+
+Adequate evidence is three repeat readings for each of at least two remotes, plus the infrared control and one explained blank. A single reading is a guess.
+
+Example entry:
+
+```text
+Setup:       official firmware, region EU, analyzer on Flipper
+Prediction:  doorbell 433.92, LED remote 433.92, fan remote unsure; IR remote blank
+Observation: doorbell 433.920 / 433.900 / 433.920, RSSI bar 3/4 full at 1 cm;
+             at 1 m bar 1/4, reading wandered then cleared
+             LED remote 433.940 x3; fan remote blank until fresh cell, then 433.920 x3
+             IR remote: blank, as predicted; baseline: blank
+Explanation: 20 kHz fine steps explain the spread; fan cell too weak at first
+```
+
+Set a review date two days from now. When you can explain the analyzer's two passes and the roughly −90 dBm threshold without notes, mark it retrieved.
+
+## Continue
+
+Next is [Module 2: Hear the signal](/learn/02-modulation). You have *where* a signal lives. Module 2 adds *how* it is shaped, and why the right frequency can still capture nothing when the modulation is wrong.
+
+Retrieval question for a week from now: without notes, why does the analyzer need your remote to be close, and what is the quarter-wave length at 433.92 MHz?
+
+Primary sources, verified on 13 October 2026:
+
+- [Flipper: Sub-GHz frequencies and regional transmit bands](https://docs.flipper.net/zero/sub-ghz/frequencies)
+- [Flipper: reading signals and the Frequency Analyzer](https://docs.flipper.net/zero/sub-ghz/read)
+- [Flipper: Sub-GHz hardware](https://docs.flipper.net/zero/sub-ghz)
+- [Flipper firmware: Frequency Analyzer worker source](https://github.com/flipperdevices/flipperzero-firmware/blob/dev/applications/main/subghz/helpers/subghz_frequency_analyzer_worker.c) and [its threshold constant](https://github.com/flipperdevices/flipperzero-firmware/blob/dev/applications/main/subghz/helpers/subghz_frequency_analyzer_worker.h)
+- [Flipper developer docs: Sub-GHz file format](https://developer.flipper.net/flipperzero/doxygen/subghz_file_format.html)
+- [Texas Instruments: CC1101 product page](https://www.ti.com/product/CC1101)
+- [ComReg: ITU Radio Regulations footnote 5.138](https://rfpi.comreg.ie/content-item/628,5138)
+- [47 CFR 15.231: periodic operation above 70 MHz (US)](https://www.law.cornell.edu/cfr/text/47/15.231)
+- [47 CFR 15.247: operation in 902-928 MHz (US)](https://www.law.cornell.edu/cfr/text/47/15.247)
+- [CEPT: ERC Recommendation 70-03, short range devices](https://docdb.cept.org/document/845)
+

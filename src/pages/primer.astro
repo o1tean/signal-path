@@ -1,0 +1,15 @@
+---
+/* Copy: docs/v2/copy/resources.md#primer, meta.md#primer. */
+import ResourcePage from '@/components/content/ResourcePage.astro';
+import html from '@/content/pages/primer.html?raw';
+export const prerender = true;
+---
+<ResourcePage
+  title="Radio primer for Flipper Zero owners"
+  description="Six ideas behind remotes and key fobs: frequency, channels, modulation, protocols, fixed versus rolling codes, and listening versus transmitting."
+  eyebrow="Primer · Free · Start here"
+  heading="Six ideas behind frequency, modulation, protocols and rolling codes."
+  lede="Signal, channel, modulation, protocol, fixed versus rolling code, and why listening differs from transmitting."
+  body="Read it before Module 0. It ends with six check questions, each with an explanation."
+  html={html}
+/>

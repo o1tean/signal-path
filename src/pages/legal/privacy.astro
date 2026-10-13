@@ -1,0 +1,8 @@
+---
+import LegalLayout from '@/components/marketing/LegalLayout.astro';
+import { Content } from './_privacy.md';
+export const prerender = true;
+---
+<LegalLayout title="Privacy notice" description="What Signal Path collects: your email, your purchases through Stripe, and your progress if you turn on sync. Sign-in cookies only, and no ad trackers." heading="Privacy notice" subheading="Last updated [NEED: date]. What Signal Path collects, why, who else handles it, and how to get it back or deleted.">
+  <Content />
+</LegalLayout>

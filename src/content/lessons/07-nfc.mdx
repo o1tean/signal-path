@@ -1,0 +1,377 @@
+---
+id: m07
+number: 7
+slug: 07-nfc
+title: NFC at 13.56 MHz
+description: Read NFC tags and cards you own at 13.56 MHz, decode the UID, ATQA and SAK lines, and learn why the Flipper copies an NTAG in full but never a bank card.
+stage: atlas
+week: Week 4
+access: paid
+minutes: 60
+gear:
+  - Flipper Zero on official firmware 1.4.3 or later, with a microSD card
+  - two blank NTAG213 or NTAG215 stickers you own, both the same type, unlocked
+  - one 13.56 MHz card you own and no longer use (an old transit, gym or hotel card)
+  - a phone with NFC turned on, to check what the Flipper emulates
+  - the 125 kHz training fob from Module 6, as a control
+  - a ruler marked in millimetres
+  - optional, your own contactless bank card, read only and never saved
+transmits: own-device
+outcome: Read your own NFC tags and cards, and say for each whether the Flipper captured all of it, part of it or only the UID, and why.
+prerequisites:
+  - m06
+tools: []
+scenes:
+  - nearfield
+evidence: A notebook entry classifying at least three of your own items as full, partial or UID only, with the Flipper's own counters and one control that failed on purpose.
+sources:
+  - title: 'Flipper Docs: NFC'
+    url: https://docs.flipper.net/zero/nfc
+  - title: 'Flipper Docs: Reading NFC cards'
+    url: https://docs.flipper.net/zero/nfc/read
+  - title: 'Flipper Docs: MIFARE Classic key recovery (MFKey32)'
+    url: https://docs.flipper.net/zero/nfc/mfkey32
+  - title: 'Flipper Docs: Writing data to magic cards'
+    url: https://docs.flipper.net/zero/nfc/magic-cards
+  - title: 'Flipper Zero firmware 1.4.3: NFC protocols'
+    url: https://github.com/flipperdevices/flipperzero-firmware/tree/1.4.3/lib/nfc/protocols
+  - title: 'NXP PN512 data sheet, Table 6: ISO/IEC 14443 A communication overview'
+    url: https://www.nxp.com/docs/en/data-sheet/PN512.pdf
+  - title: 'NXP AN10833: MIFARE type identification procedure'
+    url: https://www.nxp.com/docs/en/application-note/AN10833.pdf
+  - title: 'NXP AN10927: MIFARE product and handling of UIDs'
+    url: https://www.nxp.com/docs/en/application-note/AN10927.pdf
+  - title: 'NXP MF1S50yyX/V1 data sheet: MIFARE Classic EV1 1K'
+    url: https://www.nxp.com/docs/en/data-sheet/MF1S50YYX_V1.pdf
+  - title: 'NXP NTAG213/215/216 data sheet'
+    url: https://www.nxp.com/docs/en/data-sheet/NTAG213_215_216.pdf
+  - title: 'NXP MIFARE DESFire EV3 short data sheet'
+    url: https://www.nxp.com/docs/en/data-sheet/MF3D_H_X3_SDS.pdf
+  - title: 'EMVCo: EMV contactless chip'
+    url: https://www.emvco.com/emv-technologies/emv-contactless-chip/
+  - title: 'EMVCo: Payment tokenisation'
+    url: https://www.emvco.com/emv-technologies/payment-tokenisation/
+reviewed: '2026-10-13'
+badge: nfc-explorer
+---
+
+## Outcome
+
+You can read an NFC tag or card that belongs to you and say, with the Flipper's own counters as proof, whether it captured the whole card, part of it, or only the UID.
+
+By the end you can:
+
+- explain how a reader at 13.56 MHz finds a card, and what the UID, ATQA and SAK lines on the screen mean;
+- sort the cards you meet into simple memory, weak keys and strong keys, and predict what Read, Emulate and Write will do with each;
+- explain to a worried friend, with the mechanism, why reading a contactless bank card never lets anyone pay with it.
+
+## Before you start
+
+- **Prerequisite:** [Module 6](/learn/06-rfid). You need near-field coupling, passive tags and the read, save, emulate rhythm from the 125 kHz lesson. This lesson keeps all three and adds cards that hold keys.
+- **Gear:** as listed above. Your own bank card is optional and is never saved.
+- **Firmware:** official firmware 1.4.3 (December 2025) or a 1.5 release candidate. Screen text below is from 1.4.3. Forks add parsers; the one that matters here is covered under bank cards.
+- **Time:** about 60 minutes: 25 to read, 35 at the bench.
+- **Transmits:** yes, in a small way. To read, the Flipper makes a 13.56 MHz field that powers the card. To emulate, it answers a reader. Both happen at a few centimetres, and only with your own tags, your own phone and your own cards.
+- **Scope:** your own tags and cards, in your own space. Work, transit and building cards belong to the system that issued them, even when the plastic is in your wallet.
+
+<Callout variant="legal" title="Own it, and only it">
+Reading a card you own is fine. Copying an access or transit card you do not control, or presenting a copy to someone else's reader, can break the issuer's rules and the law whether or not the chip cooperates. Using a payment card number that is not yours is fraud. Read the [Romania lab guide](/romania-lab-guide) before the bench work.
+</Callout>
+
+## Understand
+
+### Same coupling, higher frequency
+
+<Term id="nfc">NFC</Term> lives at <Term id="hf-13-56-mhz">13.56 MHz</Term>. Like the 125 kHz fobs in Module 6, an NFC card has no battery. The reader's coil makes an alternating magnetic field, the card's coil sits in it, and the card takes its power from that field. The frequency is about 108 times higher than LF, so it carries data much faster, and the cards can afford a small processor and real cryptography.
+
+<Figure label="A logarithmic frequency scale from 100 kilohertz to 1 gigahertz. 125 kilohertz LF RFID sits at the far left, 13.56 megahertz NFC in the middle, and the Flipper's three Sub-GHz bands between 300 and 928 megahertz at the right." caption="One decade per 140 pixels. NFC sits about 108 times above an LF fob and 22 to 68 times below the Sub-GHz bands. Different frequency, different app, different antenna.">
+<svg viewBox="0 0 640 180" width="100%" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+  <line x1="40" y1="110" x2="600" y2="110" class="stroke-border" stroke-width="2" />
+  <g class="stroke-muted-foreground fill-muted-foreground font-mono" font-size="10" stroke-width="1">
+    <line x1="40" y1="104" x2="40" y2="116" /><text x="40" y="132" text-anchor="middle" stroke="none">100 kHz</text>
+    <line x1="180" y1="104" x2="180" y2="116" /><text x="180" y="132" text-anchor="middle" stroke="none">1 MHz</text>
+    <line x1="320" y1="104" x2="320" y2="116" /><text x="320" y="132" text-anchor="middle" stroke="none">10 MHz</text>
+    <line x1="460" y1="104" x2="460" y2="116" /><text x="460" y="132" text-anchor="middle" stroke="none">100 MHz</text>
+    <line x1="600" y1="104" x2="600" y2="116" /><text x="600" y="132" text-anchor="middle" stroke="none">1 GHz</text>
+  </g>
+  <line x1="54" y1="72" x2="54" y2="110" class="stroke-info" stroke-width="2.5" />
+  <circle cx="54" cy="72" r="4" class="fill-info" />
+  <text x="54" y="60" text-anchor="middle" class="fill-info font-mono" font-size="11" font-weight="600">125 kHz</text>
+  <text x="54" y="164" text-anchor="middle" class="fill-muted-foreground font-mono" font-size="10">LF · Module 6</text>
+  <line x1="338.5" y1="52" x2="338.5" y2="110" class="stroke-primary" stroke-width="2.5" />
+  <circle cx="338.5" cy="52" r="4" class="fill-primary" />
+  <text x="338.5" y="40" text-anchor="middle" class="fill-primary font-mono" font-size="11" font-weight="600">13.56 MHz</text>
+  <text x="338.5" y="164" text-anchor="middle" class="fill-primary font-mono" font-size="10">HF · NFC · this lesson</text>
+  <rect x="526.8" y="88" width="9" height="22" class="fill-story stroke-story" fill-opacity="0.25" stroke-width="1.2" />
+  <rect x="542.3" y="88" width="11" height="22" class="fill-story stroke-story" fill-opacity="0.25" stroke-width="1.2" />
+  <rect x="584.8" y="88" width="10.7" height="22" class="fill-story stroke-story" fill-opacity="0.25" stroke-width="1.2" />
+  <text x="561" y="78" text-anchor="middle" class="fill-story font-mono" font-size="10.5" font-weight="600">300 to 928 MHz</text>
+  <text x="561" y="164" text-anchor="middle" class="fill-muted-foreground font-mono" font-size="10">Sub-GHz · Modules 1 to 5</text>
+</svg>
+</Figure>
+
+<Scene3D name="nearfield" opts={{ kind: 'card' }} label="3D animation: a 13.56 MHz reader coil couples with a card antenna through a near field." />
+
+The Flipper's NFC side is an ST25R3916 reader chip driving a 13.56 MHz antenna on the back of the case, on the same dual-band board as the 125 kHz antenna. Put cards against the back, not the screen.
+
+#### Worked example: why centimetres
+
+| Quantity | 13.56 MHz | 125 kHz |
+| --- | --- | --- |
+| Wavelength, λ = c ÷ f | 22.1 m | 2,398 m |
+| Near-field boundary, roughly λ ÷ 2π | 3.52 m | 382 m |
+| Typical card distance with the Flipper | a few centimetres | a few centimetres |
+
+At a few centimetres you are about a hundred times inside the near-field boundary, so the link is magnetic coupling, the same mechanism as Module 6. Once the card is several coil radii from the reader, the field of a loop falls with roughly the cube of distance: double the gap and the field drops to about an eighth. NXP's tag data sheets quote "up to 100 mm" with a large, well-tuned reader antenna. The Flipper's antenna is small, so you will measure your own figure in Lab 7.1. Short range is part of the design: a card answers only when someone brings it close on purpose.
+
+### Four technologies share one frequency
+
+"NFC card" covers several radio standards that all run at 13.56 MHz. Flipper's documentation groups them by NFC type letter:
+
+| Type | Standard | Examples you may own | Flipper 1.4.3 |
+| --- | --- | --- | --- |
+| NFC-A | <Term id="iso-14443">ISO/IEC 14443</Term> type A | NTAG stickers, MIFARE Classic, MIFARE DESFire, most bank cards | reads; depth depends on the card |
+| NFC-B | ISO/IEC 14443 type B | ST25TB tags | ST25TB read in full; other type B shows the UID only, unsaved |
+| NFC-F | FeliCa | FeliCa Lite-S tags | reads, saves and emulates Lite-S |
+| NFC-V | ISO/IEC 15693 | ICODE SLIX tags | reads, saves and emulates UID and blocks |
+
+<Callout variant="note" title="ISO 14443 is two of the four">
+Types A and B are ISO 14443. FeliCa and ISO 15693 are separate standards at the same frequency. Most cards in this lesson are type A, so the rest of this section uses type A.
+</Callout>
+
+### How a reader finds a type A card
+
+Before any data moves, the reader has to wake a card, learn its name and choose it from any others in the field. ISO 14443-3 defines that handshake, and every type A card does it the same way, from a sticker to a passport.
+
+<Figure label="A sequence diagram between reader and card. The reader sends REQA and the card replies ATQA. The reader runs anticollision and the card replies with its UID. The reader sends SELECT and the card replies SAK. The SAK value then branches: 00 means Ultralight or NTAG pages, 08 or 18 means MIFARE Classic sectors that need a key, and 20 means an ISO 14443-4 card that is next asked for its ATS." caption="ISO 14443-3 type A activation. Nothing in the first three exchanges is secret: any reader gets the UID, ATQA and SAK. SAK values from NXP AN10833.">
+<svg viewBox="0 0 640 330" width="100%" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+  <text x="90" y="22" text-anchor="middle" class="fill-foreground font-sans" font-size="14" font-weight="700">Reader (Flipper)</text>
+  <text x="430" y="22" text-anchor="middle" class="fill-foreground font-sans" font-size="14" font-weight="700">Card</text>
+  <line x1="90" y1="32" x2="90" y2="196" class="stroke-border" stroke-width="2" />
+  <line x1="430" y1="32" x2="430" y2="196" class="stroke-border" stroke-width="2" />
+  <g class="font-mono" font-size="11">
+    <line x1="90" y1="52" x2="424" y2="52" class="stroke-primary" stroke-width="1.5" />
+    <path d="M424 48 L430 52 L424 56 Z" class="fill-primary" />
+    <text x="100" y="46" class="fill-primary">REQA: anyone there?</text>
+    <line x1="430" y1="76" x2="96" y2="76" class="stroke-info" stroke-width="1.5" />
+    <path d="M96 72 L90 76 L96 80 Z" class="fill-info" />
+    <text x="420" y="70" text-anchor="end" class="fill-info">ATQA: yes, UID size and type hint</text>
+    <line x1="90" y1="104" x2="424" y2="104" class="stroke-primary" stroke-width="1.5" />
+    <path d="M424 100 L430 104 L424 108 Z" class="fill-primary" />
+    <text x="100" y="98" class="fill-primary">ANTICOLLISION: send your UID</text>
+    <line x1="430" y1="128" x2="96" y2="128" class="stroke-info" stroke-width="1.5" />
+    <path d="M96 124 L90 128 L96 132 Z" class="fill-info" />
+    <text x="420" y="122" text-anchor="end" class="fill-info">UID: 4, 7 or 10 bytes</text>
+    <line x1="90" y1="156" x2="424" y2="156" class="stroke-primary" stroke-width="1.5" />
+    <path d="M424 152 L430 156 L424 160 Z" class="fill-primary" />
+    <text x="100" y="150" class="fill-primary">SELECT this UID</text>
+    <line x1="430" y1="180" x2="96" y2="180" class="stroke-info" stroke-width="1.5" />
+    <path d="M96 176 L90 180 L96 184 Z" class="fill-info" />
+    <text x="420" y="174" text-anchor="end" class="fill-info">SAK: what I can do next</text>
+  </g>
+  <rect x="460" y="40" width="172" height="150" rx="6" class="fill-muted stroke-border" stroke-width="1" />
+  <text x="546" y="64" text-anchor="middle" class="fill-muted-foreground font-sans" font-size="12" font-weight="600">public, no key used</text>
+  <text x="546" y="86" text-anchor="middle" class="fill-muted-foreground font-mono" font-size="10.5">Flipper shows these as</text>
+  <text x="546" y="106" text-anchor="middle" class="fill-foreground font-mono" font-size="11">UID: 04 A1 ...</text>
+  <text x="546" y="124" text-anchor="middle" class="fill-foreground font-mono" font-size="11">ATQA: 00 44</text>
+  <text x="546" y="142" text-anchor="middle" class="fill-foreground font-mono" font-size="11">SAK: 00</text>
+  <line x1="40" y1="222" x2="600" y2="222" class="stroke-border" stroke-width="1" stroke-dasharray="3 4" />
+  <text x="0" y="248" class="fill-foreground font-sans" font-size="13" font-weight="700">SAK</text>
+  <rect x="40" y="260" width="180" height="58" rx="6" class="fill-success stroke-success" fill-opacity="0.1" stroke-width="1.2" />
+  <text x="130" y="282" text-anchor="middle" class="fill-success font-mono" font-size="12" font-weight="600">00</text>
+  <text x="130" y="302" text-anchor="middle" class="fill-foreground font-sans" font-size="11">Ultralight / NTAG: open pages</text>
+  <rect x="230" y="260" width="180" height="58" rx="6" class="fill-warning stroke-warning" fill-opacity="0.1" stroke-width="1.2" />
+  <text x="320" y="282" text-anchor="middle" class="fill-warning font-mono" font-size="12" font-weight="600">08 (1K) or 18 (4K)</text>
+  <text x="320" y="302" text-anchor="middle" class="fill-foreground font-sans" font-size="11">MIFARE Classic: key per sector</text>
+  <rect x="420" y="260" width="200" height="58" rx="6" class="fill-danger stroke-danger" fill-opacity="0.1" stroke-width="1.2" />
+  <text x="520" y="282" text-anchor="middle" class="fill-danger font-mono" font-size="12" font-weight="600">20: ISO 14443-4</text>
+  <text x="520" y="302" text-anchor="middle" class="fill-foreground font-sans" font-size="11">RATS, ATS, then apps (DESFire, EMV)</text>
+</svg>
+</Figure>
+
+- **<Term id="uid">UID</Term>.** The card's identifier, sent to any reader that asks, before any key is used. NXP's own note says a UID "is not a serial number", and some cards send a random one: a 4-byte UID that starts with `08` is a Random ID, generated fresh each time the card powers up.
+- **ATQA.** Answer to Request. It tells the reader the UID size and gives a rough type hint.
+- **SAK.** Select Acknowledge. One bit (value `20`) says whether the card speaks ISO 14443-4, the layer that carries application commands. NXP warns against identifying cards from ATQA and SAK alone, since newer cards can be configured to send other values. Treat them as a first guess.
+
+#### The bits on the air
+
+The two directions use different tricks, because the card has no transmitter of its own.
+
+| Direction | How | Numbers at 106 kbit/s |
+| --- | --- | --- |
+| Reader to card | 100 % ASK: the reader briefly cuts its field, in a modified Miller code | one bit = 128 carrier cycles = 9.44 µs, so 105.9 kbit/s |
+| Card to reader | load modulation: the card switches a load on its coil, and the reader sees its own field dip | on a subcarrier of 13.56 MHz ÷ 16 = 847.5 kHz, Manchester coded, 8 subcarrier cycles per bit |
+
+The card's answer is a tiny change in how much energy it draws from the reader's field. That is why the card has to be close, and why a card that is half in the field reads intermittently.
+
+### Three kinds of card, by what they keep to themselves
+
+What matters for you is how much a card protects.
+
+<div class="table-scroll">
+
+| Card | Protection | Memory | What Flipper 1.4.3 does |
+| --- | --- | --- | --- |
+| **<Term id="ntag">NTAG</Term>213 / 215 / 216, Ultralight** <span class="pill green">simple</span> | none by default; optional 32-bit password | 144, 504 or 888 user bytes in 4-byte pages | reads open pages, emulates the pages it read, writes a saved NTAG to an unlocked blank of the same type |
+| **<Term id="mifare-classic">MIFARE Classic</Term> 1K / 4K** <span class="pill yellow">weak keys</span> | two 48-bit keys per sector, Crypto-1 cipher | 1K: 16 sectors of 4 blocks of 16 bytes | reads each sector whose key is in its dictionary; emulates only unlocked sectors |
+| **MIFARE DESFire** <span class="pill red">strong keys</span> | AES-128 or 3DES on EV1 and later, per application | applications holding files | reads unprotected applications and files; emulates the UID only |
+| **EMV bank card** <span class="pill red">strong keys</span> | per-transaction cryptogram from a key that stays in the chip | payment applications | on official firmware, ISO 14443-4 info only; never emulated |
+
+</div>
+
+#### Inside one MIFARE Classic sector
+
+<Figure label="One MIFARE Classic 1K sector drawn as four 16-byte blocks. Blocks 0 to 2 hold data. Block 3, the sector trailer, holds Key A in bytes 0 to 5, access bits in bytes 6 to 8, one free data byte at byte 9, and Key B in bytes 10 to 15." caption="Every sector ends in a trailer holding its two keys and the access bits. Key A always reads back as zeros, and Key B does too unless the access bits make it readable, so a key is learned by guessing or by attacking the cipher. New cards ship with every key set to FF FF FF FF FF FF (NXP MF1S50yyX data sheet).">
+<svg viewBox="0 0 640 190" width="100%" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+  <g class="font-mono" font-size="11">
+    <text x="0" y="40" class="fill-muted-foreground">block 0</text>
+    <rect x="70" y="26" width="540" height="22" class="fill-muted stroke-border" stroke-width="1" />
+    <text x="340" y="41" text-anchor="middle" class="fill-foreground">data, 16 bytes</text>
+    <text x="0" y="68" class="fill-muted-foreground">block 1</text>
+    <rect x="70" y="54" width="540" height="22" class="fill-muted stroke-border" stroke-width="1" />
+    <text x="340" y="69" text-anchor="middle" class="fill-foreground">data, 16 bytes</text>
+    <text x="0" y="96" class="fill-muted-foreground">block 2</text>
+    <rect x="70" y="82" width="540" height="22" class="fill-muted stroke-border" stroke-width="1" />
+    <text x="340" y="97" text-anchor="middle" class="fill-foreground">data, 16 bytes</text>
+    <text x="0" y="124" class="fill-muted-foreground">block 3</text>
+    <rect x="70" y="110" width="202.5" height="22" class="fill-danger stroke-danger" fill-opacity="0.15" stroke-width="1" />
+    <text x="171" y="125" text-anchor="middle" class="fill-danger">Key A (6 bytes)</text>
+    <rect x="272.5" y="110" width="135" height="22" class="fill-warning stroke-warning" fill-opacity="0.15" stroke-width="1" />
+    <text x="340" y="125" text-anchor="middle" class="fill-warning">access bits + 1</text>
+    <rect x="407.5" y="110" width="202.5" height="22" class="fill-danger stroke-danger" fill-opacity="0.15" stroke-width="1" />
+    <text x="509" y="125" text-anchor="middle" class="fill-danger">Key B (6 bytes)</text>
+    <text x="70" y="152" class="fill-muted-foreground">byte 0</text>
+    <text x="272" y="152" text-anchor="middle" class="fill-muted-foreground">6</text>
+    <text x="408" y="152" text-anchor="middle" class="fill-muted-foreground">10</text>
+    <text x="610" y="152" text-anchor="end" class="fill-muted-foreground">15</text>
+    <text x="340" y="180" text-anchor="middle" class="fill-muted-foreground">sector trailer: Key A always reads back as zeros</text>
+  </g>
+</svg>
+</Figure>
+
+To read a sector, the reader names it, picks Key A or Key B, and runs a challenge and response with the card; only then does traffic move, encrypted with Crypto-1. The Flipper cannot ask the card for its <Term id="key">keys</Term>. It tries the keys in its system dictionary on the SD card, plus any you add. A system that kept the factory key, or uses a key already in the dictionary, unlocks at once. Crypto-1 is also broken: Flipper's MFKey32 tool recovers keys from nonces a reader produces while it tries to authenticate. That needs your own reader and card system, and is outside this lesson's labs.
+
+DESFire is the opposite case. Its keys are AES-128 or 3DES, and the Flipper has no tool that recovers them. A DESFire card with protected applications shows "Auth required to read apps!" on the Flipper, and stays that way.
+
+### What the screen is actually showing you
+
+<Flip>NFC → Read</Flip> runs the handshake above, then the deepest protocol the card supports. Reading can take several minutes on a MIFARE Classic while the dictionary runs, so hold the card still. The result screen depends on the card:
+
+- **NTAG / Ultralight:** the card name, then `Pages Read: 135/135` for a full NTAG215. Fewer pages, with `Password-protected pages!`, means part of the tag is behind a password.
+- **MIFARE Classic:** `Keys Found: 32/32` and `Sectors Read: 16/16` for a full 1K. Anything lower is a partial read, and an emulated copy contains only the sectors counted.
+- **DESFire:** the number of applications and files, and the free memory, or `Auth required to read apps!`.
+- **Unknown type A:** only the UID, ATQA and SAK. **Info** shows `Tech: ISO 14443-3 (NFC-A)` or `ISO 14443-4`, and for 14443-4 cards the ATS protocol bytes.
+
+**Retry** reads again, and **More** offers Save, Emulate or Emulate UID, and Info. Saved cards appear under <Flip>NFC → Saved</Flip>, where NTAG captures also offer **Write**.
+
+<Callout variant="warn" title='"But the Flipper read it fine"'>
+A card name and a UID on screen is the start of a read, not proof of a copy. A DESFire badge reads in a second and copies nothing but its UID. Always check the counter: pages read, keys found, sectors read. Those numbers tell you how much of the card you actually hold.
+</Callout>
+
+### The bank-card question
+
+Hold your own contactless card to <Flip>NFC → Read</Flip> on official firmware 1.4.3 and you see an ISO 14443-4 type A card: a UID (often a random one starting `08`), ATQA, SAK `20` and the ATS. Release 1.4.3 has no EMV reader. Some forks add one, and it shows what the card hands any payment terminal on request: the card number, expiry date, application name and, on some cards, a short transaction log.
+
+<div class="grid2">
+<div class="card">
+
+#### <span class="pill yellow">readable</span> Public, by design
+
+- the card's presence and type
+- with an EMV parser: card number and expiry
+- on some cards, recent transaction amounts and dates
+
+</div>
+<div class="card">
+
+#### <span class="pill red">never readable</span> Stays in the chip
+
+- the PIN, which the card never sends
+- the secret keys
+- a valid cryptogram for any payment you have not made yet
+
+</div>
+</div>
+
+Every EMV contactless payment carries a one-time security code, a cryptogram the chip computes from the transaction data with a key that never leaves it. EMVCo describes it as a code "generated for every transaction". A copy of the public fields cannot compute a fresh one, so a replayed or emulated copy fails the issuer's check. Phone wallets go further: they replace the card number with a payment token, so even the public number is not the card's.
+
+### Misconceptions
+
+- **"A UID is a secure identity."** Any reader gets it, some cards randomise it, and magic cards let you set it. Flipper's docs list Gen1, Gen2 and Gen4 cards with a rewritable UID. A system that trusts only the UID is as weak as an LF fob.
+- **"Keys Found 20/32 is nearly a copy."** Emulation contains only the unlocked sectors. If the reader checks a locked one, the copy fails.
+- **"Reading my bank card number means it can be used to pay."** It cannot be used for a contactless payment, because the cryptogram is missing. Treat the number as private anyway, and do not save or photograph it.
+
+## Predict and practise
+
+{/* TODO: tool: an NFC handshake stepper that walks REQA, ATQA, SELECT and SAK on synthetic NTAG, Classic and DESFire cards before the bench */}
+
+<Lab kicker="Lab 7.1" title="Classify what really copied" gear="Flipper, two blank NTAGs, one old 13.56 MHz card you own, the Module 6 fob, a ruler. Optional: your own bank card, never saved.">
+
+1. **Predict first.** For each item, write "full", "partial" or "UID only", and the SAK you expect (`00`, `08` or `20`).
+2. Open <Flip>NFC → Read</Flip> and hold one blank NTAG flat on the back of the Flipper. Note the type, UID, and `Pages Read`. Choose **More → Save** and name it `ntag-blank-a`.
+3. Read your old card the same way. Note the type, UID, ATQA and SAK, then the counter for that type: `Keys Found` and `Sectors Read`, the DESFire application line, or nothing beyond the UID. Save it.
+4. Read the same card again, lifting it fully away between reads. Compare the two UIDs. If the 4-byte UID starts with `08` and changes, it is a Random ID.
+5. **Range:** lay the NTAG on the ruler and move the Flipper back in 5 mm steps, pressing **Retry** each time. Write the last distance that still reads.
+6. **Control:** read the 125 kHz fob from Module 6 in the NFC app. Expect no card found. Flipper's guide says to use the 125 kHz RFID app when this happens.
+7. Optional: read your own bank card. Do not save it. Write down only the type and SAK.
+
+</Lab>
+
+Expected observation: the blank NTAG reads every page, the 125 kHz fob shows nothing, and your old card lands where its type predicts.
+
+<Win>you can point at one item and say "full read, it has no keys", at another and say "UID only, the rest is behind keys the Flipper does not have", and back both up with the counters you wrote down.</Win>
+
+<Lab kicker="Lab 7.2" title="Write and emulate an NTAG you own" gear="Flipper, your two blank NTAGs of the same type, your phone with NFC on.">
+
+1. With your phone's NFC tools app, write a short URL or text record to blank NTAG A, so it holds something you can recognise.
+2. **Predict:** if the Flipper emulates a capture of that tag, what will your phone do when you tap it on the Flipper's back?
+3. Read NTAG A on the Flipper and save it as `ntag-a-url`.
+4. Open <Flip>NFC → Saved → ntag-a-url → Emulate</Flip> and tap your phone against the back of the Flipper. Note what the phone shows.
+5. Back in the saved tag's menu, choose **Write**, hold blank NTAG B to the Flipper, and wait for it to finish. Tap NTAG B with your phone.
+6. **Control:** try to write the same capture to a tag of a different type, or to your old card from Lab 7.1. Expect a refusal. Flipper's guide says the destination must be the same NTAG type, with the default password, AUTH0 disabled and no lock bits set.
+
+</Lab>
+
+<Win>your phone reads the same record from the Flipper's emulation and from NTAG B, the wrong-type write is refused, and you can explain why both successes depend on the tag having no keys.</Win>
+
+<Callout variant="tip" title="Blank NTAGs are your T5577s">
+A pack of unlocked NTAG215 stickers does for NFC what T5577 blanks did in Module 6: cheap, rewritable and entirely yours. Do not set the lock bits while practising; on NTAG they are permanent.
+</Callout>
+
+## Check yourself
+
+<Quiz id="m07" />
+
+Two questions to answer in a sentence each, without notes:
+
+1. A badge shows `SAK: 20` and `Auth required to read apps!`. What will an emulated copy contain, and why?
+2. Why does a MIFARE Classic read with `Keys Found: 32/32` copy fully, while one with `20/32` may fail at the real reader?
+
+## Keep evidence
+
+Open your [notebook](/learn/notebook?module=m07) and save an entry for this module. Map each lab to a field:
+
+- **Setup:** firmware version, each item by type, never by owner or card number.
+- **Prediction:** for each item, full, partial or UID only, and the SAK you expected.
+- **Observation:** UID behaviour across two reads, ATQA, SAK, the counter for its type, the read range for the NTAG, the 125 kHz control, and what your phone showed from the emulation and from NTAG B.
+- **Explanation:** for each item, one sentence on why it copied as far as it did.
+
+Adequate evidence names at least three items with their counters, one control that failed on purpose, and no payment card data. An example entry:
+
+> Official 1.4.3. Blank NTAG215: SAK 00, Pages Read 135/135, full. Read at 15 mm, not at 20 mm. Old hotel card: MIFARE Classic 1K, SAK 08, Keys Found 12/32, Sectors Read 6/16: partial. Module 6 fob in NFC app: no card. Emulated URL tag opened on my phone; written NTAG B opened the same URL; write to the hotel card refused. Bank card: ISO 14443-4, SAK 20, UID changed between reads, not saved.
+
+Set a review date one week from today. When you can explain the partial read without your notes, mark it retrieved.
+
+## Continue
+
+Next is [Module 8: Firmware, apps & Momentum](/learn/08-momentum). It explains what changes when you install a fork, including extra NFC parsers such as the EMV reader mentioned here, and how to tell an official build from a modified one.
+
+**Retrieval question for next week:** without looking, what three values does every type A card give any reader before a key is used, and which one tells you the card speaks ISO 14443-4?
+
+Primary sources, checked 13 October 2026:
+
+- Flipper Docs: [NFC](https://docs.flipper.net/zero/nfc), [Reading NFC cards](https://docs.flipper.net/zero/nfc/read), [MFKey32](https://docs.flipper.net/zero/nfc/mfkey32) and [magic cards](https://docs.flipper.net/zero/nfc/magic-cards) for the hardware, per-card read, emulate and write limits, and key recovery.
+- [Firmware 1.4.3: NFC protocols](https://github.com/flipperdevices/flipperzero-firmware/tree/1.4.3/lib/nfc/protocols) for the protocol list (no EMV reader) and the screen text.
+- [NXP PN512 data sheet](https://www.nxp.com/docs/en/data-sheet/PN512.pdf), Table 6, for type A modulation and timing; [AN10833](https://www.nxp.com/docs/en/application-note/AN10833.pdf) and [AN10927](https://www.nxp.com/docs/en/application-note/AN10927.pdf) for SAK values and UIDs.
+- NXP data sheets for [MIFARE Classic EV1 1K](https://www.nxp.com/docs/en/data-sheet/MF1S50YYX_V1.pdf), [NTAG213/215/216](https://www.nxp.com/docs/en/data-sheet/NTAG213_215_216.pdf) and [DESFire EV3](https://www.nxp.com/docs/en/data-sheet/MF3D_H_X3_SDS.pdf).
+- EMVCo on the [contactless chip](https://www.emvco.com/emv-technologies/emv-contactless-chip/) and [payment tokenisation](https://www.emvco.com/emv-technologies/payment-tokenisation/).

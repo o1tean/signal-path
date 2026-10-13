@@ -1,0 +1,100 @@
+---
+/** The six stages from src/data/course.ts with their lessons from the lesson frontmatter (src/lib/lessons.ts).
+    Default: the home "path" rows (copy: docs/v2/copy/home.md#path) with free / Complete / optional markers.
+    `detailed`: every lesson link per stage (used by /learn). */
+import type { StageId } from '@/data/course';
+import { getStages } from '@/lib/lessons';
+
+interface Props {
+  detailed?: boolean;
+}
+const { detailed = false } = Astro.props;
+const stages = await getStages();
+
+const homeCopy: Record<StageId, { lead: string; line: string }> = {
+  starter: { lead: 'Start here, weeks 0–1', line: 'Set up your lab and find your first frequency.' },
+  signals: { lead: 'Stage 1, weeks 1–3', line: 'Decode a fixed-code remote and explain when replay fails.' },
+  atlas: { lead: 'Stage 2, weeks 4–6', line: 'Classify RFID and NFC training tags and build your signal atlas.' },
+  build: { lead: 'Stage 3, weeks 7–10', line: 'Work with IR, GPIO, USB and Bluetooth, then compile your own app.' },
+  research: { lead: 'Stage 4, weeks 11–12', line: 'Test one security claim and write it up so others can repeat it.' },
+  wifi: { lead: 'Optional extension', line: 'Flash, debug and recover the official Wi-Fi Devboard (3–4 sessions).' },
+};
+---
+{
+  detailed ? (
+    <ol class="relative space-y-4 border-l border-border pl-6 md:pl-8">
+      {stages.map((stage) => (
+        <li id={stage.id} class="relative scroll-mt-24">
+          <span class="absolute top-6 -left-[calc(1.5rem+5px)] size-2.5 rounded-full bg-primary ring-4 ring-background md:-left-[calc(2rem+5px)]" aria-hidden="true" />
+          <div class="rounded-card border border-border bg-card p-5 md:p-6">
+            <p class="text-xs font-medium tracking-wide text-muted-foreground uppercase">{stage.label}</p>
+            <h3 class="mt-2 text-xl">{stage.title}</h3>
+            <p class="mt-2 text-muted-foreground">{stage.description}</p>
+            <ol class="mt-4 grid gap-1.5 text-sm sm:grid-cols-2">
+              {stage.lessons.map((m) => (
+                <li>
+                  <a href={m.href} class="flex min-h-11 items-center gap-2 rounded-md px-2 hover:bg-muted">
+                    <span class="font-mono text-xs text-muted-foreground">{String(m.n).padStart(2, '0')}</span>
+                    <span class="flex-1">{m.title}</span>
+                    {m.free && <span class="pill grey">Free</span>}
+                  </a>
+                </li>
+              ))}
+            </ol>
+          </div>
+        </li>
+      ))}
+    </ol>
+  ) : (
+    <ol class="path">
+      {stages.map((stage) => {
+        const mods = stage.lessons;
+        const copy = homeCopy[stage.id];
+        const free = mods.every((m) => m.free);
+        const optional = stage.id === 'wifi';
+        return (
+          <li class:list={['path-row', free && 'is-free', optional && 'is-optional']}>
+            <span class="node" aria-hidden="true" />
+            <div class="min-w-0">
+              <p class="flex flex-wrap items-center gap-x-2.5 gap-y-1">
+                <b class="font-semibold">{copy.lead}</b>
+                {free ? <span class="pill grey">Free</span> : optional ? <span class="pill grey">Optional</span> : <span class="pill orange">Complete</span>}
+              </p>
+              <p class="mt-1 text-[1.0625rem] leading-snug text-foreground/90">{copy.line}</p>
+            </div>
+            <p class="lessons font-mono text-xs text-muted-foreground tabular-nums">
+              <span class="sr-only">Lessons </span>
+              {mods.map((m) => String(m.n).padStart(2, '0')).join(' · ')}
+            </p>
+          </li>
+        );
+      })}
+    </ol>
+  )
+}
+
+<style>
+  @reference "../../styles/global.css";
+  .path {
+    @apply relative grid;
+  }
+  .path::before {
+    content: '';
+    @apply absolute top-4 bottom-4 left-[0.4375rem] w-px bg-border;
+  }
+  .path-row {
+    @apply relative grid grid-cols-[1rem_minmax(0,1fr)] items-start gap-x-5 border-b border-border py-5 last:border-b-0 sm:grid-cols-[1rem_minmax(0,1fr)_auto] sm:items-center md:py-6;
+  }
+  .node {
+    @apply relative z-10 mt-1.5 size-[0.9375rem] rounded-full border-2 border-primary bg-background sm:mt-0;
+  }
+  .is-free .node {
+    @apply border-success bg-success;
+  }
+  .is-optional .node {
+    @apply border-dashed border-muted-foreground;
+  }
+  .lessons {
+    @apply col-start-2 mt-2 sm:col-start-3 sm:mt-0;
+  }
+</style>

@@ -1,0 +1,375 @@
+---
+id: m15
+number: 15
+slug: 15-app-development
+title: Build your first Flipper app
+description: Build a small Flipper Zero app with uFBT, read every line of its C source, run it on your own device and prove with a firmware counter that it frees its memory.
+stage: build
+week: Week 10
+access: paid
+minutes: 120
+gear:
+  - Flipper Zero on official firmware 1.4.3 (app API 87.1), with its microSD card inserted
+  - a USB-C data cable
+  - a computer running macOS, Linux or Windows, with Python 3.8 or later and an internet connection for the first build
+  - a plain-text or code editor
+transmits: none
+outcome: Build a small external app with uFBT against the SDK that matches your firmware, run it on your own Flipper, and explain every line from entry point to cleanup.
+prerequisites:
+  - m00
+  - m08
+tools: []
+scenes: []
+evidence: A build record with uFBT, SDK and firmware versions, one change you can explain line by line, and the allocation balance of two on-device runs after Back.
+sources:
+  - title: 'uFBT: micro Flipper Build Tool (README)'
+    url: https://github.com/flipperdevices/flipperzero-ufbt
+  - title: 'uFBT on PyPI (release 0.2.6)'
+    url: https://pypi.org/project/ufbt/
+  - title: 'Flipper Developer Docs: Your first app in C'
+    url: https://developer.flipper.net/flipperzero/doxygen/app_dev_your_first_app_in_c.html
+  - title: 'Flipper Developer Docs: FAP (Flipper Application Package)'
+    url: https://developer.flipper.net/flipperzero/doxygen/apps_on_sd_card.html
+  - title: 'Flipper Developer Docs: App manifests'
+    url: https://developer.flipper.net/flipperzero/doxygen/app_manifests.html
+  - title: 'Flipper Developer Docs: GUI'
+    url: https://developer.flipper.net/flipperzero/doxygen/app_dev_gui.html
+  - title: 'Flipper Docs: Tech specs'
+    url: https://docs.flipper.net/zero/development/hardware/tech-specs
+  - title: 'Flipper Zero firmware 1.4.3: app API (api_symbols.csv)'
+    url: https://github.com/flipperdevices/flipperzero-firmware/blob/1.4.3/targets/f7/api_symbols.csv
+  - title: 'Flipper Zero firmware 1.4.3: ViewPort API (view_port.h)'
+    url: https://github.com/flipperdevices/flipperzero-firmware/blob/1.4.3/applications/services/gui/view_port.h
+  - title: 'Flipper Zero firmware 1.4.3: input events (input.h)'
+    url: https://github.com/flipperdevices/flipperzero-firmware/blob/1.4.3/applications/services/input/input.h
+  - title: 'Flipper Zero firmware 1.4.3: canvas and fonts (canvas.h, canvas.c)'
+    url: https://github.com/flipperdevices/flipperzero-firmware/blob/1.4.3/applications/services/gui/canvas.h
+  - title: 'Flipper Zero firmware 1.4.3: app install path (fbt_extapps.py)'
+    url: https://github.com/flipperdevices/flipperzero-firmware/blob/1.4.3/scripts/fbt_tools/fbt_extapps.py
+  - title: 'Flipper Zero firmware 1.4.3: allocation balance log (thread.c)'
+    url: https://github.com/flipperdevices/flipperzero-firmware/blob/1.4.3/furi/core/thread.c
+  - title: 'Flipper Zero firmware 1.4.3: free and sysctl CLI commands (cli_main_commands.c)'
+    url: https://github.com/flipperdevices/flipperzero-firmware/blob/1.4.3/applications/services/cli/cli_main_commands.c
+  - title: 'Flipper official update index (directory.json)'
+    url: https://update.flipperzero.one/firmware/directory.json
+reviewed: '2026-10-13'
+badge: app-development
+---
+
+## Outcome
+
+You can build a small Flipper Zero app from source, run it on your own device, and explain each line from the loader's start to the Back press that ends it.
+
+By the end you can:
+
+- say what a <Term id="fap">`.fap`</Term> is, what its manifest declares, and why it must be built against your firmware's app <Term id="api-major">API</Term>;
+- build and launch an app with <Term id="ufbt">uFBT</Term>, recording the uFBT, <Term id="sdk">SDK</Term> and firmware versions;
+- trace a button press through a callback and a message queue to your main loop, and prove with the firmware's own counter that the app freed what it allocated.
+
+## Before you start
+
+- **Prerequisites:** [Module 0](/learn/00-setup) for the USB connection, and [Module 8](/learn/08-momentum), where you recorded your firmware's API number (87.1 on official 1.4.3). This lesson builds an app for that number.
+- **Gear:** your Flipper with its microSD card, a USB-C data cable, a computer with Python 3.8 or later, and an editor. Basic C helps; every line is explained.
+- **Firmware:** official 1.4.3, the current Release channel (checked 13 October 2026). On a release candidate or Momentum, see the uFBT section for the matching SDK.
+- **Time:** about two hours over two or three sittings: 30 minutes to read, 30 to install and build, 60 at the device.
+- **Transmits:** nothing. The app uses only the screen and the buttons.
+- **Scope:** your own Flipper and your own computer. Build only code you have read.
+
+<Callout variant="warn" title="An app can do anything the firmware exports">
+Apps get no permission prompt. Firmware 1.4.3 exports 2,444 functions to apps (the `+` function rows of `api_symbols.csv`), Sub-GHz transmit and SD card access among them, and any `.fap` you start can call them. Read the source of every app before you run it. Do not flash firmware just to make an app start; change the SDK instead, and take the Module 8 backup before any firmware change.
+</Callout>
+
+## Understand
+
+### An app is a package the loader copies into RAM
+
+A `.fap` (Flipper Application Package) is an ELF executable with metadata and resources bundled in. It lives on the microSD card, and the processor cannot run code from the card. So the firmware's loader reads the file, checks it, copies it into RAM, fills in the address of every firmware function it calls, and jumps to its entry point.
+
+The check is the one from Module 8. Each app records the API version it was built for, and the loader compares the **major** number with the firmware's. Official 1.4.3 declares API 87.1 in `api_symbols.csv`; the 1.5.1 release candidate declares 88.2. An app built with the 1.5.1-rc SDK shows "Outdated Firmware" on 1.4.3, however simple its code.
+
+uFBT, the micro Flipper Build Tool, is a small Python program that downloads a prebuilt toolchain and the SDK (software development kit) for one firmware build: the headers and the list of functions apps may call. It compiles your source against them, so you never build the whole firmware. The SDK you pick decides which firmware accepts the result.
+
+<Figure label="Six boxes in two rows. On your computer: application.fam and lab_companion.c go into uFBT, which holds the toolchain and the SDK for API 87.1, and produces dist/signal_path_companion.fap. On the Flipper: the file is copied over USB to /ext/apps/Tools on the microSD card, the loader checks that the app's API major 87 equals the firmware's 87, and the code is copied into RAM where signal_path_app runs." caption="From source to a running app. The only firmware-specific input is the SDK that uFBT downloads, so the API check on the right is decided on the left, at build time.">
+<svg viewBox="0 0 640 300" width="100%" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+  <defs>
+    <marker id="a15" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto"><path d="M0 0 L8 4 L0 8 z" class="fill-muted-foreground" /></marker>
+  </defs>
+  <text x="10" y="22" class="fill-foreground font-sans" font-size="14" font-weight="700">On your computer</text>
+  <rect x="10" y="36" width="180" height="70" rx="8" class="fill-card stroke-border" stroke-width="1.5" />
+  <text x="22" y="62" class="fill-foreground font-mono" font-size="12">application.fam</text>
+  <text x="22" y="84" class="fill-foreground font-mono" font-size="12">lab_companion.c</text>
+  <rect x="230" y="36" width="180" height="70" rx="8" class="fill-card stroke-primary" stroke-width="1.5" />
+  <text x="242" y="62" class="fill-primary font-sans" font-size="13" font-weight="700">uFBT</text>
+  <text x="242" y="84" class="fill-muted-foreground font-mono" font-size="11">toolchain + SDK, API 87.1</text>
+  <rect x="450" y="36" width="180" height="70" rx="8" class="fill-card stroke-border" stroke-width="1.5" />
+  <text x="462" y="62" class="fill-foreground font-mono" font-size="12">dist/</text>
+  <text x="462" y="84" class="fill-foreground font-mono" font-size="11">signal_path_companion.fap</text>
+  <line x1="190" y1="71" x2="226" y2="71" class="stroke-muted-foreground" stroke-width="1.5" marker-end="url(#a15)" />
+  <line x1="410" y1="71" x2="446" y2="71" class="stroke-muted-foreground" stroke-width="1.5" marker-end="url(#a15)" />
+  <line x1="540" y1="106" x2="540" y2="186" class="stroke-muted-foreground" stroke-width="1.5" marker-end="url(#a15)" />
+  <text x="548" y="150" class="fill-muted-foreground font-mono" font-size="11">USB serial</text>
+  <text x="10" y="172" class="fill-foreground font-sans" font-size="14" font-weight="700">On the Flipper</text>
+  <rect x="450" y="190" width="180" height="70" rx="8" class="fill-card stroke-border" stroke-width="1.5" />
+  <text x="462" y="216" class="fill-foreground font-sans" font-size="13" font-weight="700">microSD card</text>
+  <text x="462" y="238" class="fill-muted-foreground font-mono" font-size="11">/ext/apps/Tools/</text>
+  <rect x="230" y="190" width="180" height="70" rx="8" class="fill-card stroke-info" stroke-width="1.5" />
+  <text x="242" y="216" class="fill-info font-sans" font-size="13" font-weight="700">Loader</text>
+  <text x="242" y="238" class="fill-muted-foreground font-mono" font-size="11">API major 87 = 87 ?</text>
+  <rect x="10" y="190" width="180" height="70" rx="8" class="fill-card stroke-border" stroke-width="1.5" />
+  <text x="22" y="216" class="fill-foreground font-sans" font-size="13" font-weight="700">RAM</text>
+  <text x="22" y="238" class="fill-muted-foreground font-mono" font-size="11">signal_path_app() runs</text>
+  <line x1="450" y1="225" x2="414" y2="225" class="stroke-muted-foreground" stroke-width="1.5" marker-end="url(#a15)" />
+  <line x1="230" y1="225" x2="194" y2="225" class="stroke-muted-foreground" stroke-width="1.5" marker-end="url(#a15)" />
+  <text x="230" y="288" class="fill-muted-foreground font-sans" font-size="11">mismatch: "Outdated App" or "Outdated Firmware", nothing runs</text>
+</svg>
+</Figure>
+
+### The whole app, two files
+
+The course app draws three lines of text and exits on Back. Make a folder named `signal_path_companion` and put these two files in it.
+
+The manifest, `application.fam`, is a Python call that the build reads:
+
+```python
+App(
+    appid="signal_path_companion",
+    name="Signal Path",
+    apptype=FlipperAppType.EXTERNAL,
+    entry_point="signal_path_app",
+    stack_size=2048,
+    fap_category="Tools",
+    fap_version=(1, 0),
+    fap_description="A minimal on-screen companion for the Signal Path learning lab",
+)
+```
+
+Only `appid` and `apptype` are mandatory. `EXTERNAL` means "build a `.fap`". `appid` (lowercase letters, digits and underscores) names the output file, `name` is what the menu shows, and `entry_point` is the C function the loader calls. `stack_size` is in bytes: too small crashes the app, too large wastes heap. `fap_category` picks the folder, so the app lands in `/ext/apps/Tools/` and appears under <Flip>Apps → Tools</Flip>.
+
+The source, `lab_companion.c`:
+
+```c
+#include <furi.h>
+#include <gui/gui.h>
+#include <input/input.h>
+
+/* This example only draws on the screen and handles the Back button. */
+static void signal_path_draw(Canvas* canvas, void* context) {
+    UNUSED(context);
+    canvas_clear(canvas);
+    canvas_set_font(canvas, FontPrimary);
+    canvas_draw_str(canvas, 4, 20, "Signal Path");
+    canvas_set_font(canvas, FontSecondary);
+    canvas_draw_str(canvas, 4, 37, "Predict. Test. Explain.");
+    canvas_draw_str(canvas, 4, 56, "Press Back to exit");
+}
+
+/* Do not block the input service: deliver events to the application's queue. */
+static void signal_path_input(InputEvent* event, void* context) {
+    FuriMessageQueue* queue = context;
+    furi_message_queue_put(queue, event, 0);
+}
+
+int32_t signal_path_app(void* context) {
+    UNUSED(context);
+    FuriMessageQueue* queue = furi_message_queue_alloc(8, sizeof(InputEvent));
+    ViewPort* viewport = view_port_alloc();
+    view_port_draw_callback_set(viewport, signal_path_draw, NULL);
+    view_port_input_callback_set(viewport, signal_path_input, queue);
+    Gui* gui = furi_record_open(RECORD_GUI);
+    gui_add_view_port(gui, viewport, GuiLayerFullscreen);
+
+    InputEvent event;
+    while(true) {
+        if(furi_message_queue_get(queue, &event, FuriWaitForever) == FuriStatusOk &&
+           event.key == InputKeyBack && event.type == InputTypeShort) {
+            break;
+        }
+    }
+
+    view_port_enabled_set(viewport, false);
+    gui_remove_view_port(gui, viewport);
+    view_port_free(viewport);
+    furi_message_queue_free(queue);
+    furi_record_close(RECORD_GUI);
+    return 0;
+}
+```
+
+Every function it calls is marked `+` (available to apps) in the 1.4.3 `api_symbols.csv`, the list the loader resolves against.
+
+### Two threads and a queue
+
+The three functions do not share a thread. `signal_path_app` runs on the thread the loader started for your app. The two callbacks run on the **GUI thread**: `view_port.h` marks both "called from GUI thread". Your app lends the GUI two functions and runs its own loop.
+
+That split explains the queue. A button press reaches the GUI thread, which calls `signal_path_input`. If that callback waited, the whole screen would stall. So it copies the event into a message queue with a timeout of `0` (if the queue is full, drop the event) and returns. Your main loop sleeps in `furi_message_queue_get` with `FuriWaitForever` until an event arrives, checks it, and sleeps again. The queue holds eight events, enough for a burst of presses.
+
+<Figure label="Two horizontal lanes. Top lane, GUI thread: a button press arrives from the input service, signal_path_input copies the event into the queue with timeout 0 and returns; separately, signal_path_draw paints the canvas when a redraw is due. Middle: a message queue with eight slots. Bottom lane, app thread: furi_message_queue_get waits forever, then the event is tested for Back and Short; no loops back to waiting, yes leads to cleanup and return 0." caption="Who runs what. The callbacks belong to the GUI thread and must return quickly. Your loop owns the decision to exit.">
+<svg viewBox="0 0 640 290" width="100%" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+  <text x="10" y="20" class="fill-info font-sans" font-size="13" font-weight="700">GUI thread (firmware)</text>
+  <rect x="10" y="30" width="130" height="50" rx="8" class="fill-card stroke-border" stroke-width="1.5" />
+  <text x="22" y="52" class="fill-foreground font-sans" font-size="12">button press</text>
+  <text x="22" y="70" class="fill-muted-foreground font-mono" font-size="10">from input service</text>
+  <rect x="180" y="30" width="190" height="50" rx="8" class="fill-card stroke-info" stroke-width="1.5" />
+  <text x="192" y="52" class="fill-foreground font-mono" font-size="12">signal_path_input()</text>
+  <text x="192" y="70" class="fill-muted-foreground font-mono" font-size="10">put(event, timeout 0)</text>
+  <rect x="410" y="30" width="220" height="50" rx="8" class="fill-card stroke-info" stroke-width="1.5" />
+  <text x="422" y="52" class="fill-foreground font-mono" font-size="12">signal_path_draw()</text>
+  <text x="422" y="70" class="fill-muted-foreground font-mono" font-size="10">paints the canvas on redraw</text>
+  <line x1="140" y1="55" x2="176" y2="55" class="stroke-muted-foreground" stroke-width="1.5" marker-end="url(#a15)" />
+  <line x1="275" y1="80" x2="275" y2="116" class="stroke-muted-foreground" stroke-width="1.5" marker-end="url(#a15)" />
+  <rect x="180" y="120" width="190" height="40" rx="6" class="fill-muted stroke-border" stroke-width="1.5" />
+  <line x1="203.75" y1="120" x2="203.75" y2="160" class="stroke-border" stroke-width="1" />
+  <line x1="227.5" y1="120" x2="227.5" y2="160" class="stroke-border" stroke-width="1" />
+  <line x1="251.25" y1="120" x2="251.25" y2="160" class="stroke-border" stroke-width="1" />
+  <line x1="275" y1="120" x2="275" y2="160" class="stroke-border" stroke-width="1" />
+  <line x1="298.75" y1="120" x2="298.75" y2="160" class="stroke-border" stroke-width="1" />
+  <line x1="322.5" y1="120" x2="322.5" y2="160" class="stroke-border" stroke-width="1" />
+  <line x1="346.25" y1="120" x2="346.25" y2="160" class="stroke-border" stroke-width="1" />
+  <text x="384" y="145" class="fill-muted-foreground font-mono" font-size="11">queue: 8 InputEvents</text>
+  <line x1="275" y1="160" x2="275" y2="196" class="stroke-muted-foreground" stroke-width="1.5" marker-end="url(#a15)" />
+  <text x="10" y="192" class="fill-primary font-sans" font-size="13" font-weight="700">App thread (yours)</text>
+  <rect x="180" y="200" width="190" height="50" rx="8" class="fill-card stroke-primary" stroke-width="1.5" />
+  <text x="192" y="222" class="fill-foreground font-mono" font-size="12">queue_get(...)</text>
+  <text x="192" y="240" class="fill-muted-foreground font-mono" font-size="10">waits forever</text>
+  <rect x="410" y="200" width="220" height="50" rx="8" class="fill-card stroke-primary" stroke-width="1.5" />
+  <text x="422" y="222" class="fill-foreground font-mono" font-size="12">Back and Short?</text>
+  <text x="422" y="240" class="fill-muted-foreground font-mono" font-size="10">yes: cleanup, return 0</text>
+  <line x1="370" y1="225" x2="406" y2="225" class="stroke-muted-foreground" stroke-width="1.5" marker-end="url(#a15)" />
+  <path d="M520 250 L520 274 L120 274 L120 225 L176 225" fill="none" class="stroke-muted-foreground" stroke-width="1.5" stroke-dasharray="4 3" marker-end="url(#a15)" />
+  <text x="130" y="268" class="fill-muted-foreground font-mono" font-size="10">no: wait again</text>
+</svg>
+</Figure>
+
+The exit test is precise. One press produces several event types, and `InputTypeShort` comes only when the button is released before the long-press threshold. Hold Back longer and you get `InputTypeLong`, then a release with no Short, so the app stays open.
+
+### Cleanup gives back what the GUI holds first
+
+Everything the app takes, it gives back, and the order matters in one place: the GUI must let go of the viewport before you free it. `view_port_free` checks that it is detached and crashes the Flipper on purpose if not. So the code detaches from the GUI first (disable, remove), frees the viewport, then frees the queue and closes the record. The queue and the record are independent of each other, so their order is free.
+
+<div class="table-scroll">
+
+| Taken at start | Given back at exit | If you forget |
+| --- | --- | --- |
+| `furi_message_queue_alloc` | `furi_message_queue_free` (4th) | the queue's memory is lost until reboot |
+| `view_port_alloc` | `view_port_free` (3rd) | the viewport's memory is lost until reboot |
+| `gui_add_view_port` | `view_port_enabled_set(false)`, then `gui_remove_view_port` (1st and 2nd) | the GUI keeps calling into an app that is gone; expect a crash |
+| `furi_record_open(RECORD_GUI)` | `furi_record_close(RECORD_GUI)` (5th) | the GUI record's open count never drops |
+
+</div>
+
+You can check the first two rows with a number. With heap tracking on, the firmware logs a line ending in `allocation balance:`, the bytes your app thread allocated and did not free: `0` at Info level, anything else as an error. One caveat from the source: `gui_add_view_port` appends to a list inside the GUI, and if that list has to grow, the growth is charged to your thread. So the first run may read above zero for reasons that are not a leak. Record both runs and treat the second as the result; the source predicts 0 for the unmodified app, and your measurement settles it.
+
+### What the screen is actually showing you
+
+The display is a 128 × 64 pixel monochrome LCD. The origin `(0, 0)` is the top-left corner, x runs right and y runs down. `canvas_draw_str` places text by its **baseline**, the line letters sit on, so at `y = 20` the letters sit on row 20 and rise above it. In firmware 1.4.3, `canvas.c` gives `FontPrimary` a height of 8 pixels and `FontSecondary` 7.
+
+<Figure label="The 128 by 64 pixel screen drawn four times larger on a grid of 16-pixel squares. Three dashed baselines at y 20, 37 and 56. 'Signal Path' in the primary font sits on y 20 starting at x 4; 'Predict. Test. Explain.' and 'Press Back to exit' in the secondary font sit on y 37 and y 56." caption="The companion's screen at four times size, with the coordinates from the source. Glyph widths here are approximate; on the device, canvas_string_width tells you the exact width in pixels.">
+<svg viewBox="0 0 640 320" width="100%" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+  <rect x="40" y="24" width="512" height="256" class="fill-card stroke-foreground" stroke-width="2" />
+  <g class="stroke-border" stroke-width="1">
+    <line x1="104" y1="24" x2="104" y2="280" /><line x1="168" y1="24" x2="168" y2="280" /><line x1="232" y1="24" x2="232" y2="280" /><line x1="296" y1="24" x2="296" y2="280" /><line x1="360" y1="24" x2="360" y2="280" /><line x1="424" y1="24" x2="424" y2="280" /><line x1="488" y1="24" x2="488" y2="280" />
+    <line x1="40" y1="88" x2="552" y2="88" /><line x1="40" y1="152" x2="552" y2="152" /><line x1="40" y1="216" x2="552" y2="216" />
+  </g>
+  <line x1="40" y1="104" x2="552" y2="104" class="stroke-primary" stroke-width="1.5" stroke-dasharray="6 4" />
+  <line x1="40" y1="172" x2="552" y2="172" class="stroke-info" stroke-width="1.5" stroke-dasharray="6 4" />
+  <line x1="40" y1="248" x2="552" y2="248" class="stroke-info" stroke-width="1.5" stroke-dasharray="6 4" />
+  <text x="56" y="104" class="fill-foreground font-sans" font-size="38" font-weight="700">Signal Path</text>
+  <text x="56" y="172" class="fill-foreground font-sans" font-size="28">Predict. Test. Explain.</text>
+  <text x="56" y="248" class="fill-foreground font-sans" font-size="28">Press Back to exit</text>
+  <text x="560" y="108" class="fill-primary font-mono" font-size="11">y = 20</text>
+  <text x="560" y="176" class="fill-info font-mono" font-size="11">y = 37</text>
+  <text x="560" y="252" class="fill-info font-mono" font-size="11">y = 56</text>
+  <text x="560" y="284" class="fill-muted-foreground font-mono" font-size="11">y = 63</text>
+  <text x="40" y="16" class="fill-muted-foreground font-mono" font-size="11">(0, 0)</text>
+  <text x="552" y="16" text-anchor="end" class="fill-muted-foreground font-mono" font-size="11">x = 127</text>
+  <text x="56" y="300" class="fill-muted-foreground font-mono" font-size="11">x = 4</text>
+  <text x="296" y="300" text-anchor="middle" class="fill-muted-foreground font-mono" font-size="11">grid: 16 px</text>
+</svg>
+</Figure>
+
+Text past x = 127 is cut off, and nothing warns you at build time. Text fit is a device test.
+
+### The uFBT commands you will use
+
+`ufbt` builds the app in the current folder, with the `.fap` in `dist/`. `ufbt launch` builds, copies the file over USB, closes any running app and starts this one. `ufbt status` prints the uFBT version, the SDK version and its channel. `ufbt update --channel=release` switches the SDK to `release`, `rc` or `dev`. `ufbt cli` opens the Flipper's command line over USB.
+
+On the first run uFBT downloads the toolchain and the SDK from the official **release** channel into `.ufbt` in your home folder; later builds reuse them. Momentum publishes an index in the same format, and `ufbt update --index-url=https://up.momentum-fw.dev/firmware/directory.json` selects its SDK. Flipper's first-app guide suggests `ufbt flash_usb` when versions disagree, which rewrites your firmware to match the SDK. In this course you change the SDK to match the firmware.
+
+### Misconceptions
+
+- **"A .fap is a small firmware."** It is an app the firmware loads into RAM. Firmware lives in internal flash and is replaced only by an update.
+- **"Build against the newest SDK to be safe."** Newer means a higher API major, which your release firmware refuses.
+- **"App logic goes in the input callback."** It runs on the GUI thread. Hand the event over and return.
+
+## Predict and practise
+
+The first lab needs only your computer; the second needs the Flipper.
+
+{/* TODO: tool. A canvas preview that renders canvas_draw_str calls at 128 x 64 with the real FontPrimary/FontSecondary metrics would let learners check text fit before building. */}
+
+<Lab kicker="Lab 15.1" title="Read, predict and build" gear="A computer with Python 3.8 or later. Nothing connects to the Flipper yet.">
+
+1. **Predict first.** Read both files above and write in your notebook: what the screen will show, which button closes the app, what happens if you press OK, and what happens if you *hold* Back for two seconds.
+2. In the folder that contains `signal_path_companion`, not inside it, create a virtual environment. On macOS or Linux run `python3 -m venv .venv`, then `source .venv/bin/activate`. On Windows PowerShell run `py -m venv .venv`, then `.venv\Scripts\Activate.ps1`.
+3. Install the tool: `python -m pip install --upgrade ufbt`. Record the output of `python -m pip show ufbt`.
+4. Change into `signal_path_companion` and run `ufbt`. The first run downloads the SDK and toolchain. Then run `ufbt status` and record the SDK version and channel.
+5. List `dist/`. You should find `signal_path_companion.fap`.
+6. **Negative control.** Change `canvas_draw_str` on the "Signal Path" line to `canvas_draw_strg` and build again. Record the message and the line it names, if it gives one. Undo the change and confirm the build passes.
+
+</Lab>
+
+Expected observation: the build passes, `ufbt status` reports 1.4.3 on the release channel, and the typo stops the build, with an error or a linker failure that names `canvas_draw_strg`. If the SDK version differs from your firmware, run `ufbt update --channel=release` and build again.
+
+<Win>you have a `.fap` in `dist/`, a recorded uFBT and SDK version that matches your firmware's API major, and a build error you caused and fixed on purpose.</Win>
+
+<Lab kicker="Lab 15.2" title="Run it, change it, prove the cleanup" gear="Your Flipper on official 1.4.3, USB-C cable. Nothing transmits.">
+
+1. Connect the Flipper and **close qFlipper**, so only uFBT talks to the USB serial port. In the app folder run `ufbt launch` and compare the screen with your prediction.
+2. Press OK and the arrows: nothing should change. Hold Back for two seconds and release: the app should stay open. Press Back briefly: you return to where you were.
+3. Start it again from <Flip>Apps → Tools → Signal Path</Flip> to confirm the copy on the SD card works without the computer.
+4. **Predict, then change.** Replace `"Signal Path"` with your lab's name. Before you build, write whether it will fit in 124 pixels from x = 4. Run `ufbt launch` and check the right edge.
+5. **Measure the cleanup.** Run `ufbt cli`, then `sysctl heap_track main`, then `log info`. **Predict the balance before you measure** and write it down. Start the app from the Apps menu, press Back, and find the line ending in `allocation balance:`. Do it twice, record both numbers and treat the second as the result. Press Ctrl+C to stop the log, then type `exit` to leave the CLI. The tracking setting is stored on the Flipper, so it stays on until you set it to `none`.
+6. **Control.** `ufbt launch` and an open `ufbt cli` cannot share the serial port, so make sure the CLI is closed. Comment out `furi_message_queue_free(queue);` and run `ufbt launch`. Close the app with Back, then open `ufbt cli` again, run `log info`, and start and close the app twice from the Apps menu. The balance should be non-zero on both runs, because the queue leaks every time. Leave the CLI, restore the line, run `ufbt launch`, and confirm with two more runs that the second is back to 0.
+7. Open `ufbt cli`, run `sysctl heap_track none`, leave the CLI, and restart with <Flip>Settings → Power → Reboot → Reboot Flipper</Flip> to recover the memory the control leaked.
+
+</Lab>
+
+Expected observation: the three lines appear where the screen figure puts them, only a short Back exits, a title wider than 124 pixels is clipped at the right edge with no warning, and the second-run balance for the clean build is the number your prediction named (the source says 0), and every run of the build without the queue free reads a positive number.
+
+<Win>you have a recorded second-run allocation balance for the clean build, a non-zero balance from a leak you introduced on purpose, and a title change whose fit you predicted before you saw it.</Win>
+
+### Stretch: a button counter
+
+Add a counter that Up increases and Down decreases, kept in a small struct that you pass to `view_port_draw_callback_set` in place of `NULL` and format with `snprintf`. Call `view_port_update(viewport)` after each change so the GUI thread redraws. Before you write it, predict what it shows at start, what happens below zero, and the allocation balance after ten open-and-close cycles. One aligned 32-bit write is a single step on this processor, so a plain `int32_t` counter needs no lock; larger state needs a `FuriMutex`.
+
+## Check yourself
+
+<Quiz id="m15" />
+
+Two questions to answer in a sentence each, without notes:
+
+1. A friend's app builds cleanly, but the Flipper shows "Outdated Firmware" when they start it. What did their build use, and what is the fix that does not touch the firmware?
+2. Why does `signal_path_input` pass a timeout of `0` while the main loop waits forever?
+
+## Keep evidence
+
+Save an entry in your [notebook](/learn/notebook?module=m15):
+
+- **Setup:** OS, Python and uFBT versions, the SDK version and channel from `ufbt status`, and your firmware version and API.
+- **Prediction:** Lab 15.1 step 1, the title-fit guess from Lab 15.2 step 4 and the balance you expected in step 5, written before you measured.
+- **Observation:** the build result, the typo error, what each button did, whether the title fitted, and every allocation balance.
+- **Explanation:** one change you made, explained line by line, and why the leak control gave a non-zero balance.
+
+Adequate evidence names versions on both sides of the API check, shows one failure you caused on purpose, and records both balances for the build you kept, with the second marked as the result. Without a Flipper, mark the device steps "untested". An example:
+
+> macOS 15, Python 3.12, ufbt 0.2.6, SDK 1.4.3 release; Flipper 1.4.3, API 87.1. Predicted: three lines, short Back exits, long Back stays. Typo: build failed naming canvas_draw_strg, fixed. Device: as predicted. "Bench 2 Radio Lab" predicted to fit, fitted. Predicted 0. Balances: first run [your number], second run [your number]; without queue free, non-zero twice; restored, second run [your number]. The queue was allocated on my thread and never freed.
+
+Set a review date one week from today. When you can sketch the two-thread figure from memory, mark it retrieved.
+
+## Continue
+
+Next is [Module 16: Authorized security research](/learn/16-security-lab), where you turn a claim into a test with positive and negative controls, the habit behind the leak control here. With the official Wi-Fi Devboard, [Module 18](/learn/18-wifi-devboard) adds UART logs, SWD debugging and app-to-board communication.
+
+**Retrieval question for next week:** without looking, name the five calls the companion makes at exit, in order, and say which one would crash the device if it ran first.
+
+Primary sources, all checked 13 October 2026, are listed in this lesson's sources: the uFBT README and PyPI page, the Flipper developer docs for apps, manifests and the GUI, and the firmware 1.4.3 files behind every API, path, font and log detail above.

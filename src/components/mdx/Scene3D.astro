@@ -1,0 +1,33 @@
+---
+/** Lazy 3D concept scene (src/widgets/scene3d, options in its README). Mounts when scrolled near the
+    viewport. `opts.hero` renders a frameless 2:1 stage for the home page; put it inside an element with
+    `data-signal-stage data-mode="subghz|nfc|wifi"` and the device screen follows that attribute. */
+interface Props {
+  name: string;
+  caption?: string;
+  label?: string;
+  opts?: Record<string, unknown>;
+  class?: string;
+}
+const { name, caption = 'Concept animation · drag to rotate', label, opts = {}, class: className } = Astro.props;
+const hero = opts.hero === true;
+---
+<figure
+  class:list={[
+    'scene3d not-prose overflow-hidden p-0',
+    hero ? 'm-0 bg-transparent' : 'my-8 rounded-card border border-border bg-scope-bg',
+    className,
+  ]}
+  data-scene3d={name}
+  data-label={label}
+  data-opts={JSON.stringify(opts)}
+>
+  <div data-scene-stage class:list={['relative flex items-center justify-center', hero ? 'aspect-[2/1]' : 'aspect-[16/9]']}></div>
+  {caption && (
+    <figcaption class:list={['m-0 px-4 py-2 font-mono text-xs', hero ? 'text-center text-muted-foreground' : 'border-t border-scope-grid text-scope-text']}>{caption}</figcaption>
+  )}
+</figure>
+<script>
+  import { mountAll } from '@/widgets/registry';
+  mountAll();
+</script>

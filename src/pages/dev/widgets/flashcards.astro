@@ -1,0 +1,11 @@
+---
+import Base from '@/layouts/Base.astro';
+import Widget from '@/components/mdx/Widget.astro';
+export const prerender = false;
+if (!import.meta.env.DEV) return new Response(null, { status: 404 });
+---
+<Base title="Flashcards (dev)" description="Dev-only page for the flashcards widget.">
+  <main class="mx-auto max-w-3xl px-4 py-10">
+    <Widget name="flashcards" />
+  </main>
+</Base>

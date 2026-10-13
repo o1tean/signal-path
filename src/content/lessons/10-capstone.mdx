@@ -1,0 +1,304 @@
+---
+id: m10
+number: 10
+slug: 10-capstone
+title: 'Foundation project: your signal atlas'
+description: Run one six-step routine on a remote, an LF tag and an NFC card you own, and build a signal atlas where every entry states its evidence and its limits.
+stage: atlas
+week: Week 6
+access: paid
+minutes: 90
+gear:
+  - Flipper Zero on official firmware 1.4.3 (the analyzer constants below were checked against that release), with a microSD card
+  - one Sub-GHz remote or wireless doorbell you own
+  - one 125 kHz training tag you own that is not tied to any access system, such as the T5577 card from Module 6
+  - one 13.56 MHz practice card or NTAG sticker you own
+  - your notebook entries from Modules 1 to 9, if you kept them
+  - a browser for the Signal Atlas
+transmits: none
+outcome: Classify three devices you own by band, frequency, modulation, protocol and code type, and record a replay verdict for each with the evidence behind it and one stated limitation.
+prerequisites:
+  - m04
+  - m05
+  - m06
+  - m07
+  - m09
+tools:
+  - signal-atlas
+scenes: []
+evidence: An exported atlas with three entries you classified yourself, each with the screen evidence, a control, a replay verdict and one stated limitation, written into the notes column.
+sources:
+  - title: 'Flipper Docs: Reading signals (Frequency Analyzer, presets, Config)'
+    url: https://docs.flipper.net/zero/sub-ghz/read
+  - title: 'Flipper Docs: Reading RAW signals'
+    url: https://docs.flipper.net/zero/sub-ghz/read-raw
+  - title: 'Flipper Docs: Supported vendors'
+    url: https://docs.flipper.net/zero/sub-ghz/supported-vendors
+  - title: 'Flipper Docs: Frequencies'
+    url: https://docs.flipper.net/zero/sub-ghz/frequencies
+  - title: 'Flipper Docs: Reading 125 kHz RFID cards'
+    url: https://docs.flipper.net/zero/rfid/read
+  - title: 'Flipper Docs: Reading NFC cards'
+    url: https://docs.flipper.net/zero/nfc/read
+  - title: 'Flipper Zero firmware 1.4.3: default frequency and hopper lists (subghz_setting.c)'
+    url: https://github.com/flipperdevices/flipperzero-firmware/blob/1.4.3/lib/subghz/subghz_setting.c
+  - title: 'Flipper Zero firmware 1.4.3: Frequency Analyzer worker (subghz_frequency_analyzer_worker.c)'
+    url: https://github.com/flipperdevices/flipperzero-firmware/blob/1.4.3/applications/main/subghz/helpers/subghz_frequency_analyzer_worker.c
+  - title: 'Flipper Zero firmware 1.4.3: KeeLoq decoder (keeloq.c)'
+    url: https://github.com/flipperdevices/flipperzero-firmware/blob/1.4.3/lib/subghz/protocols/keeloq.c
+  - title: 'Microchip HCS301 KeeLoq code hopping encoder datasheet (DS21143C)'
+    url: https://ww1.microchip.com/downloads/aemDocuments/documents/MCU08/ProductDocuments/DataSheets/21143C.pdf
+reviewed: '2026-10-13'
+badge: atlas-builder
+---
+
+## Outcome
+
+You can take a device you own that you have never examined, run the same six steps on it, and write an atlas entry that someone else could check.
+
+By the end you can:
+
+- identify the band, frequency, modulation and protocol of a Sub-GHz remote, an LF tag and an NFC card, using the right Flipper app for each;
+- classify a code as fixed, rolling or unknown from the evidence on screen, and say why a changing value alone does not prove rolling security;
+- export an atlas in which every row states what you saw, the control you ran and what you have not established.
+
+## Before you start
+
+- **Prerequisites:** [Module 4](/learn/04-transmit) for the replay tests your verdicts cite, [Module 5](/learn/05-raw-and-rolling) for RAW and rolling codes, [Module 6](/learn/06-rfid) and [Module 7](/learn/07-nfc) for the two card bands, and [Module 9](/learn/09-troubleshooting) for devices that will not decode. This lesson adds no new mechanism; it joins the earlier ones into one routine.
+- **Gear:** your Flipper on official firmware 1.4.3, three lab targets you own (one Sub-GHz remote or doorbell, one 125 kHz tag not tied to any access system, one 13.56 MHz practice card or NTAG sticker), and a browser.
+- **Time:** about 90 minutes: 25 to read, 15 in the Signal Atlas, 50 at the bench. The bench work can be spread over several days; the atlas keeps your rows.
+- **Transmits:** nothing. Every step listens or reads. A replay verdict cites the test you ran in [Module 4](/learn/04-transmit), or says "expected" or "unknown".
+- **Scope:** your own devices, in your own space. A device that shows up on the analyzer but belongs to someone else stays out of your atlas.
+
+<Callout variant="legal" title="The rule does not expire">
+Capture, read and replay only devices **you own or have written permission to test**, in a space you control. Knowing how a system works is not permission to test it. Before any later transmission, run the three checks in the [Romania lab guide](/romania-lab-guide).
+</Callout>
+
+## Understand
+
+### Why a project instead of a new topic
+
+A lab with the answer printed at the bottom tests whether you can follow steps. The skill this course is after is picking up a device you have not examined and, within a few minutes, saying "433.92 MHz, AM650, Princeton 24-bit, fixed code, replay expected to work because the receiver checks no counter", with evidence for each part of that sentence.
+
+Your **signal atlas** is the record of that skill: one row per device, kept in the Signal Atlas tool mounted below. If you can fill a row the same way for every device, you have learned the foundation.
+
+### The six-step routine
+
+Everything from Modules 1 to 9 reduces to six steps. Run them in order on any unknown Sub-GHz remote.
+
+<Figure label="Six steps in two rows. Row one: 1 frequency, using the Frequency Analyzer; 2 modulation, by sweeping presets in Read; 3 decode, with Read or Read RAW. Row two: 4 fixed or rolling, by comparing presses; 5 save and label, with a clear name; 6 replay verdict, stating why or why not." caption="The same six steps for every Sub-GHz device. Steps 1 and 2 fix the receiver's two dials. Steps 3 and 4 interpret what it hears. Steps 5 and 6 make the result checkable.">
+<svg viewBox="0 0 640 230" width="100%" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+  <g class="font-mono" font-size="13">
+    <rect x="10" y="20" width="180" height="62" rx="8" fill="none" class="stroke-primary" stroke-width="1.5" />
+    <text x="100" y="46" text-anchor="middle" class="fill-primary" font-weight="700">1 frequency</text>
+    <text x="100" y="68" text-anchor="middle" class="fill-muted-foreground" font-size="11">Frequency Analyzer</text>
+    <rect x="230" y="20" width="180" height="62" rx="8" fill="none" class="stroke-primary" stroke-width="1.5" />
+    <text x="320" y="46" text-anchor="middle" class="fill-primary" font-weight="700">2 modulation</text>
+    <text x="320" y="68" text-anchor="middle" class="fill-muted-foreground" font-size="11">sweep presets in Read</text>
+    <rect x="450" y="20" width="180" height="62" rx="8" fill="none" class="stroke-foreground" stroke-width="1.5" />
+    <text x="540" y="46" text-anchor="middle" class="fill-foreground" font-weight="700">3 decode</text>
+    <text x="540" y="68" text-anchor="middle" class="fill-muted-foreground" font-size="11">Read, or Read RAW</text>
+    <rect x="10" y="148" width="180" height="62" rx="8" fill="none" class="stroke-warning" stroke-width="1.5" />
+    <text x="100" y="174" text-anchor="middle" class="fill-warning" font-weight="700">4 fixed or rolling</text>
+    <text x="100" y="196" text-anchor="middle" class="fill-muted-foreground" font-size="11">compare presses</text>
+    <rect x="230" y="148" width="180" height="62" rx="8" fill="none" class="stroke-foreground" stroke-width="1.5" />
+    <text x="320" y="174" text-anchor="middle" class="fill-foreground" font-weight="700">5 save and label</text>
+    <text x="320" y="196" text-anchor="middle" class="fill-muted-foreground" font-size="11">doorbell-433-am650</text>
+    <rect x="450" y="148" width="180" height="62" rx="8" fill="none" class="stroke-success" stroke-width="1.5" />
+    <text x="540" y="174" text-anchor="middle" class="fill-success" font-weight="700">6 replay verdict</text>
+    <text x="540" y="196" text-anchor="middle" class="fill-muted-foreground" font-size="11">and the reason</text>
+  </g>
+  <g class="stroke-muted-foreground fill-muted-foreground" stroke-width="1.5">
+    <line x1="190" y1="51" x2="224" y2="51" /><polygon points="230,51 222,46 222,56" />
+    <line x1="410" y1="51" x2="444" y2="51" /><polygon points="450,51 442,46 442,56" />
+    <path d="M540 82 V115 H100 V142" fill="none" /><polygon points="100,148 95,140 105,140" />
+    <line x1="190" y1="179" x2="224" y2="179" /><polygon points="230,179 222,174 222,184" />
+    <line x1="410" y1="179" x2="444" y2="179" /><polygon points="450,179 442,174 442,184" />
+  </g>
+</svg>
+</Figure>
+
+1. **Frequency.** <Flip>Sub-GHz → Frequency Analyzer</Flip>, remote very close, button held down. Read the number.
+2. **Modulation.** Open <Flip>Sub-GHz → Read</Flip>, press <Flip>Config</Flip>, set that frequency with Hopping off, and sweep `AM650`, `AM270`, `FM476`, `FM238` until something decodes. The winning preset tells you OOK or 2-FSK ([Module 2](/learn/02-modulation)).
+3. **Decode, or go RAW.** If Read names a <Term id="protocol">protocol</Term>, record the name and bit count. If nothing decodes on any preset but the analyzer saw a peak, record it with <Flip>Read RAW</Flip>: the signal is real, and the firmware does not know its protocol.
+4. **Fixed or rolling.** Press the button three to five times and compare the reads. The next section shows what to compare.
+5. **Save and label.** A name you will recognise in a year: `doorbell-433-am650` beats `Sub_042`. For dynamic protocols (Flipper's vendor page says "encrypted") official firmware disables Save, so you write the fields down instead.
+6. **Replay verdict.** One of "works (tested in Module 4)", "expected to work", "expected to fail if the receiver already saw that press" or "unknown", followed by the reason. The reason matters more than the verdict.
+
+The card bands follow the same idea with different apps. A 125 kHz tag goes in <Flip>125 kHz RFID → Read</Flip>, which switches between ASK and PSK coding every three seconds and names a protocol such as EM4100 or HID H10301. A 13.56 MHz card goes in <Flip>NFC → Read</Flip>, which names a type such as NTAG or MIFARE Classic and saves what it could read. The band decides the app.
+
+<div class="table-scroll">
+
+| Band | Flipper app | What identifies it | What a read gives you | Typical atlas verdict |
+| --- | --- | --- | --- | --- |
+| **Sub-GHz**, 300–348, 387–464, 779–928 MHz | Sub-GHz | Frequency Analyzer peak, then a preset that decodes | Protocol, bit count, key, or a RAW recording | fixed, rolling or unknown, from repeated presses |
+| **LF**, 125 kHz | 125 kHz RFID | The tag answers only this app, within a few centimetres | Protocol and a hex ID | fixed ID; rewritable only if the card is a T5577, which the packaging tells you |
+| **HF / NFC**, 13.56 MHz | NFC | The card answers only this app | Type, UID, SAK, ATQA, and any open pages or sectors | depends on what the card protects; record what was **not** read |
+
+</div>
+
+Band edges are Flipper's documented receive ranges, checked 13 October 2026.
+
+### What the analyzer screen is actually showing you
+
+The Frequency Analyzer does not measure your remote's frequency directly. In firmware 1.4.3 it runs two passes, over and over:
+
+<div class="table-scroll">
+
+| Pass | Frequencies it tries | Receive filter | Step |
+| --- | --- | --- | --- |
+| Coarse | the 17 frequencies in the Config list, from 300.00 to 925.00 MHz | 650 kHz | one list entry at a time |
+| Fine | from 300 kHz below to just under 300 kHz above the strongest coarse hit (last step +280 kHz) | 58 kHz | 20 kHz |
+
+</div>
+
+It shows the strongest fine-pass result, smoothed with a running average (heavy smoothing for small changes), but only if the signal beats a threshold. Flipper's guide gives −90 dBm and the 1.4.3 source uses −93 dBm; this lesson says "about −90 dBm". Press Left or Right for a second screen with up to 15 measured frequencies.
+
+**Worked example.** Your doorbell is labelled 433.92 MHz but its crystal sits a little low. The coarse pass finds 433.92 MHz strongest. The fine pass then tests 433.62, 433.64 and so on in 20 kHz steps up to 434.20 MHz. The doorbell's energy peaks between two steps and the average blends successive results, so the screen may show 433.905 on one press and 433.918 on the next. Both are the same remote. Write the value you saw most often and set Read to the nearest list frequency, 433.92 MHz; the 650 kHz Read filter covers the difference.
+
+A blank analyzer does **not** prove:
+
+- that nothing transmitted. The coarse pass only listens near the 17 list frequencies, so a remote at 330 MHz, far from all of them, never gets a fine pass;
+- that the remote is broken. A weak battery or too much distance can keep it under about −90 dBm. Press closer and change the battery first.
+
+### Fixed, rolling or unknown: what to compare
+
+Step 4 is where most wrong atlas entries come from. A <Term id="fixed-code">fixed code</Term> sends the same message every press. A <Term id="rolling-code">rolling code</Term> sends a different message every press because a counter inside the remote moves forward, and the receiver rejects counter values it has already accepted ([Module 4](/learn/04-transmit) showed the window).
+
+What you can see depends on the protocol. A Princeton read in official firmware shows `Key`, `Sn` and `Btn`, plus `Yek`, `Te` and `GT` lines you can ignore here, and a fixed-code remote gives the same `Key` every press. A <Term id="keeloq">KeeLoq</Term> read is laid out differently. In 1.4.3 its decoder is registered for AM presets only and carries no Save flag, so expect it on AM650 or AM270 and expect Save to be missing.
+
+<Figure label="A bar divided into the 66-bit HCS301 KeeLoq code word: 32 bits of encrypted hopping code, then 28 bits of serial number, 4 button bits and 2 status bits. The hopping part is marked as changing every press; serial and button are marked as the same every press. Below, the Flipper Read screen fields are mapped: Hop to the encrypted 32 bits, Fix to the serial and button bits." caption="The HCS301 code word, from Microchip's datasheet. Each press moves the 16-bit counter by one, and the cipher turns that small step into a hopping code that looks unrelated to the last (Microchip: more than 50% of the bits change). The serial and button bits stay put. Flipper decodes 64 of the 66 bits and labels the two halves Hop and Fix.">
+<svg viewBox="0 0 640 200" width="100%" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+  <g class="font-mono" font-size="12">
+    <rect x="10" y="40" width="300" height="50" class="fill-warning stroke-warning" fill-opacity="0.12" stroke-width="1.5" />
+    <rect x="310" y="40" width="262" height="50" class="fill-primary stroke-primary" fill-opacity="0.08" stroke-width="1.5" />
+    <rect x="572" y="40" width="38" height="50" class="fill-primary stroke-primary" fill-opacity="0.18" stroke-width="1.5" />
+    <rect x="610" y="40" width="20" height="50" fill="none" class="stroke-muted-foreground" stroke-width="1.5" />
+    <text x="160" y="62" text-anchor="middle" class="fill-foreground" font-weight="700">hopping code, 32 bits</text>
+    <text x="160" y="80" text-anchor="middle" class="fill-muted-foreground" font-size="11">encrypted counter</text>
+    <text x="441" y="62" text-anchor="middle" class="fill-foreground" font-weight="700">serial, 28 bits</text>
+    <text x="441" y="80" text-anchor="middle" class="fill-muted-foreground" font-size="11">same every press</text>
+    <text x="591" y="70" text-anchor="middle" class="fill-foreground" font-size="11">btn</text>
+    <text x="620" y="30" text-anchor="middle" class="fill-muted-foreground" font-size="10">st</text>
+    <line x1="620" y1="33" x2="620" y2="40" class="stroke-muted-foreground" stroke-width="1" />
+    <text x="160" y="26" text-anchor="middle" class="fill-warning" font-size="11">changes every press</text>
+    <text x="10" y="26" class="fill-muted-foreground" font-size="11">first</text>
+    <path d="M12 110 V124 H308 V110" fill="none" class="stroke-warning" stroke-width="1.5" />
+    <path d="M312 110 V124 H608 V110" fill="none" class="stroke-primary" stroke-width="1.5" />
+    <text x="160" y="148" text-anchor="middle" class="fill-warning" font-weight="700">Hop:0x…  on the Read screen</text>
+    <text x="460" y="148" text-anchor="middle" class="fill-primary" font-weight="700">Fix:0x…  = Btn + Sn</text>
+    <text x="320" y="186" text-anchor="middle" class="fill-muted-foreground" font-size="11">66 bits sent · 64 decoded by Flipper · 2 status bits not shown</text>
+  </g>
+</svg>
+</Figure>
+
+On a KeeLoq remote you own, press three times: `Hop` changes completely while `Fix` stays the same. The `Cnt` line only means something when the firmware recognises the manufacturer; `MF:Unknown` says it did not, so do not read a counter from it.
+
+The comparison can mislead you the other way too. A weather sensor sends a different payload every few minutes because the temperature changed. That is changing data. A changing value earns the label "rolling" only when Flipper's vendor table marks the protocol as dynamic, or the device's documentation says so. Otherwise write "unknown, payload changes".
+
+<div class="table-scroll">
+
+| What you observe over 3–5 presses | Classify as | Replay verdict to write |
+| --- | --- | --- |
+| Same `Key` every press, static protocol such as Princeton | Fixed | Expected to work on your receiver; "works" only if you tested it in Module 4 |
+| Read names a dynamic protocol; `Hop` changes, `Fix` stays | Rolling | Expected to fail if the receiver already saw that press, because it rejects a counter it has already accepted. Otherwise unknown: a capture the receiver never heard can still fall inside its window (Module 5) |
+| A value changes, protocol not marked dynamic, no documentation | Unknown | Unknown: changing data is not proof of a counter |
+| Nothing decodes; RAW recording made | Unknown | Unknown: a recording alone cannot predict what the receiver accepts |
+
+</div>
+
+### Misconceptions
+
+- **"The analyzer's number is the exact frequency."** It is a smoothed best guess from a 20 kHz grid around a list frequency. Two readings 20 kHz apart are the same remote.
+- **"Nothing on the analyzer means nothing transmitted."** It only scans near its list, and only above about −90 dBm.
+- **"It replays every time, so it is definitely fixed code."** Replay success shows your receiver accepted a repeated message: strong evidence, still not proof. Write "replay worked, fixed code inferred".
+- **"A failed replay proves rolling code."** Distance, a wrong preset, a poor capture or a regional transmit block all fail too. [Module 9](/learn/09-troubleshooting) walks that tree.
+- **"No Save option means the read failed."** For dynamic protocols, official firmware decodes the signal and disables Save on purpose.
+- **"Same band, same app."** 125 kHz and 13.56 MHz are both "RFID" in shops, but they are different apps on different coils.
+
+## Predict and practise
+
+Start in the browser, where the answers are known, then move to devices you own.
+
+<Lab kicker="Lab 10.1" title="Check your routine on known rows" gear="A browser. Nothing transmits.">
+
+1. In the Signal Atlas below, press **Add sample entries**. Four rows appear, marked as samples.
+2. **Predict first.** Cover the frequency, modulation and code type columns. From the protocol name alone, write the frequency, preset and code type you expect for each sample, then reveal them.
+3. **Check one sample against the firmware.** Look at the KeeLoq row's modulation. Using the section above, write which presets a KeeLoq read in official 1.4.3 can come from. If the row says FSK, write why that value cannot be right for that firmware.
+4. Give each row a replay verdict. For the fixed doorbell, "expected to work"; for the rolling remote, "expected to fail if the receiver already saw that press, otherwise unknown". The NFC card is marked Unknown: write one sentence on why that is honest for a card whose protected sectors you did not read.
+5. **Control:** edit the sample doorbell so its code type says Rolling. What evidence would justify that edit? If the answer is "none I have", change it back.
+6. Delete the samples, so your export contains only devices you examined.
+
+<Win>you can say, for every sample row, which screen produced each field and which preset family it needs, and why one row is Unknown rather than Fixed or Rolling.</Win>
+
+</Lab>
+
+<Widget name="signal-atlas" />
+
+<Callout variant="tip" title="Fill it in as you go">
+Add each row the moment you have classified the device. The atlas lives in this browser only, so Export data is your backup. It has no verdict or limitation columns yet, so write them in the notes column as `Verdict: … | Control: … | Not established: …`, for example `Verdict: works, Module 4 | Control: FM476 nothing | Not established: range beyond 2 m`. {/* TODO: tool: add verdict, control and limitation columns to signal-atlas */} Use aliases such as `doorbell-hall`, and keep real keys, UIDs and dumps out of the notes.
+</Callout>
+
+Now the bench. First write your prediction for each of your three devices: band, likely frequency, likely code type and expected replay verdict.
+
+<Lab kicker="Lab 10.2" title="Classify three devices you own" gear="Flipper, one Sub-GHz remote or doorbell, one 125 kHz tag you own that is not tied to any access system, one 13.56 MHz practice card. Listening and reading only.">
+
+1. **Predict first.** Before you run anything, write a guess for each device: the Sub-GHz frequency and preset family, whether its key will repeat, and which Flipper app will read each card. Compare each guess with its row when you finish.
+2. **Sub-GHz device.** Run steps 1 to 4 of the routine. Record the analyzer reading from three presses, the winning preset, the protocol and bit count, and what changed between presses.
+3. **Negative control.** In Read with the winning preset, wait ten seconds without pressing. Then switch to a preset from the other family and press once. Both should show nothing. If something decodes, it is a nearby device: move away or retry, and do not log it.
+4. Save the capture with a clear name, or write the fields down if Save is disabled. Write the replay verdict and its reason, citing your Module 4 result if you tested this device there.
+5. **125 kHz tag.** Open <Flip>125 kHz RFID → Read</Flip> and hold the tag still near the back; some tags need up to 10 seconds. Record the protocol and ID. Note "T5577" only if the packaging says so; Read does not report the chip type. Write the ID in the notebook and only an alias in the atlas.
+6. **NFC card.** Open <Flip>NFC → Read</Flip>. Record the card type and what Flipper says it could and could not read.
+7. **Cross-band control.** Hold the NFC card to the 125 kHz Read screen, and the LF tag to the NFC Read screen. Neither should read. Note the result in both rows.
+8. In each atlas row's notes column, write `Verdict: … | Control: … | Not established: …`.
+9. Open **Export data** in the atlas and save the JSON or CSV with your notebook.
+
+</Lab>
+
+Expected observation: Sub-GHz readings within a few tens of kHz of each other, a decode on one preset family only, and either a repeated key or a changing `Hop` with a fixed `Fix`. Each card reads only in its own app.
+
+<Win>you have three rows you could defend to a reviewer: every field traces to a screen you saw, each row has a control that showed nothing on purpose, and each verdict states its reason and one limitation.</Win>
+
+<Callout variant="note" title="The unknown device">
+Some device will not cooperate: the analyzer finds it, every preset stays blank, and RAW records something you cannot name. "433.92 MHz, no decode on four presets, RAW saved, verdict unknown" is still an honest, useful row.
+</Callout>
+
+## Check yourself
+
+<Quiz id="m10" />
+
+Two questions to answer in a sentence each, without notes:
+
+1. A friend shows you a remote that reads 433.90 MHz on one press and 433.92 MHz on the next. What would you tell them, and which frequency would you set in Read?
+2. Your sensor's payload changes every reading. What two pieces of evidence would you need before you call it a rolling code?
+
+## Keep evidence
+
+Save an entry for this module in your [notebook](/learn/notebook?module=m10); the full table is on the [atlas page](/learn/atlas).
+
+- **Setup:** firmware version, the three devices by alias, and what each one is.
+- **Prediction:** your band, code type and replay verdict for each device, written before Lab 10.2.
+- **Observation:** the analyzer readings, the winning preset, the protocol lines, what changed between presses, and both controls.
+- **Explanation:** the verdict for each device and its reason, plus one limitation per device.
+
+Adequate evidence is an exported atlas whose three rows match the notebook entry, each with a control and a limitation. Example:
+
+> Official 1.4.3. Predicted: doorbell fixed, tag EM4100, card NTAG. Doorbell: analyzer 433.905, 433.918, 433.912; AM650 decodes Princeton 24-bit, same Key three presses; idle 10 s nothing; FM476 nothing. Verdict: works, tested in Module 4. Tag: EM4100 (T5577 card, written in Module 6), NFC app ignores it. Card: NTAG215, all pages read; 125 kHz app ignores it. Limitation: I did not test the doorbell beyond 2 m.
+
+Set a review date one week from today. When you can classify a new device without opening this page, mark it retrieved.
+
+## Continue
+
+This finishes the RF foundation. [Module 11: Infrared](/learn/11-infrared) runs the same routine on light instead of radio: identify the signal, decode the protocol, save and label it. The [course page](/course) shows the rest of the path, and the [reference page](/reference) keeps documentation links current.
+
+**Retrieval question for next week:** without looking, list the six steps of the routine in order, and name the observation that makes you write Unknown instead of Rolling.
+
+Primary sources, checked 13 October 2026:
+
+- [Flipper Docs: Reading signals](https://docs.flipper.net/zero/sub-ghz/read): Frequency Analyzer, −90 dBm threshold, 15-frequency screen, presets, Config.
+- [Flipper Docs: Reading RAW signals](https://docs.flipper.net/zero/sub-ghz/read-raw): recording protocols the firmware cannot name.
+- [Flipper Docs: Supported vendors](https://docs.flipper.net/zero/sub-ghz/supported-vendors): static and dynamic protocols, Save disabled for dynamic ones.
+- [Flipper Docs: Frequencies](https://docs.flipper.net/zero/sub-ghz/frequencies): the 300–348, 387–464 and 779–928 MHz receive bands.
+- [Flipper Docs: Reading 125 kHz RFID cards](https://docs.flipper.net/zero/rfid/read) and [Reading NFC cards](https://docs.flipper.net/zero/nfc/read): ASK/PSK switching, protocol lists, what each read saves.
+- Firmware 1.4.3: [subghz_setting.c](https://github.com/flipperdevices/flipperzero-firmware/blob/1.4.3/lib/subghz/subghz_setting.c) (17 list frequencies), [subghz_frequency_analyzer_worker.c](https://github.com/flipperdevices/flipperzero-firmware/blob/1.4.3/applications/main/subghz/helpers/subghz_frequency_analyzer_worker.c) (two passes, filters, −93 dBm), [keeloq.c](https://github.com/flipperdevices/flipperzero-firmware/blob/1.4.3/lib/subghz/protocols/keeloq.c) (Fix, Hop, Cnt, MF fields, AM-only, no Save flag).
+- [Microchip HCS301 datasheet, DS21143C](https://ww1.microchip.com/downloads/aemDocuments/documents/MCU08/ProductDocuments/DataSheets/21143C.pdf), sections 1.0 and 4.2: the 66-bit code word.

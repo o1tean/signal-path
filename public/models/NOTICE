@@ -1,0 +1,13 @@
+flipper-zero.glb
+
+The Flipper Zero body model in this folder is derived from the official
+Flipper Devices 3D models (https://github.com/flipperdevices/flipperzero-3d-models),
+which are licensed under the GNU General Public License v3.0. The full licence
+text is in LICENSE-flipperzero-3d-models next to this file.
+
+Changes: the official body STL was converted to glTF binary (GLB) with Blender
+and given three flat materials (body, accent, glass).
+
+This model is a public asset. It is served from /models/ to every visitor and
+is never part of paid course content. The rest of Signal Path is not a
+derivative of the model and is not covered by this licence.

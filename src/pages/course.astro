@@ -1,0 +1,235 @@
+---
+/* Course syllabus. Copy: docs/v2/copy/course.md (section ids kept). Stages from src/data/course.ts; every lesson
+   fact (title, week, minutes, access, outcome) from the lesson frontmatter via src/lib/lessons.ts. */
+import Marketing from '@/layouts/Marketing.astro';
+import Section from '@/components/marketing/Section.astro';
+import LinkButton from '@/components/marketing/LinkButton.astro';
+import Cta from '@/components/marketing/Cta.astro';
+import { courseJsonLd } from '@/components/marketing/schema';
+import { facts, price, spell } from '@/components/marketing/site';
+import type { StageId } from '@/data/course';
+import { getStages } from '@/lib/lessons';
+
+export const prerender = true;
+
+const stages = await getStages();
+
+const stageCopy: Record<StageId, { eyebrow: string; title: string; sub: string; body: string; can: string[]; canLabel?: string; evidence: string; cta?: { label: string; href: string } }> = {
+  starter: {
+    eyebrow: 'Start here · Weeks 0–1 · Free',
+    title: 'Set up your lab and find your first frequency.',
+    sub: 'Two lessons that need only a browser to begin.',
+    body: 'You learn the Flipper\'s menus on a simulated screen. Before any hardware lab, you record your firmware version and region and write a scope note. Then you use the Frequency Analyzer, Spectrum Scope and Tune In to turn "frequency" into a number you can read.',
+    can: ['move through the Sub-GHz menus without guessing', 'state the frequency of one device you own, and how you measured it'],
+    evidence: 'a setup record and one explained observation of a synthetic signal.',
+    cta: { label: 'Start Module 0', href: '/learn/00-setup' },
+  },
+  signals: {
+    eyebrow: 'Stage 1 · Weeks 1–3',
+    title: 'Decode a fixed-code remote and explain when replay fails.',
+    sub: 'Modulation, protocols, one controlled replay and why rolling codes defeat replay.',
+    body: 'You choose the preset that makes a signal appear and turn a pulse train into bits. Reading a saved .sub file line by line shows what the Flipper stored. You send a saved signal to your own device in your own space. The Rolling Code Sim then shows why a copied rolling code is accepted once at most.',
+    can: ['name a remote\'s frequency and modulation, and explain why both must match', 'name a fixed-code protocol from a capture', 'explain, with the counter, why replaying a rolling code fails'],
+    evidence: 'an annotated capture and a written explanation of when replay fails.',
+  },
+  atlas: {
+    eyebrow: 'Stage 2 · Weeks 4–6',
+    title: 'Classify training tags and fix a setup that won\'t decode.',
+    sub: '125 kHz RFID, NFC at 13.56 MHz, firmware choices and a troubleshooting method.',
+    body: 'You read, save and emulate an unenrolled training tag, then learn what the Flipper can and cannot do with each NFC card family. You make a documented firmware choice with a backup and a way back. Module 9\'s decision trees start from three common failures: nothing decodes, replay does nothing, and range is poor. Module 10 pulls it together into your signal atlas.',
+    can: ['tell LF RFID from NFC by how the reader powers the tag', 'choose and record a firmware setup you can restore', 'diagnose a failed capture step by step'],
+    evidence: 'a signal atlas of your training devices, with observations, limits and a recovery procedure.',
+  },
+  build: {
+    eyebrow: 'Stage 3 · Weeks 7–10',
+    title: 'Work with IR, GPIO, USB and Bluetooth, then compile your own app.',
+    sub: 'Five interfaces in four weeks, ending with a small C app built with uFBT.',
+    body: 'You build a two-button infrared remote for your own TV. On a breadboard, you wire an LED and estimate its current. You type visible text into your own computer to see why a host trusts a keyboard. Comparing an iButton ID with a U2F key shows where identification ends and authentication begins. In week 10 you compile a Flipper app and record the toolchain and firmware versions.',
+    can: ['read a pinout and estimate the current through a resistor', 'explain what a USB host trusts and why', 'build and install a small app from source'],
+    evidence: 'a documented interface experiment and an app build with its test results.',
+  },
+  research: {
+    eyebrow: 'Stage 4 · Weeks 11–12',
+    title: 'Test one security claim and write it up so others can repeat it.',
+    sub: 'A bounded test with controls, then a final project you can explain, measure and teach.',
+    body: 'You write a threat model that names the access, capability, target and security property at stake. Then you test one claim inside a written scope. The final project is a repeatable experiment with a prediction, one controlled variable and the failures you recorded on the way.',
+    can: ['scope a test so someone else could approve it', 'report a result in enough detail for another learner to reproduce it'],
+    evidence: 'a final portfolio another learner can follow and critique.',
+  },
+  wifi: {
+    eyebrow: 'Optional extension · After Modules 8, 12 and 15',
+    title: 'Flash, debug and recover the official Wi-Fi Devboard.',
+    sub: 'One lesson and a recovery worksheet. Allow 3–4 extra sessions.',
+    body: 'You debug your own Flipper app over the board\'s Black Magic firmware and compare what different firmwares can do. If a flash goes wrong, you recover the ESP32-S2. Measurements run on a 2.4 GHz access point you own.',
+    can: ['put the board back to a known firmware', 'take a repeatable measurement on your own test access point'],
+    canLabel: 'After this lesson you can',
+    evidence: 'a firmware and recovery record, and a repeatable test on your own lab access point.',
+  },
+};
+
+const shape = [
+  ['Outcome.', 'One thing you will be able to do, in one sentence.'],
+  ['Before you start.', 'Earlier lessons it builds on, the gear, the time, and whether anything transmits.'],
+  ['Understand.', 'The mechanism from first principles, with a figure, a table or a tool, plus the misconceptions people bring to it.'],
+  ['Predict and practise.', 'One or two labs. You write the prediction first, then compare it with what the Flipper shows. Each lab has a control case and a "you\'ve got it when" check.'],
+  ['Check yourself.', 'A quiz where every answer has an explanation, plus two reflection questions.'],
+  ['Keep evidence.', 'What to record in your notebook and an example of an adequate entry.'],
+  ['Continue.', 'What the next lesson builds on, a question to answer from memory a week later, and the sources with the date they were checked.'],
+];
+const routine = [
+  ['Retrieve, 5 minutes.', 'Explain the last mechanism without notes and note the gaps.'],
+  ['Predict.', 'Write down what the lab should do and why, with the scope and equipment.'],
+  ['Practise, 20–40 minutes.', 'Run a short controlled experiment and change one thing at a time.'],
+  ['Explain.', 'Answer the quiz, read its reasoning, and log one observation and one open question.'],
+  ['Revisit.', 'Review after a day, then again a few days later.'],
+];
+const gear = [
+  ['To begin', 'a browser. Then your Flipper Zero, a microSD card, a USB cable, and an infrared remote and TV you own. For radio practice, a fixed-code training doorbell or chime that is legal to use where you live.'],
+  ['Later', 'unenrolled EM4100 or T5577 tags and NFC practice tags, a standalone training reader, a breadboard, an LED, a 1 kΩ resistor and jumper wires.'],
+  ['Optional', 'an iButton key, and for Module 18 the official Wi-Fi Devboard with your own 2.4 GHz test access point.'],
+];
+---
+<Marketing
+  title={`Course syllabus: ${facts.lessons} lessons in ${facts.weeks} weeks`}
+  description={`${facts.lessons} lessons in ${spell(facts.stages).toLowerCase()} stages over ${facts.weeks} weeks: setup, decoding protocols, RFID and NFC, building a Flipper app, and a final project another person can repeat.`}
+  jsonLd={courseJsonLd(Astro.site, stages.flatMap((s) => s.lessons).sort((a, b) => a.n - b.n))}
+>
+  <section id="hero" data-section="hero" aria-labelledby="hero-title" class="border-b border-border">
+    <div class="mx-auto grid w-full max-w-[75rem] gap-10 px-4 pt-12 pb-12 sm:px-6 md:pt-20 md:pb-16 lg:grid-cols-[minmax(0,1fr)_20rem] lg:items-end lg:gap-16">
+      <div>
+        <p class="eyebrow">Signal Path Complete · {facts.lessons} lessons</p>
+        <h1 id="hero-title" class="mt-4 max-w-[18ch]">Go from first setup to an experiment someone else can repeat.</h1>
+        <p class="mt-6 max-w-2xl text-lg leading-relaxed text-muted-foreground md:text-xl">{spell(facts.weeks)} weeks at 2–4 hours a week, in {spell(facts.stages).toLowerCase()} stages. Each stage ends with evidence you keep in your lab notebook.</p>
+        <div class="mt-8 flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-5">
+          <LinkButton href="/learn/00-setup">Start the free starter</LinkButton>
+          <LinkButton href="/pricing" variant="quiet">See the price</LinkButton>
+        </div>
+      </div>
+      <div class="rounded-[1.25rem] border border-border bg-card p-5">
+        <p class="text-sm leading-relaxed text-muted-foreground">Modules 0 and 1 are free. The rest is in Signal Path Complete, {price} once, with a 30-day refund.</p>
+        <nav aria-label="Stages" class="mt-4 border-t border-border pt-3">
+          <ol class="grid text-sm">
+            {stages.map((s) => (
+              <li>
+                <a href={`#stage-${s.id}`} class="flex min-h-11 items-center justify-between gap-3 rounded-md px-2 hover:bg-muted">
+                  <span>{stageCopy[s.id].eyebrow.split(' · ')[0]}</span>
+                  <span class="font-mono text-xs text-muted-foreground tabular-nums">{s.lessons.length} {s.lessons.length === 1 ? 'lesson' : 'lessons'}</span>
+                </a>
+              </li>
+            ))}
+          </ol>
+        </nav>
+      </div>
+    </div>
+  </section>
+
+  <Section id="lesson-shape" eyebrow="How a lesson works" title="Every lesson has the same seven parts." intro="Most take 30–60 minutes, and you can stop between parts.">
+    <ol class="grid gap-px overflow-hidden rounded-[1.25rem] border border-border bg-border sm:grid-cols-2 lg:grid-cols-4">
+      {
+        shape.map(([k, v], i) => (
+          <li class:list={['bg-card p-5 sm:p-6', i === 6 && 'sm:col-span-2']}>
+            <span class="font-mono text-xs text-primary tabular-nums" aria-hidden="true">{String(i + 1).padStart(2, '0')}</span>
+            <p class="mt-3 font-semibold">{k}</p>
+            <p class="mt-1.5 text-sm leading-relaxed text-muted-foreground">{v}</p>
+          </li>
+        ))
+      }
+    </ol>
+  </Section>
+
+  {
+    stages.map((stage) => {
+      const c = stageCopy[stage.id];
+      return (
+        <section id={`stage-${stage.id}`} data-section={`stage-${stage.id}`} aria-labelledby={`stage-${stage.id}-title`} class="scroll-mt-20 border-t border-border">
+          <div class="mx-auto grid w-full max-w-[75rem] gap-8 px-4 py-12 sm:px-6 md:py-16 lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)] lg:gap-14">
+            <div class="lg:sticky lg:top-24 lg:self-start">
+              <p class="eyebrow">{c.eyebrow}</p>
+              <h2 id={`stage-${stage.id}-title`} class="mt-3 text-[1.625rem] leading-[1.15] tracking-[-0.025em] md:text-[2rem]">{c.title}</h2>
+              <p class="mt-3 font-medium">{c.sub}</p>
+              <p class="mt-3 leading-relaxed text-muted-foreground">{c.body}</p>
+              <div class="mt-6 rounded-xl border border-border bg-card p-5">
+                <p class="text-sm font-semibold">{c.canLabel ?? 'After this stage you can'}</p>
+                <ul class="mt-2 grid gap-1.5 text-sm">
+                  {c.can.map((x) => (
+                    <li class="flex gap-2.5">
+                      <svg aria-hidden="true" viewBox="0 0 24 24" class="mt-0.5 size-4 shrink-0 text-success" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5" /></svg>
+                      {x}
+                    </li>
+                  ))}
+                </ul>
+                <p class="mt-4 border-t border-border pt-3 text-sm text-muted-foreground"><b class="font-semibold text-foreground">Evidence:</b>{' '}{c.evidence}</p>
+              </div>
+              {c.cta && <LinkButton href={c.cta.href} size="md" class="mt-6">{c.cta.label}</LinkButton>}
+            </div>
+            <ol class="grid content-start gap-3">
+              {stage.lessons.map((m) => {
+                return (
+                  <li>
+                    <a href={m.href} class="group grid grid-cols-[3rem_minmax(0,1fr)] gap-x-4 rounded-[1.25rem] border border-border bg-card p-5 transition-[border-color,box-shadow] hover:border-foreground/20 hover:shadow-[0_12px_32px_-20px_oklch(0_0_0/0.35)] sm:p-6">
+                      <span class="font-mono text-2xl leading-none font-semibold text-muted-foreground tabular-nums group-hover:text-primary" aria-hidden="true">{String(m.n).padStart(2, '0')}</span>
+                      <div class="min-w-0">
+                        <p class="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted-foreground">
+                          <span class="sr-only">Module {m.n}.</span>
+                          <span>{m.week}</span>
+                          <span aria-hidden="true">·</span>
+                          <span>{m.minutes} min</span>
+                          {m.free ? <span class="pill grey">Free</span> : <span class="pill orange">Complete</span>}
+                        </p>
+                        <h3 class="mt-1.5 text-lg leading-snug group-hover:text-primary">{m.title}</h3>
+                        <p class="mt-1.5 text-sm leading-relaxed text-muted-foreground">{m.outcome}</p>
+                      </div>
+                    </a>
+                  </li>
+                );
+              })}
+            </ol>
+          </div>
+        </section>
+      );
+    })
+  }
+
+  <Section id="gear" eyebrow="What you need" title="Modules 0 and 1 start in the browser. Each lesson lists the gear it needs." intro="You can buy each part in the week its lesson starts.">
+    <dl class="grid gap-px overflow-hidden rounded-[1.25rem] border border-border bg-border md:grid-cols-3">
+      {
+        gear.map(([k, v]) => (
+          <div class="bg-card p-5 sm:p-6">
+            <dt class="font-semibold">{k}:</dt>
+            <dd class="mt-1.5 leading-relaxed text-muted-foreground">{v}</dd>
+          </div>
+        ))
+      }
+    </dl>
+    <p class="mt-5 text-muted-foreground">The core course needs no external radio module.</p>
+  </Section>
+
+  <Section id="session-routine" eyebrow="How to study" title="A one-hour study session, in five steps." intro="Repeat it for each block of your 2–4 hours a week.">
+    <ol class="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
+      {
+        routine.map(([k, v], i) => (
+          <li class="border-t-2 border-foreground pt-4">
+            <span class="font-mono text-xs text-muted-foreground tabular-nums" aria-hidden="true">{i + 1}</span>
+            <p class="mt-1 font-semibold">{k}</p>
+            <p class="mt-1.5 text-sm leading-relaxed text-muted-foreground">{v}</p>
+          </li>
+        ))
+      }
+    </ol>
+  </Section>
+
+  <Section id="fit">
+    <div class="grid gap-6 rounded-[1.5rem] border border-border bg-card p-6 sm:p-10 lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)] lg:gap-14">
+      <div>
+        <p class="eyebrow">Is it for you</p>
+        <h2 id="fit-title" class="mt-3 text-[1.625rem] leading-[1.15] tracking-[-0.025em] md:text-[2rem]">For Flipper Zero owners who want to know why it behaves the way it does.</h2>
+      </div>
+      <p class="self-end text-lg leading-relaxed text-muted-foreground">You should be comfortable following step-by-step instructions and writing a few lines in your notebook after each lab. You don't need a radio or electronics background; the primer and Module 1 start from what a frequency is. If you want ready-made files to run against other people's gates, cars or badges, this course has none.</p>
+    </div>
+  </Section>
+
+  <Cta title="Start with the two free lessons." body={`After Module 1, Signal Path Complete opens the other ${facts.paidLessons} lessons for ${price}, with 30 days to change your mind.`} microcopy="Free. No card required.">
+    <LinkButton href="/learn/00-setup">Start the free starter</LinkButton>
+    <LinkButton href="/pricing#buy" variant="inverse">Get Signal Path Complete</LinkButton>
+  </Cta>
+</Marketing>

@@ -1,3 +1,5 @@
+> **Superseded for implementation.** The rebuild on branch `v2` follows `docs/v2/architecture.md`, `docs/v2/offer.md` and `docs/v2/deploy.md`; where they differ from the implementation plan below (provider, hosting, access boundary), `docs/v2/*` wins. The course structure and outcomes here are still the reference.
+
 # Signal Path: course and paid-launch plan
 
 Updated 16 September 2026. **Confirmed:** custom interactive course, one-time purchase. **Proposed:** audience, free/paid boundary, provider and access terms below. No checkout or access control is implemented yet; the current GitHub Pages build publishes the entire course.

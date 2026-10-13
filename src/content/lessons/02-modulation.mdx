@@ -1,0 +1,334 @@
+---
+id: m02
+number: 2
+slug: 02-modulation
+title: 'Hear the signal: AM vs FM'
+description: Why the right frequency can still capture nothing, what AM270, AM650, FM238 and FM476 set inside the radio chip, and how to sweep presets in a minute.
+stage: signals
+week: Week 1
+access: paid
+minutes: 70
+gear:
+  - Flipper Zero on official firmware 1.4.3 or later
+  - one remote you own whose frequency you recorded in Module 1
+  - a browser for the Wave Lab
+transmits: none
+outcome: State one remote's frequency and preset pair and explain why both must match before a signal appears, including the filter and deviation numbers behind the preset name.
+prerequisites:
+  - m01
+tools:
+  - wave-lab
+scenes:
+  - modulation
+evidence: A notebook entry with your predicted and winning preset for one remote, every preset you tried in order, and a control press on the wrong family that showed nothing.
+sources:
+  - title: 'Flipper Docs: Reading signals'
+    url: https://docs.flipper.net/zero/sub-ghz/read
+  - title: 'Flipper Docs: Reading RAW signals'
+    url: https://docs.flipper.net/zero/sub-ghz/read-raw
+  - title: 'Flipper Docs: Supported vendors'
+    url: https://docs.flipper.net/zero/sub-ghz/supported-vendors
+  - title: 'Flipper Developer Docs: Sub-GHz file format'
+    url: https://developer.flipper.net/flipperzero/doxygen/subghz_file_format.html
+  - title: 'Flipper Zero firmware 1.4.3: CC1101 preset registers (cc1101_configs.c)'
+    url: https://github.com/flipperdevices/flipperzero-firmware/blob/1.4.3/lib/subghz/devices/cc1101_configs.c
+  - title: 'Flipper Zero firmware 1.5.0-rc: CC1101 preset registers including FM12K (cc1101_configs.c)'
+    url: https://github.com/flipperdevices/flipperzero-firmware/blob/1.5.0-rc/lib/subghz/devices/cc1101_configs.c
+  - title: 'Flipper Zero firmware pull request 4328: FM12K preset'
+    url: https://github.com/flipperdevices/flipperzero-firmware/pull/4328
+  - title: 'Texas Instruments CC1101 datasheet (SWRS061I)'
+    url: https://www.ti.com/lit/ds/symlink/cc1101.pdf
+reviewed: '2026-10-13'
+badge: modulation-master
+---
+
+## Outcome
+
+You can name the modulation preset that makes one of your own remotes appear in <Flip>Sub-GHz → Read</Flip>, and explain why every other preset showed nothing.
+
+By the end you can:
+
+- describe OOK and 2-FSK in one sentence each and sketch both for the same four bits;
+- read a preset name like `AM650` or `FM476` and say what it sets inside the radio chip: receive filter width, deviation, or both;
+- sweep the presets at a fixed frequency, time it, and prove the result with a control press.
+
+## Before you start
+
+- **Prerequisite:** [Module 1](/learn/01-frequency). You need one remote whose frequency you have already written down. This lesson keeps the frequency fixed and changes only the preset.
+- **Gear:** your Flipper Zero, that remote, and a browser for the Wave Lab.
+- **Firmware:** official firmware. Release 1.4.3 (December 2025) has the four presets taught here. The 1.5 release candidates (1.5.0-rc, September 2026; the page shows no year, so the dates are inferred) add a fifth, `FM12K`, covered below. Forks differ, so check the Modulation list on your firmware.
+- **Time:** about 70 minutes: 25 to read, 10 in the Wave Lab, 20 at the bench, 15 for the quiz, three questions and your notebook entry.
+- **Transmits:** nothing. Every step only listens.
+- **Scope:** your own remote, in your own space. Reading a stranger's gate or car remote is outside this course, even though it is only listening. Which frequencies you can pick depends on your Flipper's region setting.
+
+<Callout variant="legal" title="Receiving still has rules">
+Rules on listening to radio signals differ by country. Read the [Romania lab guide](/romania-lab-guide) once before your first hardware lab if you have not already, and check your own country's rules if you live elsewhere.
+</Callout>
+
+## Understand
+
+### A carrier has two knobs
+
+Recall the <Term id="carrier">carrier</Term> from Module 1: a steady radio wave at one frequency, say 433.92 MHz. On its own it carries nothing, like a held note. To send bits, the transmitter changes the carrier in a pattern the receiver can read back. That deliberate change is <Term id="modulation">modulation</Term>.
+
+A simple transmitter has two knobs it can turn:
+
+- **Strength.** Change how much power goes out and you are doing <Term id="am-amplitude-modulation">amplitude modulation (AM)</Term>.
+- **Frequency.** Nudge the wave slightly up or down and you are doing <Term id="fm-frequency-modulation">frequency modulation (FM)</Term>.
+
+Cheap Sub-GHz remotes use the simplest digital form of each, which is why the Flipper's presets start with `AM` and `FM`.
+
+### OOK and 2-FSK, one sentence each
+
+<Scene3D name="modulation" label="3D animation: the same data bits switch a carrier on and off (OOK) or shift its frequency (FSK)." />
+
+<div class="grid2">
+<div class="card">
+
+#### <span class="pill am">AM</span> On-off keying (OOK)
+
+The transmitter **switches its power amplifier on for a 1 and off for a 0**. Think of Morse code with a torch: light on, light off.
+
+<Term id="ook-on-off-keying">OOK</Term> is the bare-bones form of AM. The CC1101 datasheet describes it in exactly those terms: the amplifier is turned on or off to send ones and zeros.
+
+</div>
+<div class="card">
+
+#### <span class="pill fm">FM</span> Frequency-shift keying (2-FSK)
+
+The carrier **stays on the whole time** and moves between two nearby frequencies: centre plus the deviation for a 1, centre minus the deviation for a 0.
+
+<Term id="fsk-frequency-shift-keying">2-FSK</Term> is the two-tone form of FM. Some gate remotes use it: the firmware's KeeLoq list named one Sommer entry `Sommer(fsk476)`, and the 1.5 release candidates add Cardin S449 on the new `FM12K` preset. Flipper's vendor page lists only AM, so firmware protocol lists are the better place to look for FSK.
+
+</div>
+</div>
+
+<Figure label="Two waveforms compared for the bits 1 0 1 1: OOK switches the carrier fully on and off in bursts, while 2-FSK keeps a continuous wave that alternates between a higher and a lower frequency." caption="Same four bits, two shapes. OOK sends bursts and silence. 2-FSK never goes quiet; a 1 sits slightly above the centre frequency and a 0 slightly below. The frequency difference is exaggerated so you can see it.">
+<svg viewBox="0 0 640 260" width="100%" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+  <text x="0" y="24" class="fill-foreground font-sans" font-size="15" font-weight="700">OOK / AM: on-off keying</text>
+  <text x="0" y="44" class="fill-muted-foreground font-mono" font-size="12">bits: 1 0 1 1</text>
+  <line x1="0" y1="90" x2="640" y2="90" class="stroke-border" stroke-width="1" stroke-dasharray="3 4" />
+  <path d="M8 90 q8 -34 16 0 q8 34 16 0 q8 -34 16 0 q8 34 16 0 q8 -34 16 0 q8 34 16 0 q8 -34 16 0 q8 34 16 0" fill="none" class="stroke-primary" stroke-width="2" />
+  <line x1="152" y1="90" x2="296" y2="90" class="stroke-primary" stroke-width="2" />
+  <path d="M296 90 q8 -34 16 0 q8 34 16 0 q8 -34 16 0 q8 34 16 0 q8 -34 16 0 q8 34 16 0 q8 -34 16 0 q8 34 16 0" fill="none" class="stroke-primary" stroke-width="2" />
+  <path d="M440 90 q8 -34 16 0 q8 34 16 0 q8 -34 16 0 q8 34 16 0 q8 -34 16 0 q8 34 16 0 q8 -34 16 0 q8 34 16 0" fill="none" class="stroke-primary" stroke-width="2" />
+  <text x="44" y="128" class="fill-muted-foreground font-mono" font-size="11">amplifier ON = 1</text>
+  <text x="180" y="128" class="fill-muted-foreground font-mono" font-size="11">OFF = 0</text>
+  <text x="0" y="168" class="fill-foreground font-sans" font-size="15" font-weight="700">2-FSK / FM: frequency-shift keying</text>
+  <text x="0" y="188" class="fill-muted-foreground font-mono" font-size="12">bits: 1 0 1 1</text>
+  <line x1="0" y1="228" x2="640" y2="228" class="stroke-border" stroke-width="1" stroke-dasharray="3 4" />
+  <path d="M8 228 q5 -26 10 0 q5 26 10 0 q5 -26 10 0 q5 26 10 0 q5 -26 10 0 q5 26 10 0 q5 -26 10 0 q5 26 10 0 q5 -26 10 0 q5 26 10 0 q5 -26 10 0 q5 26 10 0 q5 -26 10 0 q5 26 10 0" fill="none" class="stroke-info" stroke-width="2" />
+  <path d="M152 228 q12 -26 24 0 q12 26 24 0 q12 -26 24 0 q12 26 24 0 q12 -26 24 0 q12 26 24 0" fill="none" class="stroke-info" stroke-width="2" />
+  <path d="M296 228 q5 -26 10 0 q5 26 10 0 q5 -26 10 0 q5 26 10 0 q5 -26 10 0 q5 26 10 0 q5 -26 10 0 q5 26 10 0 q5 -26 10 0 q5 26 10 0 q5 -26 10 0 q5 26 10 0 q5 -26 10 0 q5 26 10 0" fill="none" class="stroke-info" stroke-width="2" />
+  <path d="M440 228 q5 -26 10 0 q5 26 10 0 q5 -26 10 0 q5 26 10 0 q5 -26 10 0 q5 26 10 0 q5 -26 10 0 q5 26 10 0 q5 -26 10 0 q5 26 10 0 q5 -26 10 0 q5 26 10 0 q5 -26 10 0 q5 26 10 0" fill="none" class="stroke-info" stroke-width="2" />
+  <text x="24" y="256" class="fill-muted-foreground font-mono" font-size="11">centre + deviation = 1</text>
+  <text x="176" y="256" class="fill-muted-foreground font-mono" font-size="11">centre − deviation = 0</text>
+</svg>
+</Figure>
+
+### Why the wrong preset hears nothing
+
+The Flipper's radio, a TI <Term id="cc1101">CC1101</Term>, is a configurable receiver. Flipper's documentation says it is not a software-defined radio: you set the modulation before scanning, and even <Flip>Read RAW</Flip> decodes according to that setting.
+
+A receiver set for AM watches the carrier get louder and quieter. Point it at a 2-FSK remote and the carrier never changes strength, so the detector sees one long "on" with no edges and nothing to decode. A receiver set for FM watches for the frequency moving above and below centre. Point it at an OOK remote and it gets a carrier at centre, then noise, then centre again, which decodes as garbage or nothing.
+
+In both cases the signal is in the air; the receiver measures the wrong property.
+
+<Callout variant="note" title='"AM" and "OOK", "FM" and "2-FSK"'>
+The preset names use the family (AM, FM). The chip settings behind them are the specific digital forms: the two AM presets set the CC1101 to ASK (amplitude-shift keying, which for these presets means OOK), and the FM presets set it to 2-FSK. This course uses both names so you recognise either in documentation.
+</Callout>
+
+You cannot see the modulation on a remote's case, and manufacturers rarely print it. You find out by experiment. One fact tilts the odds: in Flipper's supported-vendors table, every remote listed is marked AM, most of them at 433.92 MHz (checked 13 October 2026). That table lists the remotes Flipper supports by brand, not every FSK remote, and it lags the firmware: some KeeLoq decoders use FSK presets even though the table says AM. Treat it as a prior, not proof. OOK is the cheapest way to build a transmitter, because the receiver only has to tell loud from quiet, while FSK needs a receiver that can tell two nearby frequencies apart.
+
+### Inside a preset: filter width and deviation
+
+Each preset is a block of CC1101 register values in the firmware. Two settings matter for this lesson.
+
+- **Receive filter bandwidth.** How wide a slice of spectrum the receiver lets through, centred on your chosen frequency. Wider catches a remote whose real frequency sits a little off its label, and lets in more noise with it.
+- **Deviation.** For FSK only: how far each tone sits from the centre. The datasheet says the receiver's deviation setting should match the transmitter's for reliable demodulation. For OOK the chip ignores it.
+
+<Figure label="Two spectrum sketches centred on 433.92 MHz. Top: the AM650 receive window is 650 kHz wide and the AM270 window 270 kHz wide; a remote 180 kHz above centre falls inside AM650 but outside AM270. Bottom: an FM476 signal shows two tones 47.6 kHz either side of centre, both inside a 270 kHz window." caption="Drawn to scale, 1 pixel = 2 kHz. The offset remote at +180 kHz is a hypothetical example. FM238's tones are only 4.76 kHz apart, closer than 3 pixels here, which is why the deviation number should be close to the remote's.">
+<svg viewBox="0 0 640 270" width="100%" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+  <text x="0" y="18" class="fill-foreground font-sans" font-size="14" font-weight="700">AM presets: two window widths</text>
+  <rect x="157.5" y="34" width="325" height="70" class="fill-primary stroke-primary" fill-opacity="0.08" stroke-width="1.5" />
+  <rect x="252.5" y="44" width="135" height="60" fill="none" class="stroke-primary" stroke-width="1.5" stroke-dasharray="5 4" />
+  <line x1="320" y1="30" x2="320" y2="112" class="stroke-muted-foreground" stroke-width="1" stroke-dasharray="2 3" />
+  <line x1="0" y1="104" x2="640" y2="104" class="stroke-border" stroke-width="1" />
+  <path d="M402 104 L410 56 L418 104" class="fill-warning stroke-warning" fill-opacity="0.35" stroke-width="1.5" />
+  <text x="162" y="30" class="fill-primary font-mono" font-size="11">AM650: 650 kHz</text>
+  <text x="256" y="58" class="fill-primary font-mono" font-size="11">AM270</text>
+  <text x="424" y="66" class="fill-warning font-mono" font-size="11">remote +180 kHz</text>
+  <text x="320" y="122" text-anchor="middle" class="fill-muted-foreground font-mono" font-size="11">433.92 MHz</text>
+  <text x="157" y="122" text-anchor="middle" class="fill-muted-foreground font-mono" font-size="11">−325</text>
+  <text x="483" y="122" text-anchor="middle" class="fill-muted-foreground font-mono" font-size="11">+325 kHz</text>
+  <text x="0" y="160" class="fill-foreground font-sans" font-size="14" font-weight="700">FM476: two tones inside one window</text>
+  <rect x="252.5" y="176" width="135" height="60" class="fill-info stroke-info" fill-opacity="0.08" stroke-width="1.5" />
+  <line x1="320" y1="172" x2="320" y2="244" class="stroke-muted-foreground" stroke-width="1" stroke-dasharray="2 3" />
+  <line x1="0" y1="236" x2="640" y2="236" class="stroke-border" stroke-width="1" />
+  <path d="M290 236 L296 192 L302 236" class="fill-info stroke-info" fill-opacity="0.35" stroke-width="1.5" />
+  <path d="M338 236 L344 192 L350 236" class="fill-info stroke-info" fill-opacity="0.35" stroke-width="1.5" />
+  <text x="250" y="190" text-anchor="end" class="fill-info font-mono" font-size="11">−47.6 kHz = 0</text>
+  <text x="392" y="190" class="fill-info font-mono" font-size="11">+47.6 kHz = 1</text>
+  <text x="320" y="254" text-anchor="middle" class="fill-muted-foreground font-mono" font-size="11">433.92 MHz</text>
+  <text x="252" y="254" text-anchor="middle" class="fill-muted-foreground font-mono" font-size="11">−135</text>
+  <text x="388" y="254" text-anchor="middle" class="fill-muted-foreground font-mono" font-size="11">+135 kHz</text>
+</svg>
+</Figure>
+
+#### Worked example: where the odd numbers come from
+
+The CC1101 runs from a 26 MHz crystal, and both settings are register fields in mantissa and exponent form. The datasheet gives the formulas.
+
+- Deviation: `f_dev = 26 MHz ÷ 2^17 × (8 + M) × 2^E`. One step of `26 MHz ÷ 2^17` is 198.36 Hz.
+  - `FM238` writes `0x04` (E = 0, M = 4): 198.36 × 12 × 1 = **2,380 Hz**, so 2.38 kHz.
+  - `FM476` writes `0x47` (E = 4, M = 7): 198.36 × 15 × 16 = **47,607 Hz**, so 47.6 kHz.
+  - `FM12K` (1.5 release candidates) writes `0x30` (E = 3, M = 0): 198.36 × 8 × 8 = **12,695 Hz**, so about 12.7 kHz. The firmware comment and Flipper's docs round this to "12 kHz"; the register gives 12.7.
+- Filter: `BW = 26 MHz ÷ (8 × (4 + M) × 2^E)`.
+  - `AM650` uses E = 0, M = 1: 26,000 ÷ 40 = **650 kHz**.
+  - `AM270` and both FM presets use E = 1, M = 2: 26,000 ÷ 96 = **270.8 kHz**.
+
+So the names are rounded register results. "FM238" is 2.38 kHz written without the decimal point, and "FM476" is 47.6 kHz the same way.
+
+### The presets, in one table
+
+<div class="table-scroll">
+
+| Preset | Chip mode | Receive filter | Deviation | `Preset:` line in a saved .sub | Reach for it when |
+| --- | --- | --- | --- | --- | --- |
+| **`AM650`** <span class="pill am">AM</span> | ASK/OOK | 650 kHz | not used | `FuriHalSubGhzPresetOok650Async` | your first try; it is the default |
+| **`AM270`** <span class="pill am">AM</span> | ASK/OOK | 270.8 kHz | not used | `FuriHalSubGhzPresetOok270Async` | an OOK read is noisy and you want less noise let in |
+| **`FM476`** <span class="pill fm">FM</span> | 2-FSK | 270.8 kHz | 47.6 kHz | `FuriHalSubGhzPreset2FSKDev476Async` | AM showed nothing; FSK with a wide shift |
+| **`FM238`** <span class="pill fm">FM</span> | 2-FSK | 270.8 kHz | 2.38 kHz | `FuriHalSubGhzPreset2FSKDev238Async` | FSK with a small shift |
+| **`FM12K`** <span class="pill fm">FM</span> | 2-FSK | 270.8 kHz | 12.7 kHz | `FuriHalSubGhzPreset2FSKDev12KAsync` | 1.5 release candidates only; added with Cardin S449 support, and the pull request says Sommer KeeLoq works better with it |
+
+</div>
+
+Sources for this table, all checked 13 October 2026: Flipper's reading guide, `cc1101_configs.c` at tag 1.4.3 (the first four presets) and at 1.5.0-rc (`FM12K`, register `DEVIATN` = `0x30`), the Sub-GHz file format page and pull request 4328.
+
+"Async" at the end of each name means the chip hands its output straight to the Flipper's processor on one pin, and the firmware times the pulses itself. That is why one preset can serve many protocols.
+
+<Callout variant="note" title="The number is not the same kind of thing in AM and FM">
+In `AM270` and `AM650` the number is the receive filter width in kHz. In `FM238` and `FM476` it is the deviation, and both use the same 270.8 kHz filter. Neither number is signal strength or transmit power.
+</Callout>
+
+Official firmware can also load custom presets from `subghz/assets/setting_user` on the SD card. The firmware ships `setting_user.example` with the format: a name, `CC1101` as the module, and raw register pairs. Saved files that use one say `Preset: FuriHalSubGhzPresetCustom`. You will not need one in this course.
+
+### What the screen is actually showing you
+
+In <Flip>Sub-GHz → Read</Flip>, press <Flip>Config</Flip> to reach the frequency, hopping and modulation settings. The preset you pick there is the receiver's whole question. If a signal answers it and the firmware knows the protocol, Read lists it by name. When you save it, the .sub file records the frequency and the preset you used, in the `Preset:` line shown above.
+
+Three things an empty Read screen does **not** tell you:
+
+- that nothing transmitted. A 2-FSK remote can be shouting at the right frequency while an AM preset hears no edges;
+- that the remote uses rolling codes. Flipper's vendor table lists many rolling-code remotes that Read can decode; it only disables saving them;
+- that Read RAW would catch it anyway. It uses the same preset; Module 5 covers what it is for.
+
+Use this table as your prediction sheet. Most consumer remotes are OOK, so at the bench the 2-FSK row is usually your control and the Wave Lab shows the FSK half. If your remote turns out to be FM, record it carefully.
+
+<div class="table-scroll">
+
+| Your remote sends | With an AM preset | With an FM preset |
+| --- | --- | --- |
+| **OOK** | Decodes, if the protocol is known and the frequency is right | Garbage or nothing; the FSK detector sees carrier and noise, not two tones |
+| **2-FSK** | Nothing decodes; to first order the carrier never changes strength | Decodes, if the deviation is close and the protocol is known |
+
+</div>
+
+### Two independent dials
+
+A signal needs two settings right at the same time: the **frequency** (where, set in Module 1) and the **preset** (how, set here). Right frequency with the wrong preset gives silence, and so does the reverse. That is why "I found the frequency and nothing captures" is so common. Hopping does not rescue you: it steps through frequencies, but the preset stays whatever you set.
+
+<Callout variant="tip" title="The habit: fix the frequency, then sweep">
+Once you know the frequency, leave it alone and try `AM650`, then `AM270`, then `FM476`, then `FM238` (and `FM12K` if your firmware has it). Press the remote once at each. With a button remote the whole sweep takes about a minute.
+</Callout>
+
+### Misconceptions
+
+- **"FM476 is a wider window than FM238."** Both FM presets use the same 270.8 kHz filter. The numbers are deviations.
+- **"A bigger number means more range."** No preset changes transmit power or range. `AM650` lets in more spectrum and more noise.
+- **"Silent on every preset means rolling code."** Read names many rolling-code remotes. Silence points to the wrong frequency, a weak signal, an unknown protocol, or a preset your firmware does not have.
+- **"Wider is always safer."** `AM650` is the best first try, but on a noisy bench `AM270` can give a cleaner read of the same remote.
+
+## Predict and practise
+
+Start in the browser, where you can see the waveform the Flipper never shows you. Then confirm it at the bench.
+
+<Lab kicker="Lab 2.1" title="Build both waveforms from your own bits" gear="A browser. Nothing transmits.">
+
+1. **Predict and sketch first.** On paper, sketch both traces for the bits `1011`. Write down how many of those four bits are silent in the OOK trace, and what the FSK trace does during the `0` bit.
+2. In the Wave Lab below, type `1011` and choose OOK. Compare the trace with your sketch.
+3. Switch to FSK without changing the bits. Look at the height of the wave, then at how tightly packed the cycles are under each bit.
+4. **Control:** type `1111`. Compare OOK and FSK. In OOK, an all-ones message looks exactly like an unmodulated carrier. In FSK it is a steady tone above centre.
+5. Type a pattern of your own, up to 16 bits, and write one sentence on how you would tell the two modulations apart if you could only measure strength.
+
+</Lab>
+
+<Widget name="wave-lab" />
+
+<Win>you can predict, before you switch modes, where the OOK trace goes flat and that the FSK trace never does, and you can explain why `1111` in OOK carries no visible information. You earn the **Wave Rider** badge once you type any pattern other than the starting one.</Win>
+
+Now the bench.
+
+<Lab kicker="Lab 2.2" title="Find the winning pair and prove it" gear="Flipper and one remote you own whose frequency you recorded in Module 1. Listening only.">
+
+1. **Predict first.** Write down three things before touching the Flipper: the family (AM or FM) your remote uses, which of `AM650` or `AM270` will give the cleaner read, and how many presets the sweep will need. The vendors table is a prior, not proof. If you predicted AM and it was FM, that is the useful result.
+2. Pick a low-stakes remote with a button, such as a fixed-code doorbell or key fob. Avoid gate, garage and car remotes: they operate the real door, and a rolling-code remote advances its counter on every press, so many presses out of range of its receiver can force a re-pairing. If you must use one, take it out of range of its receiver and cap the total at about five presses. A sensor with no button transmits on its own timer, often every 30 to 60 seconds, so wait for its next transmission at each preset instead. Note the remote's battery state.
+3. Open <Flip>Sub-GHz → Read</Flip>, press <Flip>Config</Flip>, set **Hopping** off and the **frequency** to your recorded value (it must be in your region's allowed list).
+4. **Baseline:** set `AM650`, then wait ten seconds without pressing anything. Note whether anything appears. This is your negative control for noise.
+5. Hold the remote within arm's length and press its button once. Note what Read lists.
+6. If nothing decodes, change **only the preset** and repeat step 5: `AM270`, then `FM476`, then `FM238`, then `FM12K` if present. Press once per preset and record each result, including "nothing".
+7. When a signal appears, write down the pair, for example "433.92 MHz, AM650", and the protocol name Read shows.
+8. **Control:** switch to a preset from the *other* family, press again and note what happens. Switch back and confirm the decode returns.
+9. **Timed sweep:** with the pair known, run the whole sweep again with a timer, one press per preset, and write down the seconds.
+
+</Lab>
+
+Expected observation: the winning family decodes, and the other family shows nothing or garbage lines that name no protocol. Within the winning family, both widths may work; note which gave the cleaner result.
+
+<Callout variant="note" title="Still nothing on any preset?">
+Check the frequency again with the Frequency Analyzer, press closer, and try a fresh battery (a flat battery is the most common false negative). If the remote still never decodes, its protocol may not be in Flipper's list. Write "no decode at 433.92 MHz, all presets" with the frequency you used. Module 5 shows how Read RAW records it, using the preset you choose here.
+
+No remote Read can decode? Run Lab 2.1 only and write the notebook entry as a prediction-only entry, marked as such. A cheap 433 MHz doorbell is optional gear that makes Lab 2.2 possible.
+</Callout>
+
+<Win>you can say your remote's full pair out loud ("this doorbell is 433.92 MHz, AM650"), you watched it vanish on the other family and return, and you can explain both results in terms of what the detector measures.</Win>
+
+## Check yourself
+
+<Quiz id="m02" />
+
+Three questions to answer in a sentence or two each, without notes:
+
+1. Your sensor shows up in the Frequency Analyzer at 868.35 MHz (if your region allows it) but never decodes on `AM650`. What would you change first, and what would you leave alone?
+2. Why can a 2-FSK transmitter never be "silent" for a zero, while an OOK transmitter always is?
+3. Which register results give the `AM650` filter width and the `FM476` deviation? Show the arithmetic from the Worked example.
+
+## Keep evidence
+
+Open your [notebook](/learn/notebook?module=m02) and save an entry for this module. Map each lab step to a field:
+
+- **Setup:** the remote, its recorded frequency, firmware version, and Hopping off.
+- **Prediction:** the family, the cleaner AM width and the sweep length you expected, written before Lab 2.2.
+- **Observation:** each preset you tried, in order, with what Read showed, including the baseline and the control press.
+- **Explanation:** the winning pair, why the other family showed nothing in terms of strength versus frequency, and your timed sweep.
+
+Adequate evidence is a sweep with every preset listed, one positive result and one control that failed on purpose. An example entry:
+
+> Doorbell, 433.92 MHz, official 1.4.3, hopping off. Predicted AM650 (cheap OOK). Battery fine. Baseline 10 s: nothing. AM650: Princeton listed twice. AM270: Princeton, fewer false lines. FM476 and FM238: nothing on three presses each. FM12K not present on 1.4.3. Back to AM650: Princeton again. The FM detector saw only carrier and noise, with no two tones to read.
+
+Set a review date one week from today. When you can explain the control result without your notes, mark it retrieved.
+
+## Continue
+
+Next is [Module 3: Decode a real protocol](/learn/03-protocols). It starts from the pair you found here: with frequency and preset right, the Flipper turns your remote's pulses into a protocol name, a bit count and a key.
+
+**Retrieval question for next week:** without looking, what do `AM270` and `FM238` each set inside the CC1101, and which one would you try on an OOK remote with a noisy read?
+
+Primary sources, checked 13 October 2026:
+
+- [Flipper Docs: Reading signals](https://docs.flipper.net/zero/sub-ghz/read) for the four presets, their bandwidth and deviation, and the Config menu.
+- [Flipper Docs: Reading RAW signals](https://docs.flipper.net/zero/sub-ghz/read-raw) for "not an SDR" and RAW using the modulation setting.
+- [Flipper Docs: Supported vendors](https://docs.flipper.net/zero/sub-ghz/supported-vendors) for the AM listings and dynamic protocols.
+- [Flipper Developer Docs: Sub-GHz file format](https://developer.flipper.net/flipperzero/doxygen/subghz_file_format.html) for the `Preset:` values.
+- [Firmware 1.4.3: cc1101_configs.c](https://github.com/flipperdevices/flipperzero-firmware/blob/1.4.3/lib/subghz/devices/cc1101_configs.c) for the four register sets, [1.5.0-rc: cc1101_configs.c](https://github.com/flipperdevices/flipperzero-firmware/blob/1.5.0-rc/lib/subghz/devices/cc1101_configs.c) for `FM12K`, and [pull request 4328](https://github.com/flipperdevices/flipperzero-firmware/pull/4328) (merged 30 June 2026) for why it was added.
+- [TI CC1101 datasheet, SWRS061I](https://www.ti.com/lit/ds/symlink/cc1101.pdf), sections 13, 16.1 and 16.3, for the filter and deviation formulas and OOK.

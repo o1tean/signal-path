@@ -1,0 +1,48 @@
+---
+/** Home "tools": the first two free tools of the featured list mount live from src/widgets, then the featured list.
+    Copy: docs/v2/copy/home.md#tools. */
+import Widget from '@/components/mdx/Widget.astro';
+import Section from './Section.astro';
+import LinkButton from './LinkButton.astro';
+import { toolById } from '@/data/tools';
+import { facts, spell } from './site';
+
+const featured = [
+  { id: 'tune-in', line: 'A mystery device transmits. Read the peak and name the frequency.' },
+  { id: 'wave-lab', line: 'Type bits, choose OOK or FSK, and watch the carrier change.' },
+  { id: 'spectrum-scope', line: 'Press a simulated remote and see its peak rise out of the noise floor.' },
+  { id: 'rolling-sim', line: 'See why a copied rolling code is accepted once at most.' },
+].map((f) => ({ ...f, tool: toolById(f.id)! }));
+
+// two live demos: free tools only (src/data/tools.ts), in the featured order
+const live = featured.filter((f) => f.tool.free).slice(0, 2);
+---
+<Section id="tools" eyebrow="Try it in the browser" title="Watch bits turn into a waveform before you touch the device." intro={`${spell(facts.tools)} tools run in your browser on synthetic signals. None of them connects to a radio, so you can use them before your Flipper arrives.`}>
+  <div class="grid gap-4 lg:grid-cols-2">
+    {
+      live.map(({ tool }) => (
+        // a widget draws its own titled panel, so it is not wrapped in a second card
+        <div class="min-w-0 [&_.sp-widget]:my-0">
+          <Widget name={tool.id} />
+        </div>
+      ))
+    }
+  </div>
+
+  <ul class="mt-4 grid gap-px overflow-hidden rounded-[1.25rem] border border-border bg-border sm:grid-cols-2 lg:grid-cols-4">
+    {
+      featured.map(({ tool, line }) => (
+        <li class="flex flex-col bg-card p-5">
+          <p class="flex items-center gap-2 font-semibold">
+            {tool.name}
+            {tool.free ? <span class="pill grey">Free</span> : <span class="pill orange">Complete</span>}
+          </p>
+          <p class="mt-1.5 text-sm leading-relaxed text-muted-foreground">{line}</p>
+        </li>
+      ))
+    }
+  </ul>
+  <div class="mt-8">
+    <LinkButton href="/tools" variant="secondary">Open the tools</LinkButton>
+  </div>
+</Section>

@@ -1,0 +1,63 @@
+---
+/** Stage and lesson list for the learner area. Done marks are filled in on the client from the learner store. */
+import { getStages } from '@/lib/lessons';
+import { hasAccess } from '@/lib/access';
+
+interface Props {
+  current?: string;
+}
+const { current } = Astro.props;
+const stages = await getStages();
+// paid rows show a lock until the visitor owns the course, so the paywall never comes as a surprise
+const ownsPaid = hasAccess(Astro.locals as Partial<App.Locals>, 'paid');
+---
+<nav aria-label="Lessons" class="learn-nav text-sm">
+  {
+    stages.map((stage) => (
+      <div class="mb-6">
+        <p class="mb-1 px-3 text-xs font-semibold tracking-wide text-muted-foreground uppercase">{stage.title}</p>
+        <ol class="space-y-0.5">
+          {stage.lessons.map((m) => (
+            <li>
+              <a
+                href={m.href}
+                data-module-link={m.id}
+                aria-current={m.id === current ? 'page' : undefined}
+                class="group flex min-h-11 items-center gap-2.5 rounded-md px-3 py-1.5 text-muted-foreground hover:bg-muted hover:text-foreground aria-[current=page]:bg-accent aria-[current=page]:font-medium aria-[current=page]:text-accent-foreground"
+              >
+                <span class="done-dot flex size-5 shrink-0 items-center justify-center rounded-full border border-border font-mono text-[10px]">{m.n}</span>
+                <span class="min-w-0 flex-1 leading-snug">{m.title}</span>
+                {m.free && <span class="pill grey">Free</span>}
+                {!m.free && !ownsPaid && (
+                  <svg aria-label="In Signal Path Complete" role="img" viewBox="0 0 24 24" class="size-3.5 shrink-0 text-muted-foreground" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="5" y="11" width="14" height="10" rx="2" />
+                    <path d="M8 11V7a4 4 0 0 1 8 0v4" />
+                  </svg>
+                )}
+                <span class="done-label sr-only" />
+              </a>
+            </li>
+          ))}
+        </ol>
+      </div>
+    ))
+  }
+</nav>
+<style>
+  .learn-nav :global([data-done='true'] .done-dot) {
+    background: var(--success);
+    border-color: var(--success);
+    color: var(--background);
+  }
+</style>
+<script>
+  import { $done } from '@/lib/learner';
+  $done.subscribe((done) => {
+    document.querySelectorAll<HTMLElement>('[data-module-link]').forEach((a) => {
+      const isDone = !!done[a.dataset.moduleLink ?? ''];
+      a.dataset.done = String(isDone);
+      const label = a.querySelector('.done-label');
+      if (label) label.textContent = isDone ? ' (complete)' : '';
+    });
+  });
+</script>

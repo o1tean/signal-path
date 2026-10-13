@@ -1,0 +1,65 @@
+---
+import Marketing from '@/layouts/Marketing.astro';
+import Widget from '@/components/mdx/Widget.astro';
+import { glossary } from '@/data/glossary';
+export const prerender = true;
+---
+<Marketing title="Flipper Zero and RF glossary" description="Every term in the Signal Path course, including OOK, TE, T5577 and NTAG, defined in a sentence or two. Search the A to Z list or review them as flashcards.">
+  <header class="border-b border-border">
+    <div class="mx-auto w-full max-w-[75rem] px-4 pt-12 pb-10 sm:px-6 md:pt-20 md:pb-14">
+      <p class="eyebrow">Glossary</p>
+      <h1 class="mt-4 max-w-[20ch]">Every term in the course, defined in a sentence or two.</h1>
+      <p class="mt-6 max-w-2xl text-lg leading-relaxed text-muted-foreground md:text-xl">Search the A–Z list, or review the terms as flashcards.</p>
+      <p class="mt-4 max-w-2xl leading-relaxed text-muted-foreground">Lessons link a term to this page the first time it appears.</p>
+    </div>
+  </header>
+  <div class="mx-auto w-full max-w-4xl px-4 pt-6 pb-16 sm:px-6 md:pb-24">
+    <section aria-labelledby="cards-title" class="mt-12">
+      <h2 id="cards-title" class="text-2xl">Flashcards</h2>
+      <p class="mt-2 text-muted-foreground">The glossary as flip cards. Space flips a card and the arrow keys move between them.</p>
+      <Widget name="flashcards" />
+    </section>
+
+    <section aria-labelledby="list-title" class="mt-12">
+      <h2 id="list-title" class="text-2xl">All {glossary.length} terms</h2>
+      <div class="mt-4 flex flex-wrap items-center gap-3">
+        <label for="gl-search" class="sr-only">Filter terms</label>
+        <input id="gl-search" type="search" placeholder="Filter by term or definition" autocomplete="off" class="h-11 w-full max-w-sm rounded-md border border-input bg-background px-3" />
+        <p id="gl-count" class="m-0 text-sm text-muted-foreground" aria-live="polite">{glossary.length} terms</p>
+      </div>
+      <dl class="mt-6 divide-y divide-border rounded-card border border-border bg-card">
+        {
+          glossary.map((e) => (
+            <div id={e.id} class="gl-entry scroll-mt-24 px-5 py-4 target:bg-accent" data-search={`${e.term} ${e.short} ${e.long}`.toLowerCase()}>
+              <dt class="font-semibold">
+                <a href={`#${e.id}`} class="inline-flex min-h-11 items-center hover:text-primary">{e.term}</a>
+                <span class="ml-2 font-normal text-muted-foreground">{e.short}</span>
+              </dt>
+              <dd class="mt-1.5 text-muted-foreground">{e.long}</dd>
+              <dd class="mt-2 flex flex-wrap gap-1.5">
+                {e.tags.map((t) => (
+                  <span class="pill grey">{t}</span>
+                ))}
+              </dd>
+            </div>
+          ))
+        }
+      </dl>
+    </section>
+  </div>
+</Marketing>
+<script>
+  const input = document.getElementById('gl-search') as HTMLInputElement | null;
+  const count = document.getElementById('gl-count');
+  const entries = [...document.querySelectorAll<HTMLElement>('.gl-entry')];
+  input?.addEventListener('input', () => {
+    const q = input.value.trim().toLowerCase();
+    let shown = 0;
+    for (const e of entries) {
+      const hit = !q || (e.dataset.search ?? '').includes(q);
+      e.hidden = !hit;
+      if (hit) shown++;
+    }
+    if (count) count.textContent = `${shown} ${shown === 1 ? 'term' : 'terms'}`;
+  });
+</script>

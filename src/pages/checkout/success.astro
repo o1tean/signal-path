@@ -1,0 +1,79 @@
+---
+/* /checkout/success: pending until the webhook grants access (polls /api/entitlements), slow after 60 s, then granted.
+   Nothing is granted from this URL. Copy: docs/v2/copy/checkout.md. */
+import Marketing from '@/layouts/Marketing.astro';
+import LinkButton from '@/components/marketing/LinkButton.astro';
+import { buttonClass } from '@/components/marketing/button';
+import { facts, need, owner } from '@/components/marketing/site';
+import { getLessons } from '@/lib/lessons';
+
+const { locals } = Astro;
+Astro.response.headers.set('Cache-Control', 'private, no-store');
+if (!locals.user) return Astro.redirect(`/login?next=${encodeURIComponent(Astro.url.pathname + Astro.url.search)}`, 303);
+
+const granted = locals.entitlements.includes('course-complete');
+const email = locals.user.email;
+const fmt = (d: Date) => d.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
+const refundDeadline = fmt(new Date(Date.now() + 30 * 864e5));
+// the first paid lesson: where a new buyer continues
+const firstPaid = (await getLessons()).find((l) => !l.free)!;
+---
+<Marketing title="Payment" description="Your Signal Path Complete payment status." index={false}>
+  <div class="mx-auto max-w-xl px-4 py-16 sm:py-24" data-checkout-status={granted ? 'granted' : 'pending'}>
+    <section data-state="pending" hidden={granted} aria-live="polite">
+      <p class="eyebrow">Payment submitted</p>
+      <h1 class="mt-3">Waiting for Stripe to confirm.</h1>
+      <p class="lede mt-4">This usually takes a few seconds.</p>
+      <p class="mt-4 text-muted-foreground">Keep this page open. It updates by itself.</p>
+    </section>
+    <section data-state="slow" hidden>
+      <p class="eyebrow">Still waiting</p>
+      <h1 class="mt-3">Your payment is still processing.</h1>
+      <p class="lede mt-4">Some payment methods take longer to confirm. You don't need to pay again.</p>
+      <p class="mt-4 text-muted-foreground">We'll email {email} when the lessons open. They then appear on your account. If nothing has changed within [NEED: e.g. 24 hours], email {need(owner.supportEmail, 'support email')} with the address you paid with.</p>
+      <div class="mt-8 flex flex-wrap gap-3">
+        <button type="button" class={buttonClass('primary', 'md')} data-check-again>Check again</button>
+        <LinkButton href="/account" variant="secondary" size="md">Go to your account</LinkButton>
+      </div>
+    </section>
+    <section data-state="granted" hidden={!granted}>
+      <p class="eyebrow">Signal Path Complete</p>
+      <h1 class="mt-3">All {facts.lessons} lessons are open.</h1>
+      <p class="lede mt-4">They are on the account for {email}. A receipt from Stripe is on its way.</p>
+      <p class="mt-4 text-muted-foreground">Your progress and notes from the free lessons are still there. If the course isn't right for you, you can request a refund from your account until {refundDeadline}.</p>
+      <div class="mt-8 flex flex-wrap items-center gap-4">
+        <LinkButton href={firstPaid.href} size="md">Continue with {firstPaid.title}</LinkButton>
+        <a href="/learn" class="inline-flex min-h-11 items-center text-sm text-primary hover:underline">See what's included</a>
+      </div>
+    </section>
+  </div>
+</Marketing>
+
+<script>
+  const root = document.querySelector<HTMLElement>('[data-checkout-status]');
+  const show = (state: string) => {
+    root!.dataset.checkoutStatus = state;
+    root!.querySelectorAll<HTMLElement>('[data-state]').forEach((s) => (s.hidden = s.dataset.state !== state));
+  };
+  async function owned() {
+    const res = await fetch('/api/entitlements', { cache: 'no-store' }).catch(() => null);
+    const body = res?.ok ? await res.json() : null;
+    return Array.isArray(body?.entitlements) && body.entitlements.includes('course-complete');
+  }
+  function poll() {
+    const started = Date.now();
+    const tick = async () => {
+      if (await owned()) return show('granted');
+      if (Date.now() - started >= 60_000) return show('slow');
+      setTimeout(tick, 2000);
+    };
+    void tick();
+  }
+  if (root?.dataset.checkoutStatus === 'pending') {
+    poll();
+    root.querySelector('[data-check-again]')?.addEventListener('click', () => {
+      show('pending');
+      poll();
+    });
+  }
+</script>

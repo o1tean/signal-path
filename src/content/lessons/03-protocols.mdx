@@ -1,0 +1,320 @@
+---
+id: m03
+number: 3
+slug: 03-protocols
+title: Decode a real protocol
+description: Read the Protocol, Bit, Key and TE lines of a Flipper capture, turn pulse timings into bits by hand, and save your first named .sub file from a remote you own.
+stage: signals
+week: Week 2
+access: paid
+minutes: 50
+gear:
+  - Flipper Zero on official firmware 1.4.3 or later, with a microSD card
+  - one fixed-code remote you own, such as a plug-in doorbell button, an LED strip remote or a fan remote
+  - the frequency and preset pair you found in Modules 1 and 2
+  - a browser for the Pulse Decoder
+transmits: none
+outcome: Capture one fixed-code remote you own, name its protocol, and explain every line of the saved .sub file, including how the TE value turns pulses into the Key.
+prerequisites:
+  - m01
+  - m02
+tools:
+  - pulse-decoder
+scenes:
+  - pulses
+evidence: A notebook entry with your predicted and decoded bits for the Pulse Decoder sample, the Protocol, Bit and Key of your own remote across four presses, one control device, and the saved file name.
+sources:
+  - title: 'Flipper Developer Docs: Sub-GHz file format'
+    url: https://developer.flipper.net/flipperzero/doxygen/subghz_file_format.html
+  - title: 'Flipper Docs: Reading signals'
+    url: https://docs.flipper.net/zero/sub-ghz/read
+  - title: 'Flipper Docs: Supported vendors'
+    url: https://docs.flipper.net/zero/sub-ghz/supported-vendors
+  - title: 'Flipper Zero firmware 1.4.3: Princeton encoder (princeton.c)'
+    url: https://github.com/flipperdevices/flipperzero-firmware/blob/1.4.3/lib/subghz/protocols/princeton.c
+  - title: 'Flipper Zero firmware 1.4.3: Nice FLO protocol (nice_flo.c)'
+    url: https://github.com/flipperdevices/flipperzero-firmware/blob/1.4.3/lib/subghz/protocols/nice_flo.c
+  - title: 'Flipper Zero firmware 1.4.3: Sub-GHz protocol decoders'
+    url: https://github.com/flipperdevices/flipperzero-firmware/tree/1.4.3/lib/subghz/protocols
+reviewed: '2026-10-13'
+badge: protocol-reader
+---
+
+## Outcome
+
+You can press a remote you own, read the protocol name the Flipper gives it, and say what every line of the saved .sub file means.
+
+By the end you can:
+
+- turn a list of pulse widths into bits using a protocol's timing rule;
+- read `Protocol`, `Bit`, `Key` and `TE` and say what each one tells you;
+- tell a fixed code from a rolling code by pressing the same button four times.
+
+## Before you start
+
+- **Prerequisites:** [Module 1](/learn/01-frequency) gave you a frequency and [Module 2](/learn/02-modulation) gave you a preset. You need both written down for the remote you use here.
+- **Gear:** your Flipper Zero with a microSD card, one remote you own, and a browser for the Pulse Decoder. A plug-in doorbell button, an LED strip remote, a fan remote or an outlet switch all work. Car fobs and modern gate remotes usually do not, for reasons Module 5 explains.
+- **Firmware:** official firmware, release 1.4.3 or later. Forks decode the same families and may add more.
+- **Time:** about 50 minutes: 20 to read, 10 in the Pulse Decoder, 20 at the bench.
+- **Transmits:** nothing. Every step only listens. Sending a saved file back is Module 4.
+- **Scope:** your own remote, in your own space. Do not record other people's remotes, even though listening is the gentlest thing a radio does. The [Romania lab guide](/romania-lab-guide) covers what applies.
+
+<Callout variant="legal" title="Keep the file for your own device">
+A saved capture is a working copy of a remote's message. Replay or transmit it only on equipment you own or have written permission to test, and check the transmit rules for your region first (Module 4 walks through them). This course is education, not legal advice.
+</Callout>
+
+## Understand
+
+### From flashes of radio to bits
+
+A Sub-GHz remote does something simple. It switches its transmitter on and off in a fast, fixed pattern. That is the on-off keying (<Term id="ook-on-off-keying">OOK</Term>) from Module 2. The receiver's whole job is to measure how long each "on" and each "off" lasts, in microseconds, and turn those lengths into bits.
+
+<Scene3D name="pulses" label="3D animation: a pulse train of long and short high periods and the bits it encodes." />
+
+The rule that turns lengths into bits is the <Term id="protocol">protocol</Term>. Different makers chose different rules, so a "short pulse" means 0 in one protocol and 1 in another. Once you know the rule, a flicker becomes a number. That number is everything the remote tells its receiver.
+
+### TE: the unit everything is built from
+
+Most fixed-code protocols pick one base time and make every pulse a multiple of it. In a .sub file that base time is the <Term id="te-timing-element">TE</Term> line. Flipper's file-format page calls it the quantization interval, and the unit is microseconds.
+
+The Princeton protocol, the most common one you will meet, uses a simple rule. This is the encoder in firmware 1.4.3:
+
+- a **1** is carrier on for 3 TE, then off for 1 TE;
+- a **0** is carrier on for 1 TE, then off for 3 TE.
+
+Either way a bit lasts 4 TE. The receiver does not need to know the absolute time. It only needs to see whether the "on" part is the short one or the long one.
+
+The TE in your file is measured, not looked up. Firmware 1.4.3 expects a Princeton short pulse near 390 µs and accepts anything within 300 µs of it, then averages the pulses it actually heard. Two remotes with the same chip can therefore save `TE: 380` and `TE: 410`, and both are fine.
+
+<Figure label="Timing diagram of the first four bits of the key 8C 5A 3B, which are 1 0 0 0, at TE 400 microseconds. A 1 is a long high of 1200 microseconds followed by a short low of 400; each 0 is a short high of 400 followed by a long low of 1200." caption="The first four bits of 0x8C5A3B, drawn to scale (1 TE = 36 px). Each bit lasts 4 TE, which is 1.6 ms at TE 400. The receiver reads a bit by comparing the high part with the low part.">
+<svg viewBox="0 0 640 140" width="100%" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+  <line x1="0" y1="90" x2="640" y2="90" class="stroke-border" stroke-width="1" stroke-dasharray="3 4" />
+  <path d="M20 90 V40 H128 V90 H164 V40 H200 V90 H308 V40 H344 V90 H452 V40 H488 V90 H596" fill="none" class="stroke-primary" stroke-width="2" />
+  <text x="74" y="30" text-anchor="middle" class="fill-foreground font-mono" font-size="13">1</text>
+  <text x="236" y="30" text-anchor="middle" class="fill-foreground font-mono" font-size="13">0</text>
+  <text x="380" y="30" text-anchor="middle" class="fill-foreground font-mono" font-size="13">0</text>
+  <text x="524" y="30" text-anchor="middle" class="fill-foreground font-mono" font-size="13">0</text>
+  <text x="74" y="112" text-anchor="middle" class="fill-muted-foreground font-mono" font-size="11">3 TE on</text>
+  <text x="146" y="128" text-anchor="middle" class="fill-muted-foreground font-mono" font-size="11">1 off</text>
+  <text x="182" y="112" text-anchor="middle" class="fill-muted-foreground font-mono" font-size="11">1</text>
+  <text x="254" y="128" text-anchor="middle" class="fill-muted-foreground font-mono" font-size="11">3 TE off</text>
+</svg>
+</Figure>
+
+#### Worked example: one frame of a Princeton key
+
+Take `Key: 00 00 00 00 00 8C 5A 3B` with `Bit: 24` and `TE: 400`. Only the last 24 bits count, which are `8C 5A 3B`.
+
+| Step | Value |
+| --- | --- |
+| Hex `8C 5A 3B` as binary | `1000 1100 0101 1010 0011 1011` |
+| Time per bit | 4 TE × 400 µs = 1,600 µs |
+| Time for 24 bits | 24 × 1,600 µs = 38.4 ms |
+| Stop pulse and silent guard | (1 + 30) TE × 400 µs = 12.4 ms |
+| One frame | 50.8 ms |
+
+The 30 TE of silence is the default guard time in firmware 1.4.3. Flipper measures the real gap when it decodes and saves it as `Guard_time`; if the gap falls outside 15 to 72 TE, it falls back to 30.
+
+Change the TE to 500 and every number scales by 1.25, but the bits stay the same. That is why TE is stored in the file: a replay with the wrong TE sends the right bits at the wrong speed, and the receiver ignores it.
+
+### What a message contains
+
+A decoded fixed-code message has structure. Families arrange it differently, but three ideas recur:
+
+- **Preamble.** A lead-in pattern, often a long gap or a few sync pulses, that tells the receiver a real message is starting so it can lock onto the timing. In Princeton the long silent guard time plays this role.
+- **Serial or ID.** The bulk of the bits: an identity burned into this remote, sometimes set by DIP switches inside.
+- **Button or command.** A few bits that say which button you pressed. On a one-button remote this can be a constant.
+
+The <Term id="key">Key</Term> the Flipper shows is those bits packed into one hexadecimal number. Press the same button twice on a <Term id="fixed-code">fixed-code</Term> remote and the Key is identical both times. That repeatability is what "fixed" means.
+
+### Families you will meet
+
+Flipper's supported-vendors page lists the fixed-code ("static") families below with their frequencies. The bit counts and pulse widths come from each protocol's decoder in firmware 1.4.3, where the short and long values are the nominal pulse lengths the decoder looks for.
+
+<div class="table-scroll">
+
+| Family | Bits | Short / long pulse | Ratio | Frequency listed | Where you meet it |
+| --- | --- | --- | --- | --- | --- |
+| <Term id="princeton">Princeton</Term> | 24 | 390 / 1,170 µs | 1 : 3 | 315.00, 433.92, 868.35 MHz | Generic remotes, outlet switches, LED strips |
+| <Term id="came">CAME</Term> | 12 or 24 | 320 / 640 µs | 1 : 2 | 433.92 MHz | Gate and barrier remotes |
+| <Term id="nice-flo">Nice FLO</Term> | 12 or 24 | 700 / 1,400 µs | 1 : 2 | 433.92 MHz | Older Nice gates; its rolling sibling is Nice FLOR-S |
+| <Term id="holtek">Holtek</Term> | 40 | 430 / 870 µs | 1 : 2 | 418.00 MHz | Encoder chip in many unbranded remotes |
+| Holtek HT12x | 12 | 320 / 640 µs | 1 : 2 | 433.92 MHz | Remotes built on the HT12E encoder |
+| Linear | 10 | 500 / 1,500 µs | 1 : 3 | 300.00 MHz | Older North American garage remotes |
+
+</div>
+
+Checked 13 October 2026. The ratio is the part to remember. Princeton and Linear use one short and one long pulse in a 1 : 3 ratio; CAME, Nice FLO and Holtek use 1 : 2. The order also differs. A Princeton 1 starts with the long high, while a Nice FLO 1 is a long low followed by a short high, after a 36-TE silent header. The Pulse Decoder draws both of its samples with the Princeton shape so you can compare bit counts; trust this table for the real Nice FLO timing.
+
+The same page lists dynamic (rolling-code) families such as Nice FLOR-S and CAME Atomo, and notes that Flipper decodes them but disables saving. That detail matters in Module 5.
+
+### What the screen is actually showing you
+
+Open <Flip>Sub-GHz → Read</Flip>. Flipper tries every protocol it knows against the pulses it hears. Each match adds a line to the list with the protocol name, and the bar along the bottom of the screen shows the frequency and preset you are listening on, plus how many signals it has caught. Select a line and press OK to see the details. For the Princeton key above, firmware 1.4.3 prints:
+
+```
+Princeton 24bit
+Key:0x008C5A3B
+Yek:0x00DC5A31
+Sn:0x8C5A3 Btn:B
+Te:400us  GT:Te*30
+```
+
+<div class="table-scroll">
+
+| Line | What it means |
+| --- | --- |
+| `Princeton 24bit` | The rule that matched and the bit count. The count should agree with the family table. |
+| `Key` | The 24 decoded bits in hex, the same value the file stores. |
+| `Yek` | The same 24 bits in reverse order, handy when you compare with a datasheet or tool that numbers bits from the other end. |
+| `Sn` and `Btn` | Flipper's guess at the structure: the top 20 bits as a serial and the last 4 as a button. Real remotes split their bits in different ways, so treat this as a hint. |
+| `Te` and `GT` | The measured TE and the guard time as a multiple of it. |
+
+</div>
+
+Rolling-code protocols print a different set of lines. KeeLoq, for example, shows a `Cnt` value: a counter that changes between presses. If you see one, you are not looking at a fixed code.
+
+If no protocol fits, the screen stays quiet. Silence means "no rule matched", not "nothing was sent". The signal may be a protocol Flipper does not know, or sit on a different frequency or preset than you chose.
+
+### Anatomy of a .sub file
+
+Pressing Save writes a plain-text <Term id="sub-file">.sub file</Term> to the SD card. You can open it in any editor. Here is the file firmware 1.4.3 writes for the same Princeton key:
+
+```
+Filetype: Flipper SubGhz Key File
+Version: 1
+Frequency: 433920000
+Preset: FuriHalSubGhzPresetOok650Async
+Protocol: Princeton
+Bit: 24
+Key: 00 00 00 00 00 8C 5A 3B
+TE: 400
+Guard_time: 30
+```
+
+<div class="table-scroll">
+
+| Line | What it says |
+| --- | --- |
+| `Filetype` | A decoded capture. A recording that was not decoded begins `Flipper SubGhz RAW File` and says `Protocol: RAW` (Module 5). |
+| `Version` | The file-format version, currently 1. |
+| `Frequency` | In hertz. 433920000 is 433.92 MHz. |
+| `Preset` | The radio setup. `FuriHalSubGhzPresetOok650Async` is OOK with the 650 kHz filter, shown as AM650 in menus. |
+| `Protocol` | The rule that turns the key back into pulses. |
+| `Bit` | How many bits of the key are meaningful. |
+| `Key` | The message, in hex, padded with leading zeros. |
+| `TE` | The base timing unit in microseconds. |
+| `Guard_time` | The silence after each frame, in TE. Flipper's file-format page shows an older example without this line; firmware 1.4.3 writes it, and a file without it loads with the default of 30. |
+
+</div>
+
+There is no counter and nothing secret in the file. It holds just enough to rebuild the same pulse train. That completeness is why a fixed code can be replayed exactly, and why a stranger with one clean capture could do the same. Fixed codes are convenient for cheap doorbells and weak for anything that guards a door, which is why rolling codes exist.
+
+### Preset and Protocol answer different questions
+
+- The **Preset** is physics: which filter and which modulation, so the radio hears clean pulses at all.
+- The **Protocol** is language: given clean pulses, what do their timings mean?
+
+With the wrong preset there are no clean pulses to decode. With the right preset and an unknown protocol you get pulses and no name.
+
+### Guessing versus copying
+
+A 24-bit key has 2^24 = 16,777,216 possible values. That sounds like a lot, so it is worth working out what it means in time. At TE 400 one Princeton frame lasts 50.8 ms, so a transmitter sending nothing but new keys back to back could try at most about 19.7 per second:
+
+| Step | Value |
+| --- | --- |
+| Frames per second | 1 ÷ 0.0508 s ≈ 19.7 |
+| Time to try every key once | 16,777,216 × 50.8 ms ≈ 852,000 s |
+| In days | about 9.9 days of continuous transmission |
+
+Real receivers usually want the same frame more than once before they act, which makes it slower again. So a 24-bit fixed code resists guessing reasonably well. What it does not resist is copying: one clean capture holds the exact key, with no guessing at all. That gap is what rolling codes were built to close, and Module 5 starts there.
+
+<Callout variant="warn" title="Cycling codes is an attack">
+Sending code after code at a receiver you do not own is a brute-force attack, and it is illegal. This course works only with captures of your own devices, and the arithmetic above is here to explain why fixed codes fail, not to plan anything.
+</Callout>
+
+### Misconceptions
+
+- **"The Key is a password."** It is the whole message, readable by anyone who receives it.
+- **"A bigger Bit count means a safer remote."** Bits give a count of possible values, 2^24 is 16,777,216, but a fixed code of any length can be copied from one capture.
+- **"If Read is silent, the remote is broken."** It may use another frequency, another preset, or a protocol not in the list.
+- **"TE is the bit rate."** It is the base pulse width. A Princeton bit lasts 4 TE.
+- **"Identical keys mean the Flipper is stuck."** For a fixed code, identical keys are correct.
+
+## Predict and practise
+
+Start in the browser, where you can step through the decoding the Flipper does in a blink.
+
+<Lab kicker="Lab 3.1" title="Decode a Princeton frame by hand" gear="A browser. Nothing transmits.">
+
+1. **Predict first.** On paper, write the first eight bits of `8C5A3B` and mark which would be a long pulse (a 1) and which a short one (a 0). Then write the duration of the "on" part of the very first bit at TE 400.
+2. In the Pulse Decoder below, choose the Princeton sample and step through the first eight bits. Compare each step with your sheet.
+3. Note what the decoder reports for TE, Bits, Binary and Hex when it finishes.
+4. **Control:** switch to the Nice FLO sample. It has 12 bits and a different TE. Predict its total length in bits and the hex before you finish stepping.
+
+</Lab>
+
+<Widget name="pulse-decoder" />
+
+<Win>you predicted the first byte of `8C5A3B` correctly before stepping, you can state the "on" time for a 1 and for a 0 at TE 400, and you can explain why the Nice FLO sample ended after 12 bits.</Win>
+
+Now the bench. Write your prediction first: what Protocol and Bit count will your remote show, and will the Key change between presses?
+
+<Lab kicker="Lab 3.2" title="Capture, name and save a protocol" gear="Flipper and one fixed-code remote you own, plus one second device as a control. Listening only.">
+
+1. **Predict first.** Before you press anything, write the Protocol, the Bit count and whether the Key will stay the same over four presses. Base it on the remote's label and on what Module 2 showed about its modulation.
+2. Open <Flip>Sub-GHz → Read</Flip>. Press <Flip>Config</Flip> and set the frequency and preset you recorded in Modules 1 and 2. The default is AM650.
+3. **Baseline:** wait ten seconds without pressing anything and note what appears.
+4. Hold the remote 10 to 30 cm from the Flipper and press its button once. Wait for a Protocol name.
+5. Press the same button three more times. Write down the Key each time. If a `Cnt` value climbs, or the Key changes, pick another device and keep this one for Module 5.
+6. Record Protocol, Bit and Key.
+7. **Control:** press a second remote you own (a different family if you have one). Note whether Protocol, Bit or Key differ.
+8. Save your first capture with a human name such as `doorbell-front`, not the default. Open <Flip>Sub-GHz → Saved</Flip> and confirm the file is there.
+
+</Lab>
+
+Expected observation: a Protocol name appears, the Bit count matches the family, and the Key is identical on all four presses. The control remote shows a different Key, and may show a different Protocol.
+
+<Callout variant="note" title="Nothing decodes?">
+Check the frequency with the Frequency Analyzer, sweep the presets as in Module 2, and press closer. If it still stays silent, write down "no decode at [frequency], all presets" and move on. That is a valid result and Module 5 returns to it.
+</Callout>
+
+<Win>you have one saved .sub in <Flip>Saved</Flip> with a real protocol name and a clear filename, and you can point to its Key and Bit and say why the Key repeated.</Win>
+
+## Check yourself
+
+<Quiz id="m03" />
+
+Two questions to answer in a sentence each, without notes:
+
+1. A file says `TE: 500` instead of `TE: 400`. What changes in the pulse train, and what stays the same?
+2. Your friend's remote shows a different Key on every press. What would you tell them it probably is, and what would you check first?
+
+## Keep evidence
+
+Open your [notebook](/learn/notebook?module=m03) and save an entry for this module. Map each step to a field:
+
+- **Setup:** the remote, its frequency and preset, firmware version.
+- **Prediction:** your decoded bits from Lab 3.1 and the Protocol you expected from Lab 3.2, written before you stepped or pressed.
+- **Observation:** the Pulse Decoder result, the four Keys, the control remote's Key, and the saved file name.
+- **Explanation:** one sentence on why the Key repeats and one on what TE does.
+
+Adequate evidence is four Keys that you can compare, one control, and a prediction written before the result. An example entry:
+
+> Doorbell, 433.92 MHz, AM650, official 1.4.3. Predicted Princeton, 24 bit, key stays the same. Read: Princeton, Bit 24, Key 00 00 00 00 00 8C 5A 3B on all four presses. Control (LED strip remote): Princeton, Bit 24, different Key. Saved as doorbell-front. TE 400, so one bit lasts 1.6 ms.
+
+Set a review date one week from today. When you can explain the Preset and Protocol lines without your notes, mark it retrieved.
+
+## Continue
+
+Next is [Module 4: Your first legal replay](/learn/04-transmit). It takes the file you just saved and shows what Send puts on the air, the three checks before you transmit, and why the same move fails against a rolling code.
+
+**Retrieval question for next week:** without looking, how long does a Princeton bit last at TE 400, and what tells you a remote is not fixed-code?
+
+Primary sources, checked 13 October 2026:
+
+- [Flipper Developer Docs: Sub-GHz file format](https://developer.flipper.net/flipperzero/doxygen/subghz_file_format.html) for the key file fields, the RAW header and TE.
+- [Flipper Docs: Reading signals](https://docs.flipper.net/zero/sub-ghz/read) for the Read menu path, the Config menu, the AM650 default and the save-and-name step.
+- [Flipper Docs: Supported vendors](https://docs.flipper.net/zero/sub-ghz/supported-vendors) for static and dynamic families, their frequencies, and why saving is disabled for dynamic ones.
+- [Firmware 1.4.3: princeton.c](https://github.com/flipperdevices/flipperzero-firmware/blob/1.4.3/lib/subghz/protocols/princeton.c) for the bit timing rule, the 390 µs nominal TE, the default guard time of 30 TE, the `Guard_time` line and the detail screen.
+- [Firmware 1.4.3: nice_flo.c](https://github.com/flipperdevices/flipperzero-firmware/blob/1.4.3/lib/subghz/protocols/nice_flo.c) and the [other protocol decoders](https://github.com/flipperdevices/flipperzero-firmware/tree/1.4.3/lib/subghz/protocols) for the bit counts and pulse widths in the family table.
