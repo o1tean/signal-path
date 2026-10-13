@@ -1,7 +1,8 @@
 // @vitest-environment node
-import { afterAll, describe, expect, it } from 'vitest';
+import { afterAll, describe, expect, it, beforeAll } from 'vitest';
 import Stripe from 'stripe';
 import { createClient } from '@supabase/supabase-js';
+import type { SupabaseClient } from '@supabase/supabase-js';
 import { loadEnv } from 'vite';
 import { handleStripeWebhook, supabaseStore, type EntitlementStatus, type Purchase, type PurchaseInput, type WebhookStore } from '@/lib/stripe';
 
@@ -200,8 +201,13 @@ const localDb = /^http:\/\/(127\.0\.0\.1|localhost):/.test(env.PUBLIC_SUPABASE_U
 const reachable = localDb && (await fetch(`${env.PUBLIC_SUPABASE_URL}/auth/v1/health`).then((r) => r.ok, () => false));
 
 describe.runIf(reachable)('stripe webhook against the local database', () => {
-  const db = createClient(env.PUBLIC_SUPABASE_URL!, env.SUPABASE_SECRET_KEY!, { auth: { persistSession: false } });
-  const store = supabaseStore(db);
+  // Created in beforeAll: vitest still collects a skipped suite's body, and createClient throws without a URL (CI).
+  let db: SupabaseClient;
+  let store: ReturnType<typeof supabaseStore>;
+  beforeAll(() => {
+    db = createClient(env.PUBLIC_SUPABASE_URL!, env.SUPABASE_SECRET_KEY!, { auth: { persistSession: false } });
+    store = supabaseStore(db);
+  });
   const pi = `pi_local_${Date.now()}`;
   let userId = '';
   const status = async () =>
